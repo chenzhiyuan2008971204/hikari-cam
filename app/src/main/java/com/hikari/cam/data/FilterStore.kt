@@ -52,7 +52,9 @@ class FilterStore(private val context: Context) {
     fun delete(f: Filter) {
         custom.remove(f)
         // Only remove the LUT if no other filter uses it.
-        f.lutFile?.let { path -> if (custom.none { it.lutFile == path }) File(path).delete() }
+        f.lutFile?.let { path ->
+            if (!path.startsWith(CubeLut.ASSET) && custom.none { it.lutFile == path }) File(path).delete()
+        }
         persist()
     }
 

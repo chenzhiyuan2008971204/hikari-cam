@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -72,6 +73,7 @@ fun HikariTheme(content: @Composable () -> Unit) {
 /** Category colour used for the swatch on filter chips. */
 private fun swatch(f: Filter): Brush = when {
     f.id == "original" -> Brush.linearGradient(listOf(Color(0xFF666666), Color(0xFFBBBBBB)))
+    f.swatch != null -> Brush.linearGradient(f.swatch.map { Color(it) })
     f.params.mono > 0.5f -> Brush.linearGradient(listOf(Color(0xFF111111), Color(0xFFDDDDDD)))
     f.category == Category.AIR -> Brush.linearGradient(listOf(Color(0xFFDDEEF2), Color(0xFFF6E2E4)))
     f.category == Category.FILM -> Brush.linearGradient(listOf(Color(0xFFE9B872), Color(0xFF8E6B4E)))
@@ -93,7 +95,8 @@ fun FilterStrip(
     Column {
         // Category tabs
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+                .padding(horizontal = 12.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             val tabs = listOf<Category?>(null) + Category.entries

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.hikari.cam.data.FilterStore
+import com.hikari.cam.filter.CubeLut
 import com.hikari.cam.ui.Accent
 import com.hikari.cam.ui.CameraScreen
 import com.hikari.cam.ui.EditorScreen
@@ -40,6 +41,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        CubeLut.init(applicationContext)
         val store = FilterStore(applicationContext)
         setContent {
             HikariTheme {

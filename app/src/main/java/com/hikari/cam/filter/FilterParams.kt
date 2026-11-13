@@ -146,10 +146,15 @@ enum class Category(val label: String) {
     AIR("空氣感"),
     FILM("底片"),
     CINEMA("電影・夜"),
+    JAPAN("日系名家"),
+    MASTERS("攝影名家"),
     MINE("我的"),
 }
 
-/** A named look. [lutFile] points at a .cube file in app storage for imported filters. */
+/**
+ * A named look. [lutFile] points at a .cube file in app storage for imported filters, or at a
+ * bundled one ("asset:looks/x.cube") for the photographer looks. [swatch] (ARGB) colours the chip.
+ */
 data class Filter(
     val id: String,
     val name: String,
@@ -157,6 +162,7 @@ data class Filter(
     val category: Category,
     val params: FilterParams,
     val lutFile: String? = null,
+    val swatch: List<Long>? = null,
 )
 
 /** Final shader input: the look blended by strength, with adjustments on top. */

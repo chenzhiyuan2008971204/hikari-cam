@@ -5,7 +5,9 @@ object Presets {
 
     val ORIGINAL = Filter("original", "原圖", "Original", Category.AIR, FilterParams.NEUTRAL)
 
-    val all: List<Filter> = listOf(
+    val all: List<Filter> by lazy { base + StylePresets.all }
+
+    private val base: List<Filter> = listOf(
         ORIGINAL,
 
         // ── 空氣感：bright, low contrast, airy pastel ──

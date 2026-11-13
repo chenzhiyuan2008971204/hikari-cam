@@ -3,3 +3,9 @@ build/
 local.properties
 *.iml
 .idea/
+
+# look tooling: local test photos, references and previews
+tools/looks/photos/
+tools/looks/refs/
+tools/looks/preview/
+__pycache__/

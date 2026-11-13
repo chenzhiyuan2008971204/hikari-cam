@@ -1,5 +1,6 @@
 package com.hikari.cam.filter
 
+import android.content.Context
 import java.io.File
 
 /** A 3D colour lookup table parsed from an Adobe/Resolve .cube file. Data is RGB, red fastest. */
@@ -7,10 +8,27 @@ class CubeLut(val size: Int, val data: FloatArray, val domainMin: FloatArray, va
 
     companion object {
         private val cache = HashMap<String, CubeLut>()
+        private val WS = Regex("\\s+")
+        private var appContext: Context? = null
 
-        fun load(path: String): CubeLut? = synchronized(cache) {
-            cache[path] ?: runCatching { parse(File(path).readText()) }.getOrNull()?.also { cache[path] = it }
+        /** Must be called once at startup so built-in LUTs ("asset:" paths) can be read. */
+        fun init(context: Context) {
+            appContext = context.applicationContext
         }
+
+        /** [path] is a file path, or "asset:<path inside assets>" for LUTs bundled with the app. */
+        fun load(path: String): CubeLut? = synchronized(cache) {
+            cache[path] ?: runCatching { parse(read(path)) }.getOrNull()?.also { cache[path] = it }
+        }
+
+        private fun read(path: String): String =
+            if (path.startsWith(ASSET)) {
+                appContext!!.assets.open(path.removePrefix(ASSET)).use { it.readBytes().decodeToString() }
+            } else {
+                File(path).readText()
+            }
+
+        const val ASSET = "asset:"
 
         fun parse(text: String): CubeLut {
             var size = 0
@@ -21,7 +39,7 @@ class CubeLut(val size: Int, val data: FloatArray, val domainMin: FloatArray, va
             for (raw in text.lineSequence()) {
                 val line = raw.trim()
                 if (line.isEmpty() || line.startsWith("#")) continue
-                val parts = line.split(Regex("\\s+"))
+                val parts = line.split(WS)
                 when (parts[0].uppercase()) {
                     "TITLE" -> {}
                     "LUT_1D_SIZE" -> throw IllegalArgumentException("只支援 3D LUT")
