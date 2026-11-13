@@ -15,6 +15,7 @@ Pipeline (each step is optional):
   8. gamut map to sRGB               chroma reduction at constant L and hue (no hue skew)
   9. per-channel RGB curves          film crossover, in display values
  10. output levels                   black point lift (fade) and white cap, per channel
+Near-white is kept neutral by `clean` (0..1, default 0.85) so toned looks still have clean whites.
 """
 import numpy as np
 
@@ -123,14 +124,19 @@ def apply(look, rgb):
 
     # 7. split toning: (hue deg, chroma amount) for each range
     mid = np.clip(1 - sh - hl, 0, 1)
+    sh = sh * smoothstep(0.0, 0.25, L)  # toning fades out toward pure black: blacks stay clean
+    # skin protection: toning is weakened on skin-coloured pixels so faces keep their hue
+    hd = (h - 55 + 180) % 360 - 180
+    skin = np.exp(-(hd / 20) ** 2) * smoothstep(0.02, 0.06, C) * (1 - smoothstep(0.14, 0.22, C))
+    keep = 1 - look.get("skin_protect", 0.7) * skin
     for key, wgt in (("shadows", sh), ("mids", mid), ("highlights", hl)):
         if key in look.get("split", {}):
             da, db = _ab(*look["split"][key])
-            a = a + da * wgt
-            b = b + db * wgt
+            a = a + da * wgt * keep
+            b = b + db * wgt * keep
     if "all" in look.get("split", {}):
         da, db = _ab(*look["split"]["all"])
-        a, b = a + da, b + db
+        a, b = a + da * keep, b + db * keep
     # raw a/b offsets written by fit.py
     for key, wgt in (("shadows", sh), ("mids", mid), ("highlights", hl)):
         if key in look.get("split_ab", {}):
@@ -141,6 +147,12 @@ def apply(look, rgb):
     # correction curve written by fit.py (display values), after everything else tonal
     if look.get("post_curve"):
         L = _tone(look["post_curve"])(L)
+
+    # clean whites: whatever toning a look adds, near-white stays neutral (paper, sky glare, shirts)
+    clean = look.get("clean", 0.85)
+    if clean:
+        k = 1 - clean * smoothstep(0.92, 1.0, L)
+        a, b = a * k, b * k
 
     # 8. back to sRGB without hue skew
     lin = gamut_map(np.stack([L, a, b], -1))

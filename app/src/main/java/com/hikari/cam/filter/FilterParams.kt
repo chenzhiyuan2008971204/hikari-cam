@@ -147,7 +147,7 @@ enum class Category(val label: String) {
     FILM("底片"),
     CINEMA("電影・夜"),
     JAPAN("日系名家"),
-    MASTERS("攝影名家"),
+    MASTERS("歐美名家"),
     MINE("我的"),
 }
 
