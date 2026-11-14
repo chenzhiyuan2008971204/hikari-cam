@@ -120,7 +120,7 @@ def kotlin(looks):
         args = ["lutAmount = 1f"] + [f"{p} = {e[p]}f" for p in
                                      ("grain", "vignette", "halation", "bloom", "leak") if e.get(p)]
         lines.append(
-            f'        Filter("{k}", "{lk["name"]}", "{lk["subtitle"]}", Category.{lk["category"]},\n'
+            f'        Filter("style_{k}", "{lk["name"]}", "{lk["subtitle"]}", Category.{lk["category"]},\n'
             f'            FilterParams({", ".join(args)}), lutFile = "asset:looks/{k}.cube",\n'
             f'            swatch = listOf({sw})),')
     lines += ["    )", "}", ""]
@@ -174,48 +174,65 @@ CLEAN_LIMITS = dict(
     white_level=0.95,     # darkest channel of pure white
     black_level=0.045,    # brightest channel of pure black (matte lift)
     skin_hue=12.0,        # max hue shift (deg) of skin tones
-    skin_chroma=(0.5, 1.7),  # allowed chroma ratio of skin tones
+    skin_chroma=(0.65, 1.7),  # allowed chroma ratio of skin tones (below ~0.65 faces look grey)
+    shadow_detail=0.06,   # luminance a 20% grey must keep (crushed shadows lose dark detail)
+    highlight_sep=0.06,   # luminance gap kept between 80% and 95% grey (highlight detail)
 )
 SKINS = {  # ColorChecker light / dark skin and a light East Asian skin tone
     "light": (194, 150, 130), "dark": (115, 82, 68), "asian": (226, 186, 160)}
 
 
-def clean_report(looks):
+def _lab(c):
     from colorlib import linear_to_oklab, srgb_to_linear
     import numpy as np
+    return linear_to_oklab(srgb_to_linear(np.asarray(c, float)))
 
-    def lab(c):
-        return linear_to_oklab(srgb_to_linear(np.asarray(c, float)))
 
+def clean_check(lk):
+    """(list of failed checks, measured values) for one look against CLEAN_LIMITS."""
+    import numpy as np
     lim = CLEAN_LIMITS
-    bad = []
-    print(f"{'look':<12}{'white':>7}{'grey92':>8}{'whiteLv':>9}{'blackLv':>9}{'skinHue':>9}{'skinC':>11}  fx")
-    for k, lk in looks.items():
-        out = engine.apply(lk, np.array([[1, 1, 1], [.92, .92, .92], [0, 0, 0]]
-                                        + [np.array(v) / 255 for v in SKINS.values()]))
-        lw, lg = lab(out[0]), lab(out[1])
-        wc, gc = np.hypot(*lw[1:]) * 100, np.hypot(*lg[1:]) * 100
-        wl, bl = out[0].min(), out[2].max()
+    out = engine.apply(lk, np.array([[1, 1, 1], [.92, .92, .92], [0, 0, 0]]
+                                    + [np.array(v) / 255 for v in SKINS.values()]))
+    lw, lg = _lab(out[0]), _lab(out[1])
+    tones = engine.apply(lk, np.array([[.2, .2, .2], [.8, .8, .8], [.95, .95, .95]])) @ engine.LUMA
+    m = dict(white=np.hypot(*lw[1:]) * 100, grey92=np.hypot(*lg[1:]) * 100,
+             whiteLv=out[0].min(), blackLv=out[2].max(), skinHue=None, skinC=None,
+             shadow=tones[0], hlsep=tones[2] - tones[1])
+    if lk.get("mono") is None:
         dh, cr = [], []
-        if lk.get("mono") is None:
-            for i, v in enumerate(SKINS.values()):
-                a0, a1 = lab(np.array(v) / 255), lab(out[3 + i])
-                h0, h1 = np.degrees(np.arctan2(a0[2], a0[1])), np.degrees(np.arctan2(a1[2], a1[1]))
-                dh.append(abs((h1 - h0 + 180) % 360 - 180))
-                cr.append(np.hypot(*a1[1:]) / np.hypot(*a0[1:]))
-        fx = {p: v for p, v in lk.get("fx", {}).items() if v}
-        fails = []
-        if wc > lim["white_chroma"]: fails.append("white")
-        if gc > lim["lightgray_chroma"]: fails.append("grey92")
-        if wl < lim["white_level"]: fails.append("whiteLv")
-        if bl > lim["black_level"]: fails.append("blackLv")
-        if dh and max(dh) > lim["skin_hue"]: fails.append("skinHue")
-        if cr and not (lim["skin_chroma"][0] <= min(cr) and max(cr) <= lim["skin_chroma"][1]):
-            fails.append("skinC")
-        if fx: fails.append("fx")
-        sk = f"{max(dh):9.1f}{min(cr):6.2f}-{max(cr):.2f}" if dh else f"{'-':>9}{'-':>11}"
-        print(f"{k:<12}{wc:7.1f}{gc:8.1f}{wl:9.2f}{bl:9.3f}{sk}  {fx or ''}"
-              + ("   FAIL " + ",".join(fails) if fails else ""))
+        for i, v in enumerate(SKINS.values()):
+            a0, a1 = _lab(np.array(v) / 255), _lab(out[3 + i])
+            h0, h1 = np.degrees(np.arctan2(a0[2], a0[1])), np.degrees(np.arctan2(a1[2], a1[1]))
+            dh.append(abs((h1 - h0 + 180) % 360 - 180))
+            cr.append(np.hypot(*a1[1:]) / np.hypot(*a0[1:]))
+        m["skinHue"], m["skinC"] = max(dh), (min(cr), max(cr))
+    fails = []
+    if m["white"] > lim["white_chroma"]: fails.append("white")
+    if m["grey92"] > lim["lightgray_chroma"]: fails.append("grey92")
+    if m["whiteLv"] < lim["white_level"]: fails.append("whiteLv")
+    if m["blackLv"] > lim["black_level"]: fails.append("blackLv")
+    if m["skinHue"] is not None and m["skinHue"] > lim["skin_hue"]: fails.append("skinHue")
+    if m["skinC"] is not None and not (lim["skin_chroma"][0] <= m["skinC"][0] and m["skinC"][1] <= lim["skin_chroma"][1]):
+        fails.append("skinC")
+    if m["shadow"] < lim["shadow_detail"]: fails.append("shadowDetail")
+    if m["hlsep"] < lim["highlight_sep"]: fails.append("hlDetail")
+    if any(v for v in lk.get("fx", {}).values()): fails.append("fx")
+    return fails, m
+
+
+def clean_report(looks, quiet=False):
+    say = (lambda *x: None) if quiet else print
+    say(f"{'look':<12}{'white':>7}{'grey92':>8}{'whiteLv':>9}{'blackLv':>9}{'skinHue':>9}{'skinC':>11}"
+        f"{'shadow':>8}{'hlSep':>7}")
+    bad = []
+    for k, lk in looks.items():
+        fails, m = clean_check(lk)
+        sk = (f"{m['skinHue']:9.1f}{m['skinC'][0]:6.2f}-{m['skinC'][1]:.2f}" if m["skinHue"] is not None
+              else f"{'-':>9}{'-':>11}")
+        say(f"{k:<12}{m['white']:7.1f}{m['grey92']:8.1f}{m['whiteLv']:9.2f}{m['blackLv']:9.3f}{sk}"
+            f"{m['shadow']:8.3f}{m['hlsep']:7.3f}"
+            + ("   FAIL " + ",".join(fails) if fails else ""))
         if fails:
             bad.append(k)
     return bad

@@ -148,6 +148,7 @@ enum class Category(val label: String) {
     CINEMA("電影・夜"),
     JAPAN("日系名家"),
     MASTERS("歐美名家"),
+    UNVERIFIED("未校正"),  // looks with no reference photos found to calibrate against
     MINE("我的"),
 }
 

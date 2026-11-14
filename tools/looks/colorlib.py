@@ -38,10 +38,20 @@ def oklab_to_linear(lab):
 LUMA = np.array([0.2126, 0.7152, 0.0722])
 
 
-def max_chroma(L, hue_ab, iters=16):
-    """Largest in-gamut chroma at lightness L along unit hue direction hue_ab (..., 2)."""
-    lo = np.zeros(L.shape)
-    hi = np.full(L.shape, 0.5)
+def max_chroma(L, hue_ab, steps=96, iters=12):
+    """Largest in-gamut chroma at lightness L along unit hue direction hue_ab (..., 2).
+
+    Returns the OUTERMOST boundary. Near the sRGB blue corner a ray from grey leaves the gamut,
+    re-enters and leaves again (OKLab bends there); taking the first exit made the result jump
+    between the two as hue changed, which showed up as jagged edges in blue gradients.
+    """
+    L = np.asarray(L, float)
+    cs = np.linspace(0.0, 0.5, steps + 1)
+    best = np.zeros(L.shape)
+    for c in cs[1:]:
+        inside = _inside(np.concatenate([L[..., None], hue_ab * c], -1))
+        best = np.where(inside, c, best)
+    lo, hi = best, np.minimum(best + cs[1], 0.5)
     for _ in range(iters):
         mid = (lo + hi) / 2
         inside = _inside(np.concatenate([L[..., None], hue_ab * mid[..., None]], -1))
@@ -50,22 +60,42 @@ def max_chroma(L, hue_ab, iters=16):
     return lo
 
 
-def gamut_map(lab, knee=0.9):
-    """Bring OKLab colours into linear sRGB [0,1] at constant L and hue.
+GREY_CAP = 0.5  # out-of-gamut colours are pulled toward a grey no brighter than this
 
-    Chroma is compressed smoothly from `knee` x the gamut boundary instead of being clipped, so
-    saturated colours keep their gradation (and LUT interpolation stays accurate near the edge).
+
+def gamut_excess(lin, colourful=None):
+    """How far a linear-RGB colour reaches toward (<= 1) or past (> 1) the sRGB gamut, measured
+    along the line from its anchor grey. The anchor is the colour's own luminance; for colourful
+    pixels (weight `colourful`, 0..1) it is capped at GREY_CAP. Near-neutral colours keep their
+    own luminance so whites never get darker. Closed form and continuous everywhere."""
+    lin = np.asarray(lin, float)
+    Y = np.clip(lin @ LUMA, 0.0, 1.0)
+    w = 0.0 if colourful is None else colourful
+    g = (Y - (Y - np.minimum(Y, GREY_CAP)) * w)[..., None]
+    d = lin - g
+    with np.errstate(divide="ignore", invalid="ignore"):
+        k = np.where(d > 1e-12, (1 - g) / d, np.where(d < -1e-12, g / -d, np.inf))
+    kmax = k.min(-1)
+    return np.where(np.isfinite(kmax), 1.0 / np.maximum(kmax, 1e-12), 0.0), g, d
+
+
+def gamut_map(lab, knee=0.97):
+    """Bring OKLab colours into linear sRGB [0,1].
+
+    Colours are pulled toward an anchor grey just enough to fit, with a soft knee from `knee` x
+    the gamut edge so saturated colours keep their gradation. The anchor is the colour's own
+    luminance for darker colours but at most GREY_CAP: a bright saturated colour that a look
+    pushed past what sRGB can show (a lemon yellow lifted to near white) gives up a little
+    brightness and keeps its colour, as film does, instead of fading to white. Closed form, so no
+    numerical jitter (a constant-OKLab-L search gave jagged edges near sRGB blue).
     """
-    L = np.clip(lab[..., 0], 0.0, 1.0)
-    ab = lab[..., 1:]
-    C = np.hypot(ab[..., 0], ab[..., 1])
-    unit = ab / np.maximum(C, 1e-9)[..., None]
-    cmax = np.maximum(max_chroma(L, unit), 1e-6)
-    x = C / cmax
+    lin = oklab_to_linear(lab)
+    C = np.hypot(lab[..., 1], lab[..., 2])
+    x, g, d = gamut_excess(lin, smoothstep(0.03, 0.10, C))
     span = 1 - knee
     y = np.where(x <= knee, x, knee + span * np.tanh((x - knee) / span))
-    out = oklab_to_linear(np.concatenate([L[..., None], unit * (y * cmax)[..., None]], -1))
-    return np.clip(out, 0.0, 1.0)
+    k = np.where(x > 0, y / np.maximum(x, 1e-12), 1.0)
+    return np.clip(g + d * k[..., None], 0.0, 1.0)
 
 
 def _inside(lab, eps=1e-5):

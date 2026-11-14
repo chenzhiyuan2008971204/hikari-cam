@@ -39,6 +39,14 @@ class CubeLut(val size: Int, val data: FloatArray, val domainMin: FloatArray, va
             for (raw in text.lineSequence()) {
                 val line = raw.trim()
                 if (line.isEmpty() || line.startsWith("#")) continue
+                // Fast path for data rows ("r g b"): no regex, no list allocation. Bundled looks
+                // are 33^3 = 35937 rows each and the editor loads all of them for thumbnails.
+                val c0 = line[0]
+                if (c0.isDigit() || c0 == '-' || c0 == '.') {
+                    val v = values ?: continue
+                    if (n + 3 > v.size) break
+                    if (parseRow(line, v, n)) { n += 3; continue }
+                }
                 val parts = line.split(WS)
                 when (parts[0].uppercase()) {
                     "TITLE" -> {}
@@ -62,6 +70,19 @@ class CubeLut(val size: Int, val data: FloatArray, val domainMin: FloatArray, va
             val v = values ?: throw IllegalArgumentException("找不到 LUT_3D_SIZE")
             require(n == v.size) { "LUT 資料不完整" }
             return CubeLut(size, v, min, max)
+        }
+
+        /** Parses three whitespace-separated floats from [line] into [out] at [at]. */
+        private fun parseRow(line: String, out: FloatArray, at: Int): Boolean {
+            var i = 0
+            for (k in 0..2) {
+                while (i < line.length && line[i].isWhitespace()) i++
+                val start = i
+                while (i < line.length && !line[i].isWhitespace()) i++
+                if (start == i) return false
+                out[at + k] = line.substring(start, i).toFloatOrNull() ?: return false
+            }
+            return true
         }
     }
 }

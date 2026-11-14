@@ -72,7 +72,7 @@ LOOKS = {
         split=dict(shadows=(185, 0.020), mids=(175, 0.004), highlights=(70, 0.006)),
     ),
     "kawashima": dict(
-        name="川島小鳥", subtitle="Kawashima", category="JAPAN",
+        name="川島小鳥", subtitle="Kawashima", category="UNVERIFIED",
         # Mirai-chan (Sado island), Taiwan series Myojo: bright snapshots, rosy cheeks, warm
         # light, gentle pastel colour that stays lively
         exposure=0.3, temp=0.08, tint=0.06,
@@ -84,7 +84,7 @@ LOOKS = {
         split=dict(shadows=(250, 0.006), highlights=(40, 0.008)),
     ),
     "ishida": dict(
-        name="石田真澄", subtitle="Ishida", category="JAPAN",
+        name="石田真澄", subtitle="Ishida", category="UNVERIFIED",
         # youth and everyday light on film: pale, airy 透明感, soft colour, quiet cool air
         exposure=0.3, temp=-0.08,
         curve=[(0, 0.02), (0.25, 0.30), (0.5, 0.60), (0.75, 0.85), (1, 1.0)],
@@ -95,7 +95,7 @@ LOOKS = {
         split=dict(shadows=(210, 0.012), mids=(200, 0.006)),
     ),
     "yokonami": dict(
-        name="横浪修", subtitle="Yokonami", category="JAPAN",
+        name="横浪修", subtitle="Yokonami", category="UNVERIFIED",
         # Assembly / 100 Children: flat even light, bright and orderly, cool neutral, natural skin
         exposure=0.28, temp=-0.06,
         curve=[(0, 0.02), (0.25, 0.28), (0.5, 0.56), (0.75, 0.81), (1, 1.0)],
@@ -105,7 +105,7 @@ LOOKS = {
         split=dict(shadows=(240, 0.006)),
     ),
     "araki": dict(
-        name="荒木經惟", subtitle="Araki", category="JAPAN",
+        name="荒木經惟", subtitle="Araki", category="UNVERIFIED",
         # direct flash colour, flowers and Tokyo: vivid, hard, magenta reds, greenish shadows
         exposure=0.05, tint=-0.04,
         curve=[(0, 0.0), (0.15, 0.05), (0.4, 0.35), (0.7, 0.76), (0.9, 0.96), (1, 1.0)],
@@ -155,7 +155,7 @@ LOOKS = {
         split=dict(shadows=(340, 0.010)),
     ),
     "meyerowitz": dict(
-        name="Joel Meyerowitz", subtitle="Meyerowitz", category="MASTERS",
+        name="Joel Meyerowitz", subtitle="Meyerowitz", category="UNVERIFIED",
         # Cape Light, 8x10 Deardorff: subdued, contemplative colour, luminous; "glowing yellows,
         # stormy blues and evening purples", soft blue skies into rose
         exposure=0.2, temp=0.03,
@@ -167,7 +167,7 @@ LOOKS = {
         split=dict(shadows=(270, 0.010), highlights=(70, 0.008)),
     ),
     "shore": dict(
-        name="Stephen Shore", subtitle="Shore", category="MASTERS",
+        name="Stephen Shore", subtitle="Shore", category="UNVERIFIED",
         # Uncommon Places, 8x10 colour negative: plain daylight, slightly faded, yellowish
         # whites, cyan skies, everyday neutrality
         exposure=0.08, temp=0.06,
@@ -178,18 +178,18 @@ LOOKS = {
         split=dict(shadows=(220, 0.006), mids=(95, 0.008), highlights=(95, 0.010)),
     ),
     "webb": dict(
-        name="Alex Webb", subtitle="Webb", category="MASTERS",
+        name="Alex Webb", subtitle="Webb", category="UNVERIFIED",
         # Kodachrome in hard tropical sun, exposed for highlights so shadows go deep: intense
         # colour blocks against near-black shadow
         exposure=-0.05, temp=0.05,
-        curve=[(0, 0.0), (0.18, 0.03), (0.35, 0.22), (0.6, 0.66), (0.85, 0.93), (1, 1.0)],
+        curve=[(0, 0.0), (0.18, 0.08), (0.35, 0.24), (0.6, 0.66), (0.85, 0.93), (1, 1.0)],
         sat=0.28,
         hsl=dict(red=(-2, 0.2, 0), orange=(0, 0.2, 0.02), yellow=(-6, 0.2, 0.02),
                  green=(-6, 0.1, -0.02), blue=(-6, 0.3, -0.04), aqua=(4, 0.2, 0)),
         sat_shadows=-0.2,
     ),
     "haas": dict(
-        name="Ernst Haas", subtitle="Haas", category="MASTERS",
+        name="Ernst Haas", subtitle="Haas", category="UNVERIFIED",
         # Kodachrome pioneer (New York in Color 1952-62): vivid, painterly, backlit glow, warm
         # reds and yellows, deep saturated blues
         exposure=0.05, temp=0.06,
@@ -211,7 +211,7 @@ LOOKS = {
         split=dict(shadows=(200, 0.010)),
     ),
     "mccurry": dict(
-        name="Steve McCurry", subtitle="McCurry", category="MASTERS",
+        name="Steve McCurry", subtitle="McCurry", category="UNVERIFIED",
         # Kodachrome 64 reportage: warm, rich reds and ochres, deep blue, firm contrast
         exposure=0.0, temp=0.10,
         curve=[(0, 0.0), (0.2, 0.14), (0.5, 0.50), (0.8, 0.86), (1, 1.0)],
@@ -221,7 +221,7 @@ LOOKS = {
         split=dict(shadows=(240, 0.006)),
     ),
     "crewdson": dict(
-        name="Gregory Crewdson", subtitle="Crewdson", category="MASTERS",
+        name="Gregory Crewdson", subtitle="Crewdson", category="UNVERIFIED",
         # staged twilight: blue-cyan ambient, warm practical lights, quiet desaturation
         exposure=-0.05, temp=-0.12,
         curve=[(0, 0.01), (0.25, 0.20), (0.5, 0.47), (0.75, 0.77), (1, 0.99)],
@@ -231,7 +231,7 @@ LOOKS = {
         split=dict(shadows=(225, 0.020), mids=(210, 0.008), highlights=(65, 0.010)),
     ),
     "hido": dict(
-        name="Todd Hido", subtitle="Hido", category="MASTERS",
+        name="Todd Hido", subtitle="Hido", category="UNVERIFIED",
         # foggy suburbs at night: muted cyan-green air, warm windows; clean edition keeps the
         # mood without the haze lift
         exposure=-0.05,
@@ -241,7 +241,7 @@ LOOKS = {
         split=dict(shadows=(185, 0.018), mids=(175, 0.003)),
     ),
     "parr": dict(
-        name="Martin Parr", subtitle="Parr", category="MASTERS",
+        name="Martin Parr", subtitle="Parr", category="UNVERIFIED",
         # ring flash in daylight: garish saturated colour, bright and punchy, slightly cool
         exposure=0.12, temp=-0.12, tint=0.04,
         curve=[(0, 0.0), (0.2, 0.16), (0.5, 0.54), (0.8, 0.90), (1, 1.0)],
@@ -251,7 +251,7 @@ LOOKS = {
                  magenta=(-6, 0.35, 0.02)),
     ),
     "lindbergh": dict(
-        name="Peter Lindbergh", subtitle="Lindbergh", category="MASTERS",
+        name="Peter Lindbergh", subtitle="Lindbergh", category="UNVERIFIED",
         # cinematic fashion B&W: soft mid contrast, rich black, faintly cool
         mono=(0.4, 0.45, 0.15), exposure=0.05,
         curve=[(0, 0.01), (0.15, 0.07), (0.5, 0.50), (0.85, 0.89), (1, 0.99)],
@@ -260,7 +260,7 @@ LOOKS = {
 
     # ───────────── 電影・夜（導演 / 電影攝影的色調）─────────────
     "iwai": dict(
-        name="岩井俊二", subtitle="Iwai", category="CINEMA",
+        name="岩井俊二", subtitle="Iwai", category="UNVERIFIED",
         # Love Letter era (cinematographer Noboru Shinoda): cold blue-white air, pale colour
         exposure=0.3, temp=-0.30,
         curve=[(0, 0.02), (0.25, 0.30), (0.5, 0.59), (0.75, 0.84), (1, 1.0)],
@@ -271,7 +271,7 @@ LOOKS = {
         split=dict(shadows=(240, 0.022), mids=(230, 0.010)),
     ),
     "shinkai": dict(
-        name="新海誠", subtitle="Shinkai", category="CINEMA",
+        name="新海誠", subtitle="Shinkai", category="UNVERIFIED",
         # anime-background light: saturated cyan-blue sky, clean blue shadows, bright air
         exposure=0.12, temp=-0.08,
         curve=[(0, 0.01), (0.25, 0.25), (0.5, 0.55), (0.75, 0.82), (1, 1.0)],
