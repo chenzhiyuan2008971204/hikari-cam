@@ -75,6 +75,14 @@ jobs:
             adb logcat -d -s LabReport:I AndroidRuntime:E TestRunner:* > lab-emulator/logcat.txt || true
             adb pull /sdcard/Download/HikariLab lab-emulator/ || true
             adb shell ls -l /sdcard/Pictures/Hikari > lab-emulator/exported_files.txt || true
+      - name: Print device reports
+        if: always()
+        run: |
+          echo "===== LAB REPORTS ====="
+          cat lab-emulator/HikariLab/*.txt 2>/dev/null || echo "(no reports)"
+          echo "===== FAILURES ====="
+          grep -E "failed:|AssertionError|Exception:|FATAL" lab-emulator/logcat.txt 2>/dev/null | head -40 || true
+          echo "===== END ====="
       - name: Collect test reports
         if: always()
         run: |

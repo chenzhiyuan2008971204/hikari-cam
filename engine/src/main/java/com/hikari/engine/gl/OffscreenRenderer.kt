@@ -17,6 +17,8 @@ import com.hikari.engine.FilterSpec
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
+import kotlin.math.floor
+import kotlin.math.log2
 import java.nio.ByteOrder
 import java.util.concurrent.Executors
 
@@ -144,7 +146,12 @@ class OffscreenRenderer(private val assets: AssetManager) {
         GLES30.glGenTextures(1, ids, 0)
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, ids[0])
-        GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, b, 0)
+        // Immutable sized storage (RGBA8, full mip chain) then the pixels: the canonical GLES 3.0
+        // path. The legacy unsized texImage2D gave black mip levels on the Android emulator's GL
+        // translator, so every minified read (preview, thumbnails, glow) came out black there.
+        val levels = 1 + floor(log2(maxOf(b.width, b.height).toDouble())).toInt()
+        GLES30.glTexStorage2D(GLES30.GL_TEXTURE_2D, levels, GLES30.GL_RGBA8, b.width, b.height)
+        GLUtils.texSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, b, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE)
         GLES30.glGenerateMipmap(GLES30.GL_TEXTURE_2D)
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR_MIPMAP_LINEAR)
         GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
