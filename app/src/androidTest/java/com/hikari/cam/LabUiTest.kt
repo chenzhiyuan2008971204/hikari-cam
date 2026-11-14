@@ -38,7 +38,9 @@ class LabUiTest {
 
     private fun shot(name: String) {
         rule.waitForIdle()
-        Report.png(ctx, name, rule.onRoot().captureToImage().asAndroidBitmap())
+        // system screenshot: Compose capture (PixelCopy) stalls while the GL camera preview is on screen
+        val screen = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        Report.png(ctx, name, screen ?: rule.onRoot().captureToImage().asAndroidBitmap())
     }
 
     @Test
