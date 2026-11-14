@@ -164,6 +164,12 @@ class FilmPipeline(assets: AssetManager, private val oes: Boolean) {
         GLES30.glDisableVertexAttribArray(0)
     }
 
+    /** Uploads [lut] if it is not the current one; call before the source is uploaded. */
+    fun prepareLut(lut: CubeLut) = bindLut(lut).also {
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_3D, 0)
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
+    }
+
     private fun bindLut(lut: CubeLut) {
         if (lutTex == 0) {
             val ids = IntArray(1)

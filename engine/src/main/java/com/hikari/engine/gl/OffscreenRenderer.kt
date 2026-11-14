@@ -86,6 +86,8 @@ class OffscreenRenderer(private val assets: AssetManager) {
             val t0 = System.nanoTime()
             // all render targets first, then the source (see FilmPipeline.ensureTargets)
             pipe.ensureTargets(outW.toFloat() / outH, FilmParams.effective(req.spec, req.adjust))
+            pipe.prepareLut(req.lut)
+            if (!warmedUp) warmUp(pipe, req)
             val cached = cacheKey?.let { cache[it] }
             val srcTex = cached ?: upload(source)
             if (cacheKey != null && cached == null) {
@@ -138,6 +140,30 @@ class OffscreenRenderer(private val assets: AssetManager) {
                 if (cacheKey == null) GLES30.glDeleteTextures(1, intArrayOf(srcTex), 0)
             }
         }
+
+    private var warmedUp = false
+
+    /**
+     * One throwaway pass through every shader with a tiny dummy source before the first real
+     * upload, so anything a driver does lazily on first use cannot touch a real photo (on the
+     * Android emulator the first source of a context came out black without this).
+     */
+    private fun warmUp(pipe: FilmPipeline, req: Request) {
+        val dummy = Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888).apply { eraseColor(0xFF808080.toInt()) }
+        val tex = upload(dummy)
+        dummy.recycle()
+        val p = FilmParams.effective(req.spec, req.adjust)
+        val map = SourceMap.bitmap(0f, 0f, 1f, 1f, false)
+        pipe.prepareGlow(tex, map, 1f, p)
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, tile!!.fbo)
+        GLES30.glViewport(0, 0, 8, 8)
+        pipe.composite(FilmPipeline.Frame(tex, map, 1f, 8, 8, 1f, 1f, onScreen = false), p, req.lut, 0, 0, 8, 8)
+        GLES30.glFinish()
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        GLES30.glDeleteTextures(1, intArrayOf(tex), 0)
+        while (GLES30.glGetError() != GLES30.GL_NO_ERROR) { /* clear */ }
+        warmedUp = true
+    }
 
     /** Drops a cached source texture (e.g. when a new photo is imported). */
     suspend fun forget(cacheKey: Any) = withContext(thread) {
