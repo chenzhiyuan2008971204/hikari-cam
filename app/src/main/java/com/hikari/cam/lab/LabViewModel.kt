@@ -87,7 +87,12 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
     )
 
     class CheckReport(val look: String, val fullW: Int, val fullH: Int, val prevW: Int, val prevH: Int,
-                      val result: ImageStats.Result, val ms: Double)
+                      val result: ImageStats.Result, val ms: Double,
+                      /** the preview's input vs the full-size input scaled down: the decoder's share */
+                      val input: ImageStats.Result,
+                      /** preview render of the scaled-down full input vs the full render scaled down:
+                       *  the engine's share, with the decoder taken out */
+                      val engine: ImageStats.Result)
 
     private data class PreviewReq(val sourceId: Int, val lookId: String, val adjust: Adjustments)
 
@@ -298,14 +303,20 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
             val d = full(s)
             val w = d.bitmap.width
             val h = d.bitmap.height
+            val inDown = withContext(Dispatchers.Default) { ImageStats.downscale(d.bitmap, s.outW, s.outH) }
             val big = renderer.render(d.bitmap, req, w, h, releaseSource = true)
+            val smallFromFull = renderer.render(inDown, req, s.outW, s.outH)
             busy = "一致性檢查：比對…"
-            val r = withContext(Dispatchers.Default) {
+            val (r, inp, eng) = withContext(Dispatchers.Default) {
                 val down = ImageStats.downscale(big, s.outW, s.outH)
                 big.recycle()
-                ImageStats.compare(small, down).also { down.recycle() }
+                val r = ImageStats.compare(small, down)
+                val inp = ImageStats.compare(s.original, inDown)
+                val eng = ImageStats.compare(smallFromFull, down)
+                down.recycle(); inDown.recycle(); smallFromFull.recycle()
+                Triple(r, inp, eng)
             }
-            check = CheckReport(spec.name, w, h, s.outW, s.outH, r, ms(t0))
+            check = CheckReport(spec.name, w, h, s.outW, s.outH, r, ms(t0), inp, eng)
             log.add(0, "一致性 ${spec.name}：平均 ${"%.2f".format(r.meanAbs)}、99% ${r.p99}、最大 ${r.max} 級 → ${if (r.pass) "通過" else "未通過"}")
         } catch (e: Throwable) {
             message = "檢查失敗：${e.message}"

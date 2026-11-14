@@ -353,6 +353,11 @@ private fun CheckPanel(vm: LabViewModel) {
             Text("平均差 ${"%.2f".format(r.meanAbs)} 級　99% ${r.p99} 級　最大 ${r.max} 級", color = Color.White, fontSize = 12.sp)
             Text("整體色偏 R${signed(r.biasR.toFloat())} G${signed(r.biasG.toFloat())} B${signed(r.biasB.toFloat())}　耗時 ${"%.0f".format(c.ms)} ms",
                 color = Color.White, fontSize = 12.sp)
+            Text("差異來源分解：", color = Dim, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
+            for ((name, x) in listOf("輸入（解碼縮小 vs 原尺寸縮小）" to c.input, "引擎（同一輸入，兩種尺寸渲染）" to c.engine)) {
+                Text("$name：平均 ${"%.2f".format(x.meanAbs)}、99% ${x.p99}，色偏 R${signed(x.biasR.toFloat())} G${signed(x.biasG.toFloat())} B${signed(x.biasB.toFloat())}",
+                    color = Color.White, fontSize = 11.sp)
+            }
             Text("差異圖（×8，越亮差越多）：", color = Dim, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
             val img = remember(r) { r.heatmap.asImageBitmap() }
             Image(img, null, Modifier.fillMaxWidth().aspectRatio(r.heatmap.width.toFloat() / r.heatmap.height))
