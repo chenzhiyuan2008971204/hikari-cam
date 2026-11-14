@@ -133,10 +133,17 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
         try {
             val ctx = getApplication<Application>()
             val t0 = System.nanoTime()
-            val d = Media.decode(ctx, Media.source(ctx, uri), PREVIEW_SRC)
+            // Decode at full size (exactly what the export decodes) and scale that down, so the
+            // preview and the export start from the same pixels. Letting the decoder downscale
+            // (JPEG scaled IDCT) gave a slightly different, darker-or-lighter input on device.
+            val d = Media.decode(ctx, Media.source(ctx, uri), renderer.maxTexture(), copies = 2)
+            val (prev, thumb) = withContext(Dispatchers.Default) {
+                val p = if (maxOf(d.bitmap.width, d.bitmap.height) > PREVIEW_SRC) fit(d.bitmap, PREVIEW_SRC) else d.bitmap
+                if (p !== d.bitmap) d.bitmap.recycle()
+                p to fit(p, THUMB)
+            }
             decodeMs = ms(t0)
-            val thumb = withContext(Dispatchers.Default) { fit(d.bitmap, THUMB) }
-            setSource(uri.lastPathSegment ?: "照片", uri, d.fullWidth, d.fullHeight, d.bitmap, thumb)
+            setSource(uri.lastPathSegment ?: "照片", uri, d.fullWidth, d.fullHeight, prev, thumb)
         } catch (e: Throwable) {
             message = "無法讀取：${e.message}"
         } finally {

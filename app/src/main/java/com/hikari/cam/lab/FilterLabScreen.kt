@@ -319,7 +319,7 @@ private fun PerfPanel(vm: LabViewModel) {
         }
         line("LUT 載入 ${vm.looks.size} 個共 ${"%.0f".format(vm.lutLoadMs)} ms（啟動時一次）")
         line("縮圖     ${vm.looks.size} 款共 ${"%.0f".format(vm.thumbsMs)} ms")
-        if (vm.decodeMs > 0) line("預覽解碼 ${"%.0f".format(vm.decodeMs)} ms")
+        if (vm.decodeMs > 0) line("匯入（原尺寸解碼+縮小） ${"%.0f".format(vm.decodeMs)} ms")
         vm.export?.let { e ->
             line("── 上次完整解析度匯出（${e.look}）")
             line("尺寸     ${e.w}×${e.h}（${"%.1f".format(e.w * e.h / 1e6)} MP）${if (e.downscaled) "  ⚠ 記憶體不足已縮小" else ""}")
