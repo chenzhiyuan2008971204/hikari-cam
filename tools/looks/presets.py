@@ -298,3 +298,19 @@ LOOKS = {
         split=dict(all=(70, 0.006)),
     ),
 }
+
+
+# Looks that passed verification against the photographer's real work (see VERIFICATION.md).
+# Only these ship in the app; the rest stay here for reference and future calibration.
+# Value: the note shown in the app next to the comparison image.
+SHIP = {
+    "kawauchi": "以 28 張川內倫子作品校正、另一半作品驗證：明暗、色偏、飽和度都落在她自己作品之間的差距範圍內。",
+    "hamada": "以 47 張濱田英明作品校正、另一半作品驗證：明暗、色偏、飽和度都落在他自己作品之間的差距範圍內。",
+    "okuyama": "以 42 張奧山由之作品校正、另一半作品驗證：明暗、色偏、飽和度都落在他自己作品之間的差距範圍內。",
+    "moriyama": "以森山大道作品校正、另一半作品驗證：黑白明暗與色調落在他自己作品之間的差距範圍內（參考作品較少，9 張）。",
+    "ueda": "以 38 張植田正治作品校正、另一半作品驗證：黑白明暗與色調落在他自己作品之間的差距範圍內。",
+    "leiter": "以 25 張 Saul Leiter 彩色作品校正、另一半作品驗證：明暗、色偏、飽和度都落在他自己作品之間的差距範圍內。",
+    "eggleston": "以 18 張 Eggleston 作品校正、另一半作品驗證：明暗、色偏對上；飽和度保留染印法的鮮豔，不跟著翻拍照片降低。",
+    "herzog": "以 26 張 Fred Herzog 作品校正、另一半作品驗證：明暗、色偏對上；飽和度保留 Kodachrome 的鮮豔，不跟著翻拍照片降低。",
+    "fanho": "以 57 張何藩作品校正、另一半作品驗證：黑白明暗與暖色銀鹽調落在他自己作品之間的差距範圍內。",
+}

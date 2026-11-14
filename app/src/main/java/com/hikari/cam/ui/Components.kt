@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -90,6 +91,7 @@ fun FilterStrip(
     onSelect: (Filter) -> Unit,
     onLongPress: (Filter) -> Unit,
     onImportLut: () -> Unit,
+    onInfo: (Filter) -> Unit = {},
 ) {
     var category by remember { mutableStateOf<Category?>(null) }
     Column {
@@ -133,6 +135,14 @@ fun FilterStrip(
                     ) {
                         thumbs[f.id]?.let {
                             Image(it, null, contentScale = ContentScale.Crop, modifier = Modifier.size(58.dp))
+                        }
+                        if (f.styleKey != null) {
+                            // comparison image + XMP / .cube downloads
+                            Box(
+                                Modifier.align(Alignment.TopEnd).padding(3.dp).size(20.dp).clip(CircleShape)
+                                    .background(Color.Black.copy(alpha = 0.6f)).clickable { onInfo(f) },
+                                contentAlignment = Alignment.Center,
+                            ) { Text("i", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold) }
                         }
                     }
                     Spacer(Modifier.height(3.dp))

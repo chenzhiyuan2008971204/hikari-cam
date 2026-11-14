@@ -110,6 +110,7 @@ fun CameraScreen(store: FilterStore, onEdit: (android.net.Uri) -> Unit) {
     var lut by remember { mutableStateOf<CubeLut?>(null) }
     var saveDialog by remember { mutableStateOf(false) }
     var deleteTarget by remember { mutableStateOf<Filter?>(null) }
+    var infoTarget by remember { mutableStateOf<Filter?>(null) }
     var pendingLut by remember { mutableStateOf<android.net.Uri?>(null) }
 
     val glView = remember {
@@ -276,8 +277,12 @@ fun CameraScreen(store: FilterStore, onEdit: (android.net.Uri) -> Unit) {
                     filters = Presets.all + store.custom,
                     selectedId = filter.id,
                     onSelect = { filter = it; strength = 1f },
-                    onLongPress = { if (it.category == com.hikari.cam.filter.Category.MINE) deleteTarget = it },
+                    onLongPress = {
+                        if (it.category == com.hikari.cam.filter.Category.MINE) deleteTarget = it
+                        else if (it.styleKey != null) infoTarget = it
+                    },
                     onImportLut = { pickLut.launch(arrayOf("*/*")) },
+                    onInfo = { infoTarget = it },
                 )
                 1 -> AdjustPanel(strength, { strength = it }, adj, { adj = it }, onSaveFilter = { saveDialog = true })
                 2 -> ManualPanel(caps, manual) { manual = it; camera.applyManual(it) }
@@ -339,6 +344,7 @@ fun CameraScreen(store: FilterStore, onEdit: (android.net.Uri) -> Unit) {
             }
         }
     }
+    infoTarget?.let { f -> StyleInfoDialog(f) { infoTarget = null } }
     deleteTarget?.let { f ->
         ConfirmDialog("刪除濾鏡", "要刪除「${f.name}」嗎？", "刪除", onDismiss = { deleteTarget = null }) {
             if (filter.id == f.id) filter = Presets.ORIGINAL

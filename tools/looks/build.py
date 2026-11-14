@@ -13,7 +13,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 import look as engine
-from presets import LOOKS as _BASE
+from presets import LOOKS as _BASE, SHIP
 
 HERE_ = os.path.dirname(os.path.abspath(__file__))
 
@@ -36,6 +36,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 ASSETS = os.path.join(ROOT, "app/src/main/assets/looks")
 KOTLIN = os.path.join(ROOT, "app/src/main/java/com/hikari/cam/filter/StylePresets.kt")
+XMP_DIR = os.path.join(ROOT, "app/src/main/assets/xmp")
+COMPARE_DIR = os.path.join(ROOT, "app/src/main/assets/compare")
 SIZE = 33
 
 
@@ -115,6 +117,8 @@ def kotlin(looks):
         "    val all: List<Filter> = listOf(",
     ]
     for k, lk in looks.items():
+        if k not in SHIP:
+            continue
         e = lk.get("fx", {})
         sw = ", ".join("0xFF%02X%02X%02XL" % tuple(int(v * 255 + .5) for v in c) for c in swatch(lk))
         args = ["lutAmount = 1f"] + [f"{p} = {e[p]}f" for p in
@@ -122,9 +126,33 @@ def kotlin(looks):
         lines.append(
             f'        Filter("style_{k}", "{lk["name"]}", "{lk["subtitle"]}", Category.{lk["category"]},\n'
             f'            FilterParams({", ".join(args)}), lutFile = "asset:looks/{k}.cube",\n'
-            f'            swatch = listOf({sw})),')
+            f'            swatch = listOf({sw}), styleKey = "{k}",\n'
+            f'            note = "{SHIP[k]}"),')
     lines += ["    )", "}", ""]
     return "\n".join(lines)
+
+
+def write_compares(photo_dir, width=1080):
+    """Before/after image per shipped look: top row original, bottom row with the look.
+    Uses freely usable test photos (Kodak suite), never the photographers' own work."""
+    os.makedirs(COMPARE_DIR, exist_ok=True)
+    files = sorted(glob.glob(os.path.join(photo_dir, "*")))[:3]
+    gap = 6
+    h = (width - gap * (len(files) - 1)) // len(files)
+    tiles = []
+    for f in files:
+        im = Image.open(f).convert("RGB")
+        s = min(im.size)  # centre square crop
+        im = im.crop(((im.width - s) // 2, (im.height - s) // 2, (im.width + s) // 2, (im.height + s) // 2))
+        tiles.append(np.asarray(im.resize((h, h), Image.LANCZOS), float) / 255)
+    for k in SHIP:
+        t = bake(LOOKS[k])
+        sheet = Image.new("RGB", (width, 2 * h + gap), (0, 0, 0))
+        for i, a in enumerate(tiles):
+            x = i * (h + gap)
+            sheet.paste(Image.fromarray((a * 255 + .5).astype(np.uint8)), (x, 0))
+            sheet.paste(Image.fromarray((apply_lut(t, a) * 255 + .5).astype(np.uint8)), (x, h + gap))
+        sheet.save(os.path.join(COMPARE_DIR, k + ".jpg"), quality=88)
 
 
 def font(sz):
@@ -245,6 +273,7 @@ def main():
     ap.add_argument("--out", default=os.path.join(HERE, "preview"))
     ap.add_argument("--tile", type=int, default=230)
     ap.add_argument("--no-bake", action="store_true")
+    ap.add_argument("--compare", help="test photo folder for the in-app before/after images")
     a = ap.parse_args()
 
     keys = a.only.split(",") if a.only else list(LOOKS)
@@ -252,9 +281,20 @@ def main():
     if bad:
         raise SystemExit(f"not clean: {', '.join(bad)} (see CLEAN_LIMITS)")
     if not a.no_bake:
+        import xmp
         os.makedirs(ASSETS, exist_ok=True)
-        for k, lk in LOOKS.items():
+        os.makedirs(XMP_DIR, exist_ok=True)
+        for f in glob.glob(os.path.join(ASSETS, "*.cube")) + glob.glob(os.path.join(XMP_DIR, "*.xmp")):
+            os.remove(f)  # only shipped looks stay bundled
+        for k in SHIP:
+            lk = LOOKS[k]
             write_cube(os.path.join(ASSETS, k + ".cube"), bake(lk), lk["subtitle"])
+            table = xmp.bake_rgb_slowest(lambda c, lk=lk: engine.apply(lk, c))
+            with open(os.path.join(XMP_DIR, k + ".xmp"), "w") as f:
+                f.write(xmp.profile_xmp(table, f'Hikari {lk["subtitle"]}', "Hikari 光",
+                                        f'{lk["name"]} 風格（Hikari 相機）'))
+        if a.compare:
+            write_compares(a.compare)
         with open(KOTLIN, "w") as f:
             f.write(kotlin(LOOKS))
 

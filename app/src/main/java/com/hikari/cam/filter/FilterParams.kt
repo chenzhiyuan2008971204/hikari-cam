@@ -148,7 +148,6 @@ enum class Category(val label: String) {
     CINEMA("電影・夜"),
     JAPAN("日系名家"),
     MASTERS("歐美名家"),
-    UNVERIFIED("未校正"),  // looks with no reference photos found to calibrate against
     MINE("我的"),
 }
 
@@ -164,6 +163,10 @@ data class Filter(
     val params: FilterParams,
     val lutFile: String? = null,
     val swatch: List<Long>? = null,
+    /** Set for the photographer looks: names its comparison image and XMP / .cube downloads. */
+    val styleKey: String? = null,
+    /** How the look was verified against the photographer's work, shown with the comparison. */
+    val note: String? = null,
 )
 
 /** Final shader input: the look blended by strength, with adjustments on top. */

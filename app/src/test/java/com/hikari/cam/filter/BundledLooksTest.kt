@@ -50,6 +50,22 @@ class BundledLooksTest {
     }
 
     @Test
+    fun everyStyleLookHasComparisonAndXmp() {
+        for (f in StylePresets.all) {
+            val key = f.styleKey!!
+            assertTrue("$key: comparison image", File(assets, "compare/$key.jpg").length() > 10_000)
+            val xmp = File(assets, "xmp/$key.xmp").readText()
+            val ref = Regex("crs:RGBTable=\"([0-9A-F]{32})\"").find(xmp)!!.groupValues[1]
+            val table = Regex("crs:Table_([0-9A-F]{32})=\"([^\"]+)\"").find(xmp)!!
+            assertEquals("$key: RGBTable must reference Table_", ref, table.groupValues[1])
+            // a 32^3 table block is 196652 bytes; its length prefix always encodes to "Lir00"
+            assertTrue("$key: table length prefix", table.groupValues[2].startsWith("Lir00"))
+            assertTrue("$key: profile name", xmp.contains("Hikari ${f.subtitle}"))
+            assertTrue("$key: note", !f.note.isNullOrBlank())
+        }
+    }
+
+    @Test
     fun idsAreUniqueAcrossAllBuiltIns() {
         val ids = Presets.all.map { it.id }
         assertEquals(ids.size, ids.toSet().size)

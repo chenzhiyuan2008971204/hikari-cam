@@ -1,5 +1,7 @@
 # 攝影師風格驗證紀錄
 
+> **App 只收錄 ✅ 的 9 個風格**（`presets.py` 的 `SHIP`）。其餘的設定仍保留在 `presets.py`，有參考作品後可以重新校正。
+
 ## 方法
 
 1. **參考照片**：從 GitHub 公開的作品集 repo 抓攝影師的作品，人工剔除書封、翻拍頁、拼貼、黑白混入等非照片內容。
@@ -47,7 +49,7 @@ python3 build.py                                                       # 烘焙 
 
 王家衛：*重慶森林* 白天綠色螢光、晚上藍色，色偏平均起來變成兩種場景都沒有的紫色，所以色偏不校正。
 
-找不到參考照片（app 裡放在「未校正」分類）：川島小鳥、石田真澄、横浪修、Joel Meyerowitz、Stephen Shore、
+找不到參考照片（不收錄在 app）：川島小鳥、石田真澄、横浪修、Joel Meyerowitz、Stephen Shore、
 Alex Webb、Ernst Haas、Gregory Crewdson、Todd Hido、Martin Parr、Peter Lindbergh、新海誠，
 以及上表 ❌ 的三位。
 
