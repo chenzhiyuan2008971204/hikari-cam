@@ -39,6 +39,8 @@ data class CameraCaps(
     val hasFront: Boolean,
     val hasBack: Boolean,
     val focus: Boolean,
+    /** zoom ratios of this phone's real lenses relative to the main one (e.g. 0.6, 1, 2.6), empty if unknown */
+    val lensStops: List<Float> = emptyList(),
 )
 
 enum class Flash { OFF, AUTO, ON }
@@ -136,8 +138,33 @@ class CameraController(private val context: Context) {
             hasFront = hasFront,
             hasBack = hasBack,
             focus = true,
+            lensStops = lensStops(cam, zoom?.minZoomRatio ?: 1f, zoom?.maxZoomRatio ?: 1f),
         ).also { caps = it }
     }
+
+    /**
+     * The phone's own lenses as zoom stops: 35 mm-equivalent focal length of every physical camera
+     * behind this logical camera, divided by the main camera's. Phones that do not expose their
+     * physical cameras give just 1x (plus the ultra-wide when the zoom range goes below 1x).
+     */
+    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
+    private fun lensStops(cam: Camera, minZoom: Float, maxZoom: Float): List<Float> = runCatching {
+        fun eq(info: androidx.camera.core.CameraInfo): Float? {
+            val c2 = androidx.camera.camera2.interop.Camera2CameraInfo.from(info)
+            val f = c2.getCameraCharacteristic(android.hardware.camera2.CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.firstOrNull() ?: return null
+            val s = c2.getCameraCharacteristic(android.hardware.camera2.CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE) ?: return null
+            return f * 43.27f / kotlin.math.sqrt(s.width * s.width + s.height * s.height)
+        }
+        val main = eq(cam.cameraInfo) ?: return@runCatching listOf(1f)
+        val stops = sortedSetOf(1f)
+        for (p in cam.cameraInfo.physicalCameraInfos) {
+            val e = eq(p) ?: continue
+            val r = Math.round(e / main * 10f) / 10f
+            if (r >= minZoom * 0.95f && r <= maxZoom && kotlin.math.abs(r - 1f) > 0.15f) stops.add(r.coerceAtLeast(minZoom))
+        }
+        if (minZoom < 0.95f && stops.none { it < 0.95f }) stops.add(Math.round(minZoom * 10f) / 10f)
+        stops.toList()
+    }.getOrDefault(listOf(1f))
 
     fun unbind() {
         orientation.disable()

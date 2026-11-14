@@ -5,6 +5,23 @@ import android.app.Application
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.opengl.GLSurfaceView
+import android.media.MediaActionSound
+import android.os.Build
+import android.view.HapticFeedbackConstants
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Cameraswitch
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.font.FontWeight
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -253,38 +270,32 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         }
     }
 
+    // shutter feedback: press animation, haptic tick, system shutter sound, a short white flash
+    val view = LocalView.current
+    val shutterSound = remember { MediaActionSound().apply { load(MediaActionSound.SHUTTER_CLICK) } }
+    DisposableEffect(Unit) { onDispose { shutterSound.release() } }
+    val flashAlpha = remember { Animatable(0f) }
+    var showLooks by remember { mutableStateOf(true) }
+
+    fun fire() {
+        view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY)
+        shutterSound.play(MediaActionSound.SHUTTER_CLICK)
+        scope.launch { flashAlpha.snapTo(0.75f); flashAlpha.animateTo(0f, tween(260)) }
+        vm.shoot(look, adjust, aspect, settings); vm.newSeed(); r.seed = vm.seed
+    }
+
+    fun shoot() {
+        if (timer == 0) { fire(); return }
+        scope.launch {
+            for (t in timer downTo 1) { countdown = t; delay(1000) }
+            countdown = 0
+            fire()
+        }
+    }
+
     val caps = vm.caps
     Column(Modifier.fillMaxSize().background(Color.Black)) {
-        // top controls: only what this camera supports
-        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween) {
-            if (caps?.hasFlash == true) TextButton(onClick = {
-                flash = Flash.entries[(flash.ordinal + 1) % Flash.entries.size]; vm.controller.setFlash(flash)
-            }) { Text("閃光 " + mapOf(Flash.OFF to "關", Flash.AUTO to "自動", Flash.ON to "開")[flash], color = Color.White, fontSize = 12.sp) }
-            else Text("無閃光燈", color = HikariColors.Dim, fontSize = 11.sp, modifier = Modifier.padding(12.dp))
-            TextButton(onClick = { timer = listOf(0, 3, 10)[(listOf(0, 3, 10).indexOf(timer) + 1) % 3] }) {
-                Text(if (timer == 0) "計時 關" else "計時 ${timer}s", color = Color.White, fontSize = 12.sp)
-            }
-            TextButton(onClick = {
-                val i = UserSettings.ASPECTS.indexOf(settings.aspect)
-                app.updateSettings { it.copy(aspect = UserSettings.ASPECTS[(i + 1) % UserSettings.ASPECTS.size]) }
-            }) { Text(settings.aspect, color = Color.White, fontSize = 12.sp) }
-            TextButton(onClick = { app.updateSettings { it.copy(grid = !it.grid) } }) {
-                Text("格線", color = if (settings.grid) HikariColors.Accent else Color.White, fontSize = 12.sp)
-            }
-            if (caps != null && caps.evRange.upper > caps.evRange.lower) TextButton(onClick = { showEv = !showEv }) {
-                Text("EV ${"%+.1f".format(ev * caps.evStep)}", color = if (ev != 0) HikariColors.Accent else Color.White, fontSize = 12.sp)
-            }
-        }
-        if (showEv && caps != null) {
-            Slider(ev.toFloat(), { ev = it.roundToInt(); vm.controller.setExposure(ev) },
-                valueRange = caps.evRange.lower.toFloat()..caps.evRange.upper.toFloat(),
-                modifier = Modifier.padding(horizontal = 24.dp))
-        }
-
-        // preview, sized to the chosen aspect
-        // the preview keeps the chosen aspect and fits inside the free space (width or height first),
-        // so it never overflows over the controls above it
+        // the preview takes all the space above the shutter row; controls float on top of it
         BoxWithConstraints(Modifier.fillMaxWidth().weight(1f).clipToBounds(), contentAlignment = Alignment.Center) {
             val fitHeight = maxWidth / maxHeight > aspect
             Box(
@@ -323,45 +334,139 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                     }
                 }
                 if (countdown > 0) Text("$countdown", color = Color.White, fontSize = 72.sp, modifier = Modifier.align(Alignment.Center))
-                if (caps != null && caps.maxZoom > caps.minZoom) Text("${"%.1f".format(zoom)}×", color = Color.White, fontSize = 12.sp,
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(8.dp)
-                        .background(Color(0x66000000), RoundedCornerShape(10.dp)).padding(horizontal = 8.dp, vertical = 2.dp))
+                // capture flash
+                Box(Modifier.fillMaxSize().graphicsLayer { alpha = flashAlpha.value }.background(Color.White))
+            }
+
+            // top controls (only what this camera supports), over a soft scrim
+            Column(Modifier.align(Alignment.TopCenter).fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(Color(0x99000000), Color.Transparent)))) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween) {
+                    if (caps?.hasFlash == true) TextButton(onClick = {
+                        flash = Flash.entries[(flash.ordinal + 1) % Flash.entries.size]; vm.controller.setFlash(flash)
+                    }) { Text("閃光 " + mapOf(Flash.OFF to "關", Flash.AUTO to "自動", Flash.ON to "開")[flash], color = Color.White, fontSize = 12.sp) }
+                    else Text("無閃光燈", color = HikariColors.Dim, fontSize = 11.sp, modifier = Modifier.padding(12.dp))
+                    TextButton(onClick = { timer = listOf(0, 3, 10)[(listOf(0, 3, 10).indexOf(timer) + 1) % 3] }) {
+                        Text(if (timer == 0) "計時 關" else "計時 ${timer}s", color = Color.White, fontSize = 12.sp)
+                    }
+                    TextButton(onClick = {
+                        val i = UserSettings.ASPECTS.indexOf(settings.aspect)
+                        app.updateSettings { it.copy(aspect = UserSettings.ASPECTS[(i + 1) % UserSettings.ASPECTS.size]) }
+                    }) { Text(settings.aspect, color = Color.White, fontSize = 12.sp) }
+                    TextButton(onClick = { app.updateSettings { it.copy(grid = !it.grid) } }) {
+                        Text("格線", color = if (settings.grid) HikariColors.Accent else Color.White, fontSize = 12.sp)
+                    }
+                    if (caps != null && caps.evRange.upper > caps.evRange.lower) TextButton(onClick = { showEv = !showEv }) {
+                        Text("EV ${"%+.1f".format(ev * caps.evStep)}", color = if (ev != 0) HikariColors.Accent else Color.White, fontSize = 12.sp)
+                    }
+                }
+                if (showEv && caps != null) {
+                    Slider(ev.toFloat(), { ev = it.roundToInt(); vm.controller.setExposure(ev) },
+                        valueRange = caps.evRange.lower.toFloat()..caps.evRange.upper.toFloat(),
+                        modifier = Modifier.padding(horizontal = 24.dp))
+                }
+            }
+
+            // bottom overlay: zoom stops, look name, look strip or adjustments
+            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xB0000000))))) {
+                if (caps != null && caps.maxZoom > caps.minZoom) ZoomStops(caps.minZoom, caps.maxZoom, caps.lensStops, zoom) { z ->
+                    zoom = z
+                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    vm.controller.setZoom(z)
+                }
+                Row(Modifier.fillMaxWidth().clickable { showLooks = !showLooks; if (!showLooks) showAdjust = false }
+                    .padding(horizontal = 16.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("${look.name}　${look.zh}  ${if (showLooks) "▾" else "▴"}", color = Color.White, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { showAdjust = !showAdjust; showLooks = true }) { Text(if (showAdjust) "濾鏡" else "調整") }
+                }
+                if (showLooks) {
+                    if (showAdjust) {
+                        AdjustSliders(look, adjust,
+                            onChange = { a -> app.updateSettings { it.copy(cameraAdjustJson = a.toJson()) } },
+                            onReset = { app.updateSettings { it.copy(cameraAdjustJson = "") } },
+                            modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp).background(Color(0xCC141414)))
+                    } else {
+                        LookStrip(app.looks, emptyMap(), look.id, favorites,
+                            onSelect = { s -> app.updateSettings { it.copy(lastLook = s.id) }; app.touch(s.id) },
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), size = 64)
+                    }
+                }
             }
         }
 
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("${look.name}　${look.zh}", color = Color.White, fontSize = 13.sp, modifier = Modifier.weight(1f))
-            TextButton(onClick = { showAdjust = !showAdjust }) { Text(if (showAdjust) "濾鏡" else "調整") }
-        }
-        if (showAdjust) {
-            AdjustSliders(look, adjust,
-                onChange = { a -> app.updateSettings { it.copy(cameraAdjustJson = a.toJson()) } },
-                onReset = { app.updateSettings { it.copy(cameraAdjustJson = "") } },
-                modifier = Modifier.fillMaxWidth().weight(0.7f).background(HikariColors.Panel))
-        } else {
-            LookStrip(app.looks, emptyMap(), look.id, favorites,
-                onSelect = { s -> app.updateSettings { it.copy(lastLook = s.id) }; app.touch(s.id) },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), size = 72)
-        }
-
         // shutter row
-        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
+        Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween) {
-            Box(Modifier.size(52.dp).clip(RoundedCornerShape(8.dp)).background(HikariColors.Panel)
+            Box(Modifier.size(52.dp).clip(RoundedCornerShape(10.dp)).background(HikariColors.Panel)
                 .clickable { vm.lastUri?.let { app.go(Route.Editor(it)) } }) {
                 vm.lastThumb?.let { Image(it.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
                 if (vm.processing > 0) Text("…", color = HikariColors.Accent, modifier = Modifier.align(Alignment.Center))
             }
-            Box(Modifier.size(76.dp).border(4.dp, Color.White, CircleShape).padding(8.dp).clip(CircleShape)
-                .background(if (vm.processing > 2) Color.Gray else Color.White)
-                .testTag("shutter").semantics { contentDescription = "快門" }
-                .clickable(enabled = vm.processing <= 2 && countdown == 0) { shoot() })
-            if (caps != null && caps.hasFront && caps.hasBack) TextButton(onClick = {
-                lens = if (lens == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
-            }) { Text("翻轉", color = Color.White) } else Box(Modifier.size(52.dp))
+            ShutterButton(enabled = vm.processing <= 2 && countdown == 0, busy = vm.processing > 0) { shoot() }
+            if (caps != null && caps.hasFront && caps.hasBack) Box(
+                Modifier.size(52.dp).clip(CircleShape).background(Color(0xFF262626)).clickable {
+                    lens = if (lens == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
+                }, contentAlignment = Alignment.Center,
+            ) { Icon(Icons.Outlined.Cameraswitch, contentDescription = "翻轉", tint = Color.White) }
+            else Box(Modifier.size(52.dp))
         }
     }
     Toast(vm.message) { vm.message = null }
+}
+
+/**
+ * Zoom stops like the system camera: the phone's own lenses (e.g. 0.6 / 1 / 2.6, read from the
+ * hardware), plus 2x / 5x / 10x digital stops inside the zoom range that are not next to a lens.
+ * The active stop shows the exact current zoom; pinch still zooms freely.
+ */
+@Composable
+private fun ZoomStops(min: Float, max: Float, lenses: List<Float>, zoom: Float, onZoom: (Float) -> Unit) {
+    val native = lenses.ifEmpty { listOf(1f) }
+    val stops = (native + listOf(2f, 5f, 10f).filter { d -> d in min..max && native.none { kotlin.math.abs(kotlin.math.ln(it / d)) < 0.2f } })
+        .distinct().sorted()
+    if (stops.size < 2) return
+    val active = stops.minBy { kotlin.math.abs(kotlin.math.ln(it / zoom)) }
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.Center) {
+        Row(Modifier.background(Color(0x66000000), CircleShape).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            for (z in stops) {
+                val on = z == active
+                val lens = z in native
+                Box(
+                    Modifier.size(if (on) 42.dp else 36.dp).clip(CircleShape)
+                        .background(if (on) Color(0xCC2A2A2A) else Color.Transparent)
+                        .clickable { onZoom(z) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    fun fmt(v: Float) = if (v == Math.round(v).toFloat() && v >= 1f) "%.0f".format(v) else "%.1f".format(v)
+                    val label = if (on) fmt(zoom) + "×" else fmt(z)
+                    Text(label, color = if (on) HikariColors.Accent else if (lens) Color.White else Color(0xFFBBBBBB),
+                        fontSize = if (on) 12.sp else 11.sp, fontWeight = if (lens) FontWeight.Bold else FontWeight.Normal)
+                }
+            }
+        }
+    }
+}
+
+/** A shutter that feels pressed: the inner disc sinks on touch and springs back. */
+@Composable
+private fun ShutterButton(enabled: Boolean, busy: Boolean, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val view = LocalView.current
+    LaunchedEffect(pressed) { if (pressed) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP) }
+    val scale by animateFloatAsState(if (pressed) 0.84f else 1f, spring(dampingRatio = 0.42f, stiffness = 700f), label = "shutter")
+    Box(
+        Modifier.size(80.dp).border(4.dp, Color.White, CircleShape)
+            .testTag("shutter").semantics { contentDescription = "快門" }
+            .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(Modifier.size(64.dp).graphicsLayer { scaleX = scale; scaleY = scale }.clip(CircleShape)
+            .background(if (!enabled) Color.Gray else if (pressed) Color(0xFFDDDDDD) else Color.White))
+        if (busy) Box(Modifier.size(18.dp).clip(CircleShape).background(HikariColors.Accent))
+    }
 }
 
 /** Holds the GL renderer created inside the view factory. */
