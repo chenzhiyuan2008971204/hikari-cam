@@ -74,6 +74,8 @@ class RenderTarget(val w: Int, val h: Int) {
         GLES30.glFramebufferTexture2D(GLES30.GL_FRAMEBUFFER, GLES30.GL_COLOR_ATTACHMENT0, GLES30.GL_TEXTURE_2D, tex, 0)
         val status = GLES30.glCheckFramebufferStatus(GLES30.GL_FRAMEBUFFER)
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0)
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
         check(status == GLES30.GL_FRAMEBUFFER_COMPLETE) { "framebuffer incomplete: $status" }
     }
 

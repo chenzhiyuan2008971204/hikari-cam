@@ -84,6 +84,8 @@ class OffscreenRenderer(private val assets: AssetManager) {
             ensureGl()
             val pipe = pipeline!!
             val t0 = System.nanoTime()
+            // all render targets first, then the source (see FilmPipeline.ensureTargets)
+            pipe.ensureTargets(outW.toFloat() / outH, FilmParams.effective(req.spec, req.adjust))
             val cached = cacheKey?.let { cache[it] }
             val srcTex = cached ?: upload(source)
             if (cacheKey != null && cached == null) {

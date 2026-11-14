@@ -52,11 +52,7 @@ class FilmPipeline(assets: AssetManager, private val oes: Boolean) {
             val (mode, radius, threshold) = spec
             if (!needed) continue
             val size = FilmParams.chainSize(radius, aspect)
-            val cur = chains[idx]
-            val (a, b) = if (cur != null && cur.first.w == size.w && cur.first.h == size.h) cur else {
-                cur?.first?.release(); cur?.second?.release()
-                (RenderTarget(size.w, size.h) to RenderTarget(size.w, size.h)).also { chains[idx] = it }
-            }
+            val (a, b) = chain(idx, size)
             pre.use()
             bindSource(pre, src, map)
             pre.i("uMode", mode)
@@ -80,6 +76,26 @@ class FilmPipeline(assets: AssetManager, private val oes: Boolean) {
             val needed = passes[idx].second
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, if (needed) chains[idx]!!.first.tex else black.tex)
         }
+    }
+
+    /**
+     * Creates (or resizes) the glow render targets for this look and aspect. Call before the
+     * source texture is uploaded: on the Android emulator's GL translator, creating textures
+     * between uploading the source and drawing from it left the source black.
+     */
+    fun ensureTargets(aspect: Float, p: FilmParams) {
+        val radii = listOf(p.bloomRadius to p.needsBloom, p.halationRadius to p.needsHalation, p.diffusionRadius to p.needsDiffusion)
+        for ((idx, r) in radii.withIndex()) if (r.second) chain(idx, FilmParams.chainSize(r.first, aspect))
+    }
+
+    private fun chain(idx: Int, size: FilmParams.ChainSize): Pair<RenderTarget, RenderTarget> {
+        val cur = chains[idx]
+        if (cur != null && cur.first.w == size.w && cur.first.h == size.h) return cur
+        cur?.first?.release(); cur?.second?.release()
+        // nothing of ours may stay bound while textures are created (emulator translator bug)
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0)
+        return (RenderTarget(size.w, size.h) to RenderTarget(size.w, size.h)).also { chains[idx] = it }
     }
 
     /** Settings for one [composite] call. */
