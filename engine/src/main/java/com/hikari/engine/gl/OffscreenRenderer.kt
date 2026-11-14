@@ -137,7 +137,14 @@ class OffscreenRenderer(private val assets: AssetManager) {
                 lastTiming = Timing((t1 - t0) / 1e6, (t2 - t1) / 1e6, (t3 - t2) / 1e6, (t3 - t0) / 1e6)
                 out
             } finally {
-                if (cacheKey == null) GLES30.glDeleteTextures(1, intArrayOf(srcTex), 0)
+                if (cacheKey == null) {
+                    GLES30.glDeleteTextures(1, intArrayOf(srcTex), 0)
+                    // A one-off (export-size) source was created and deleted: drop the cached
+                    // preview sources too and upload them again next time. On the Android
+                    // emulator's GL translator a cached texture read back black after this.
+                    for (t in cache.values) GLES30.glDeleteTextures(1, intArrayOf(t), 0)
+                    cache.clear()
+                }
             }
         }
 
