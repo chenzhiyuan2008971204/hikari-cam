@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +43,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun HikariAppUi(app: AppViewModel = viewModel()) {
-    when (val r = app.route) {
+    // pages cross-fade; full-screen pages (editor, lab) fade over the tabs
+    Crossfade(targetState = app.route, animationSpec = tween(220), label = "route") { r -> RouteContent(app, r) }
+}
+
+@Composable
+private fun RouteContent(app: AppViewModel, r: Route) {
+    when (r) {
         is Route.Editor -> EditorScreen(app, r.uri, r.lookId)
         Route.Lab -> {
             BackHandler { app.back() }

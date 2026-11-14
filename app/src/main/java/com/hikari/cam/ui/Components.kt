@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -89,6 +90,19 @@ val ADJUST_PARAMS = listOf(
     Param("飽和", -1f..1f, ::signed, { a, _ -> a.saturation }, { a, v -> a.copy(saturation = v) }),
 )
 
+/** Lens character and film defects: each one can be switched off (0) or set; null = the look's own amount. */
+val LENS_PARAMS = listOf(
+    Param("色差", 0f..1f, { "%.2f".format(it) }, { a, s -> a.aberration ?: s.lens.aberration }, { a, v -> a.copy(aberration = v) }),
+    Param("柔焦", 0f..1f, { "%.2f".format(it) }, { a, s -> a.softFocus ?: s.diffusion.softFocus }, { a, v -> a.copy(softFocus = v) }),
+    Param("光線擴散", 0f..1f, { "%.2f".format(it) }, { a, s -> a.mist ?: s.diffusion.mist }, { a, v -> a.copy(mist = v) }),
+    Param("邊緣柔化", 0f..1f, { "%.2f".format(it) }, { a, s -> a.edgeSoft ?: s.lens.edgeSoft }, { a, v -> a.copy(edgeSoft = v) }),
+    Param("灰塵", 0f..1f, { "%.2f".format(it) }, { a, s -> a.dust ?: s.defects.dust }, { a, v -> a.copy(dust = v) }),
+    Param("刮痕", 0f..1f, { "%.2f".format(it) }, { a, s -> a.scratches ?: s.defects.scratches }, { a, v -> a.copy(scratches = v) }),
+    Param("漏光", 0f..1f, { "%.2f".format(it) }, { a, s -> a.leak ?: s.defects.leak }, { a, v -> a.copy(leak = v) }),
+    Param("曝光不均", 0f..1f, { "%.2f".format(it) }, { a, s -> a.uneven ?: s.defects.uneven }, { a, v -> a.copy(uneven = v) }),
+    Param("色彩漂移", 0f..1f, { "%.2f".format(it) }, { a, s -> a.drift ?: s.defects.drift }, { a, v -> a.copy(drift = v) }),
+)
+
 /** The adjustment sliders for one look. [onChange] fires while dragging; [onCommit] when a drag ends. */
 @Composable
 fun AdjustSliders(
@@ -99,28 +113,49 @@ fun AdjustSliders(
     modifier: Modifier = Modifier,
     onCommit: () -> Unit = {},
     params: List<Param> = ADJUST_PARAMS,
+    lens: List<Param> = LENS_PARAMS,
 ) {
     Column(modifier.verticalScroll(rememberScrollState()).padding(horizontal = 14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("${spec.name} · ${spec.zh}", color = HikariColors.Dim, fontSize = 11.sp, modifier = Modifier.weight(1f))
             TextButton(onClick = onReset) { Text("重設", color = HikariColors.Accent) }
         }
-        for (p in params) {
-            val v = p.get(adjust, spec)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(p.label, color = Color.White, fontSize = 12.sp, modifier = Modifier.width(70.dp))
-                Slider(
-                    value = v.coerceIn(p.range.start, p.range.endInclusive),
-                    onValueChange = { onChange(p.set(adjust, it)) },
-                    onValueChangeFinished = onCommit,
-                    valueRange = p.range,
-                    colors = SliderDefaults.colors(thumbColor = HikariColors.Accent, activeTrackColor = HikariColors.Accent),
-                    modifier = Modifier.weight(1f).height(32.dp),
-                )
-                Text(p.format(v), color = HikariColors.Dim, fontSize = 11.sp, fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.width(56.dp).padding(start = 6.dp))
+        for (p in params) ParamRow(p, spec, adjust, onChange, onCommit)
+        if (lens.isNotEmpty()) {
+            Text("鏡頭與底片瑕疵（每項可單獨開關）", color = HikariColors.Dim, fontSize = 11.sp, modifier = Modifier.padding(top = 10.dp, bottom = 2.dp))
+            for (p in lens) {
+                val v = p.get(adjust, spec)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Switch(
+                        checked = v > 0f,
+                        onCheckedChange = { on ->
+                            val own = p.get(Adjustments.DEFAULT, spec)
+                            onChange(p.set(adjust, if (on) (if (own > 0f) own else 0.3f) else 0f)); onCommit()
+                        },
+                        modifier = Modifier.padding(end = 4.dp).height(28.dp),
+                    )
+                    Box(Modifier.weight(1f)) { ParamRow(p, spec, adjust, onChange, onCommit) }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun ParamRow(p: Param, spec: FilterSpec, adjust: Adjustments, onChange: (Adjustments) -> Unit, onCommit: () -> Unit) {
+    val v = p.get(adjust, spec)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(p.label, color = Color.White, fontSize = 12.sp, modifier = Modifier.width(70.dp))
+        Slider(
+            value = v.coerceIn(p.range.start, p.range.endInclusive),
+            onValueChange = { onChange(p.set(adjust, it)) },
+            onValueChangeFinished = onCommit,
+            valueRange = p.range,
+            colors = SliderDefaults.colors(thumbColor = HikariColors.Accent, activeTrackColor = HikariColors.Accent),
+            modifier = Modifier.weight(1f).height(32.dp),
+        )
+        Text(p.format(v), color = HikariColors.Dim, fontSize = 11.sp, fontFamily = FontFamily.Monospace,
+            modifier = Modifier.width(56.dp).padding(start = 6.dp))
     }
 }
 

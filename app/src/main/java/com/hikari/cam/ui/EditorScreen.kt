@@ -77,7 +77,7 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
         if (panel) {
             AdjustSliders(
                 spec = vm.look, adjust = vm.adjust,
-                onChange = { vm.setAdjust(it) }, onCommit = { vm.commit() }, onReset = { vm.reset() },
+                onChange = { vm.updateAdjust(it) }, onCommit = { vm.commit() }, onReset = { vm.reset() },
                 modifier = Modifier.fillMaxWidth().heightIn(max = 260.dp).background(HikariColors.Panel),
             )
         } else {

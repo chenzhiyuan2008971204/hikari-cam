@@ -41,13 +41,13 @@ class FilmParams private constructor(
                 "uContrast" to a.contrast, "uSaturation" to a.saturation, "uFade" to a.fade,
                 "uBloom" to (a.bloom ?: spec.bloom.amount),
                 "uHalation" to (a.halation ?: spec.halation.amount),
-                "uSoftFocus" to spec.diffusion.softFocus, "uMist" to spec.diffusion.mist,
+                "uSoftFocus" to (a.softFocus ?: spec.diffusion.softFocus), "uMist" to (a.mist ?: spec.diffusion.mist),
                 "uVignette" to (a.vignette ?: spec.lens.vignette), "uVignetteSoft" to spec.lens.vignetteSoft,
-                "uAberration" to spec.lens.aberration, "uEdgeSoft" to spec.lens.edgeSoft,
+                "uAberration" to (a.aberration ?: spec.lens.aberration), "uEdgeSoft" to (a.edgeSoft ?: spec.lens.edgeSoft),
                 "uGrain" to (a.grain ?: spec.grain.amount), "uGrainSize" to (a.grainSize ?: spec.grain.size),
                 "uGrainChroma" to spec.grain.chroma, "uGrainRough" to spec.grain.rough,
-                "uDust" to spec.defects.dust, "uScratches" to spec.defects.scratches,
-                "uLeak" to spec.defects.leak, "uUneven" to spec.defects.uneven, "uDrift" to spec.defects.drift,
+                "uDust" to (a.dust ?: spec.defects.dust), "uScratches" to (a.scratches ?: spec.defects.scratches),
+                "uLeak" to (a.leak ?: spec.defects.leak), "uUneven" to (a.uneven ?: spec.defects.uneven), "uDrift" to (a.drift ?: spec.defects.drift),
             )
             val v = linkedMapOf("uHalationTint" to spec.halation.tint, "uLeakColor" to spec.defects.leakColor)
             return FilmParams(

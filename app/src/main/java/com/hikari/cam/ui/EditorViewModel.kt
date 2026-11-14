@@ -127,14 +127,16 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
         pushUndo()
         look = spec
         // look-specific overrides (grain, halation...) belong to the old look; keep the global edits
-        adjust = adjust.copy(grain = null, grainSize = null, halation = null, bloom = null, vignette = null)
+        adjust = adjust.copy(grain = null, grainSize = null, halation = null, bloom = null, vignette = null,
+            aberration = null, softFocus = null, mist = null, edgeSoft = null, dust = null, scratches = null,
+            leak = null, uneven = null, drift = null)
         refresh(); persist()
     }
 
     private var dragStart: Adjustments? = null
 
     /** slider moves: preview only; history and storage happen in [commit] */
-    fun setAdjust(a: Adjustments) {
+    fun updateAdjust(a: Adjustments) {
         if (dragStart == null) dragStart = adjust
         adjust = a
         refresh()

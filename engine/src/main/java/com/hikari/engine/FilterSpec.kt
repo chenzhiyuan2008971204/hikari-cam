@@ -83,6 +83,16 @@ data class Adjustments(
     val tint: Float = 0f,
     val contrast: Float = 0f,
     val saturation: Float = 0f,
+    // lens character and film defects: null = the look's own amount, 0 = off
+    val aberration: Float? = null,
+    val softFocus: Float? = null,
+    val mist: Float? = null,
+    val edgeSoft: Float? = null,
+    val dust: Float? = null,
+    val scratches: Float? = null,
+    val leak: Float? = null,
+    val uneven: Float? = null,
+    val drift: Float? = null,
 ) {
     fun toJson(): String = JSONObject().apply {
         put("strength", strength.toDouble())
@@ -94,7 +104,13 @@ data class Adjustments(
         put("fade", fade.toDouble()); put("exposure", exposure.toDouble())
         put("temperature", temperature.toDouble()); put("tint", tint.toDouble())
         put("contrast", contrast.toDouble()); put("saturation", saturation.toDouble())
+        for ((k, v) in optional()) v?.let { put(k, it.toDouble()) }
     }.toString()
+
+    private fun optional() = listOf(
+        "aberration" to aberration, "softFocus" to softFocus, "mist" to mist, "edgeSoft" to edgeSoft,
+        "dust" to dust, "scratches" to scratches, "leak" to leak, "uneven" to uneven, "drift" to drift,
+    )
 
     companion object {
         val DEFAULT = Adjustments()
@@ -109,6 +125,9 @@ data class Adjustments(
                 fade = opt("fade") ?: 0f, exposure = opt("exposure") ?: 0f,
                 temperature = opt("temperature") ?: 0f, tint = opt("tint") ?: 0f,
                 contrast = opt("contrast") ?: 0f, saturation = opt("saturation") ?: 0f,
+                aberration = opt("aberration"), softFocus = opt("softFocus"), mist = opt("mist"),
+                edgeSoft = opt("edgeSoft"), dust = opt("dust"), scratches = opt("scratches"),
+                leak = opt("leak"), uneven = opt("uneven"), drift = opt("drift"),
             )
         }
     }
