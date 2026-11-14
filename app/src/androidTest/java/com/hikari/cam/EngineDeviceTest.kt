@@ -135,4 +135,30 @@ class EngineDeviceTest {
             "(the Lab now always uses full decode + box downscale)")
         Report.flush(ctx, "decoder_report.txt")
     }
+
+    /** Which path goes black: cached vs fresh source texture, minified vs 1:1 output. */
+    @Test
+    fun diagnoseSourcePaths() = runBlocking {
+        renderer.maxTexture()
+        val full = TestChart.draw(TestChart.FULL_W, TestChart.FULL_H)
+        val src = ImageStats.downscale(full, 2048, 1536)
+        val spec = repo.looks.first()
+        val req = OffscreenRenderer.Request(spec, repo.lut(spec), Adjustments(strength = 0f, grain = 0f, vignette = 0f), seed = 1f)
+        Report.line("diag input level ${f(ImageStats.meanLevel(src))}")
+        for ((name, cache, w, h) in listOf(
+            Quad("fresh 1:1", null, 2048, 1536),
+            Quad("fresh minified", null, 1600, 1200),
+            Quad("cached 1:1", "d1", 2048, 1536),
+            Quad("cached 1:1 again", "d1", 2048, 1536),
+            Quad("cached minified", "d2", 1600, 1200),
+            Quad("fresh small", null, 512, 384),
+        )) {
+            val out = renderer.render(src, req, w, h, cacheKey = cache)
+            Report.line("diag $name ${w}x$h: level ${f(ImageStats.meanLevel(out))}, gl error after: 0x${Integer.toHexString(renderer.lastGlError)}")
+            out.recycle()
+        }
+        Report.flush(ctx, "diag_report.txt")
+    }
+
+    private data class Quad(val a: String, val b: String?, val c: Int, val d: Int)
 }

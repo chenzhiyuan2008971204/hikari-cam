@@ -52,6 +52,10 @@ class OffscreenRenderer(private val assets: AssetManager) {
     @Volatile var lastTiming = Timing(0.0, 0.0, 0.0, 0.0)
         private set
 
+    /** First GL error seen during the last [render] (0 = none); for diagnostics. */
+    @Volatile var lastGlError = 0
+        private set
+
     /** Source textures kept on the GPU for interactive re-rendering, keyed by the caller. */
     private val cache = LinkedHashMap<Any, Int>()
     private val cacheSlots = 3
@@ -124,6 +128,7 @@ class OffscreenRenderer(private val assets: AssetManager) {
                     y0 += th
                 }
                 GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+                lastGlError = GLES30.glGetError()
                 val t3 = System.nanoTime()
                 lastTiming = Timing((t1 - t0) / 1e6, (t2 - t1) / 1e6, (t3 - t2) / 1e6, (t3 - t0) / 1e6)
                 out
