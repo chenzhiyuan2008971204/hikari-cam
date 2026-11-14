@@ -50,6 +50,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -345,6 +348,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             }
             Box(Modifier.size(76.dp).border(4.dp, Color.White, CircleShape).padding(8.dp).clip(CircleShape)
                 .background(if (vm.processing > 2) Color.Gray else Color.White)
+                .testTag("shutter").semantics { contentDescription = "快門" }
                 .clickable(enabled = vm.processing <= 2 && countdown == 0) { shoot() })
             if (caps != null && caps.hasFront && caps.hasBack) TextButton(onClick = {
                 lens = if (lens == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
