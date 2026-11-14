@@ -1,0 +1,66 @@
+{
+ "id": "night_bloom",
+ "name": "Night Bloom",
+ "zh": "夜光",
+ "series": "special",
+ "note": "夜景電影感：紅色高光暈染與柔和光暈，暗部保留層次。",
+ "lut": "luts/night_bloom.cube",
+ "color": {
+  "lutAmount": 1.0,
+  "exposure": 0.0
+ },
+ "grain": {
+  "amount": 0.38,
+  "size": 0.00144,
+  "chroma": 0.3,
+  "rough": 0.5
+ },
+ "halation": {
+  "amount": 0.85,
+  "threshold": 0.68,
+  "radius": 0.015,
+  "tint": [
+   1.0,
+   0.32,
+   0.12
+  ]
+ },
+ "bloom": {
+  "amount": 0.42,
+  "threshold": 0.62,
+  "radius": 0.06
+ },
+ "diffusion": {
+  "softFocus": 0.0,
+  "mist": 0.0,
+  "radius": 0.006
+ },
+ "lens": {
+  "vignette": 0.2,
+  "vignetteSoft": 0.6,
+  "aberration": 0.0,
+  "edgeSoft": 0.0
+ },
+ "defects": {
+  "dust": 0.0,
+  "scratches": 0.0,
+  "leak": 0.0,
+  "leakColor": [
+   1.0,
+   0.45,
+   0.18
+  ],
+  "uneven": 0.0,
+  "drift": 0.0
+ },
+ "recipe": [
+  "影調曲線：18% 灰處斜率 1.06（加反差），黑位 0.020、白位肩部 0.985，曝光 +0.05 EV（線性光、不裁切）",
+  "飽和度（OKLab）：整體飽和 +0.05",
+  "分色 HSL：橙 色相+0° 飽和+0.04 亮度+0.02；綠 色相+10° 飽和-0.15 亮度+0.00；藍 色相-6° 飽和+0.05 亮度+0.00",
+  "分離色調：暗部 190° × 0.016、高光 60° × 0.010",
+  "保護：中性白／灰、膚色色相、色域內壓縮（不爆色）",
+  "顆粒：強度 0.38、粒徑 1.44‰ 短邊、彩色 0.30、粗糙 0.50，中間調最強",
+  "Halation：0.85，門檻 0.68，半徑 1.5% 短邊，紅橙色",
+  "Bloom：0.42，門檻 0.62，半徑 6.0% 短邊"
+ ]
+}
