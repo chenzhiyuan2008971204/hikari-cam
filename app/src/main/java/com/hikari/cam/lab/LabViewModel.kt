@@ -221,7 +221,10 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
                 Media.Decoded(TestChart.draw(TestChart.FULL_W, TestChart.FULL_H), TestChart.FULL_W, TestChart.FULL_H, false)
             }
         } else {
-            Media.decode(ctx, Media.source(ctx, s.uri), renderer.maxTexture())
+            // the full-size source goes to the GPU and is recycled before the output is allocated,
+            // so only one full-size bitmap is on the heap at a time
+            System.gc()
+            Media.decode(ctx, Media.source(ctx, s.uri), renderer.maxTexture(), copies = 1)
         }
     }
 

@@ -1,5 +1,6 @@
 package com.hikari.cam.data
 
+import android.app.ActivityManager
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
@@ -97,7 +98,12 @@ object Media {
      * software ARGB bitmap no larger than [maxSide]. A full-resolution request is also limited by
      * free heap: [Decoded.downscaled] then says the result is smaller than the original.
      */
-    suspend fun decode(context: Context, source: ImageDecoder.Source, maxSide: Int): Decoded = withContext(Dispatchers.IO) {
+    suspend fun decode(
+        context: Context, source: ImageDecoder.Source, maxSide: Int,
+        /** full-size bitmaps that must fit in the heap at the same time (1 when the caller hands the
+         *  decoded bitmap to the GPU and recycles it before allocating the output) */
+        copies: Int = 2,
+    ): Decoded = withContext(Dispatchers.IO) {
         var full = Size(0, 0)
         var scaled = false
         val bmp = ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
@@ -106,13 +112,15 @@ object Media {
             decoder.memorySizePolicy = ImageDecoder.MEMORY_POLICY_DEFAULT
             var side = maxOf(info.size.width, info.size.height)
             var target = minOf(side, maxSide)
-            // keep the decode inside the heap with room for the output bitmap
-            val rt = Runtime.getRuntime()
-            val free = rt.maxMemory() - (rt.totalMemory() - rt.freeMemory())
+            // Bitmap pixels live in native memory (Android 8+), not in the Java heap, so the limit
+            // is what the system can still give: keep a margin so the app is not killed.
+            val mi = ActivityManager.MemoryInfo()
+            (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(mi)
+            val free = mi.availMem - mi.threshold - (256L shl 20)
             while (target > 1024) {
                 val s = target.toFloat() / side
                 val bytes = 4L * (info.size.width * s).toLong() * (info.size.height * s).toLong()
-                if (bytes * 2 + (64L shl 20) < free) break
+                if (bytes * copies + (48L shl 20) < free) break
                 target = (target * 0.85f).toInt()
             }
             if (target < side) {
