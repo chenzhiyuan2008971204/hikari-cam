@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -117,17 +116,15 @@ fun FiltersScreen(app: AppViewModel) {
 
 @Composable
 private fun LookRow(spec: FilterSpec, favorite: Boolean, app: AppViewModel, onClick: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Box(Modifier.width(120.dp).aspectRatio(4f / 3f).clip(RoundedCornerShape(6.dp)).background(HikariColors.Panel)) {
+    // full-width card: the rendered look is the main thing on this page
+    Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Box(Modifier.fillMaxWidth().aspectRatio(4f / 3f).clip(RoundedCornerShape(10.dp)).background(HikariColors.Panel)) {
             app.chartThumbs[spec.id]?.let { Image(it.asImageBitmap(), spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
         }
-        Column(Modifier.weight(1f)) {
-            Text((if (favorite) "★ " else "") + spec.name, color = Color.White, fontSize = 15.sp)
-            Text(spec.zh, color = HikariColors.Accent, fontSize = 12.sp)
-            Text(spec.note, color = HikariColors.Dim, fontSize = 11.sp, maxLines = 2)
+        Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text((if (favorite) "★ " else "") + spec.name, color = Color.White, fontSize = 17.sp)
+            Text(spec.zh, color = HikariColors.Accent, fontSize = 13.sp)
         }
+        Text(spec.note, color = HikariColors.Dim, fontSize = 12.sp, maxLines = 2)
     }
 }

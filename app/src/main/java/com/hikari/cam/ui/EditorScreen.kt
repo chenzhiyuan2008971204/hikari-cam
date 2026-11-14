@@ -82,7 +82,7 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
             )
         } else {
             LookStrip(vm.looks, vm.thumbs, vm.look.id, favorites, onSelect = { vm.selectLook(it); app.touch(it.id) },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), size = 64)
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), size = 80)
         }
     }
 

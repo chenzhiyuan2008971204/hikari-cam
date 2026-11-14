@@ -330,7 +330,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         } else {
             LookStrip(app.ordered(), app.chartThumbs, look.id, favorites,
                 onSelect = { s -> app.updateSettings { it.copy(lastLook = s.id) }; app.touch(s.id) },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), size = 56)
+                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), size = 72)
         }
 
         // shutter row

@@ -73,7 +73,7 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
                     val p = if (maxOf(d.bitmap.width, d.bitmap.height) > LabViewModel.PREVIEW_SRC) LabViewModel.fit(d.bitmap, LabViewModel.PREVIEW_SRC) else d.bitmap
                     if (p !== d.bitmap) d.bitmap.recycle()
                     val o = if (maxOf(p.width, p.height) > LabViewModel.PREVIEW_OUT) LabViewModel.fit(p, LabViewModel.PREVIEW_OUT) else p
-                    Triple(p, o, LabViewModel.fit(p, 200))
+                    Triple(p, o, LabViewModel.fit(p, 320))
                 }
                 renderer.forget(cacheKey)
                 cacheKey = "ed${System.nanoTime()}"

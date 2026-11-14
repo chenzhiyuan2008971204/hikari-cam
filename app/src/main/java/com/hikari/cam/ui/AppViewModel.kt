@@ -100,7 +100,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         viewModelScope.launch {
-            val chart = withContext(Dispatchers.Default) { TestChart.draw(480, 360) }
+            val chart = withContext(Dispatchers.Default) { TestChart.draw(1200, 900) }
             for (spec in looks) {
                 val lut = withContext(Dispatchers.IO) { hikari.looks.lut(spec) }
                 chartThumbs[spec.id] = hikari.renderer.render(chart, OffscreenRenderer.Request(spec, lut, Adjustments.DEFAULT, seed = 3f),
