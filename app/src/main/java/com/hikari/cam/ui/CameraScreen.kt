@@ -261,15 +261,6 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         }
     }
 
-    fun shoot() {
-        if (timer == 0) { vm.shoot(look, adjust, aspect, settings); vm.newSeed(); r.seed = vm.seed; return }
-        scope.launch {
-            for (t in timer downTo 1) { countdown = t; delay(1000) }
-            countdown = 0
-            vm.shoot(look, adjust, aspect, settings); vm.newSeed(); r.seed = vm.seed
-        }
-    }
-
     // shutter feedback: press animation, haptic tick, system shutter sound, a short white flash
     val view = LocalView.current
     val shutterSound = remember { MediaActionSound().apply { load(MediaActionSound.SHUTTER_CLICK) } }
