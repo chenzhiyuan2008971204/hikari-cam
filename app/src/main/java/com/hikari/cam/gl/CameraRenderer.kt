@@ -28,7 +28,6 @@ class CameraRenderer(
     private var program: FilterProgram? = null
     private var oesTex = 0
     private var surfaceTexture: SurfaceTexture? = null
-    private val texMatrix = FloatArray(16)
     private var viewW = 1
     private var viewH = 1
     private var frame = 0
@@ -65,7 +64,6 @@ class CameraRenderer(
         } catch (e: RuntimeException) {
             return
         }
-        st.getTransformMatrix(texMatrix)
         GLES30.glClearColor(0f, 0f, 0f, 1f)
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
 
@@ -76,7 +74,11 @@ class CameraRenderer(
         val viewAspect = viewW.toFloat() / viewH
         corners = previewCorners(rot, mirror, imgAspect, viewAspect)
         frame++
-        prog.draw(oesTex, texMatrix, corners, params, lut, viewW, viewH, bw / bh, (frame % 97).toFloat())
+        // The SurfaceTexture transform matrix is deliberately NOT used: when the camera writes to the
+        // texture directly it already contains the sensor rotation (and the selfie mirror), so applying
+        // CameraX's rotationDegrees on top of it rotated the preview twice. The corners address the raw
+        // sensor buffer instead, which is exactly what rotationDegrees is defined against.
+        prog.draw(oesTex, FilterProgram.IDENTITY, corners, params, lut, viewW, viewH, bw / bh, (frame % 97).toFloat())
     }
 
     private var corners = FloatArray(16)
@@ -84,7 +86,9 @@ class CameraRenderer(
     companion object {
         /**
          * Builds the quad for the preview: center-crops the upright image to the view and maps each
-         * screen corner back into the sensor-oriented camera buffer.
+         * screen corner back into the raw camera buffer. [rot] is CameraX's rotationDegrees (clockwise
+         * rotation that makes the sensor buffer upright); [mirror] flips the upright image left-right
+         * (selfie preview). Returns BL, BR, TL, TR as (image u, image v down, tex s, tex t).
          */
         fun previewCorners(rot: Int, mirror: Boolean, imgAspect: Float, viewAspect: Float): FloatArray {
             // Visible part of the upright image (u right, v up), center crop.
@@ -106,8 +110,10 @@ class CameraRenderer(
                 }
                 out[i * 4] = c.first          // image uv x
                 out[i * 4 + 1] = 1f - c.second // image uv y (down)
+                // (bx, by) is in the raw sensor buffer with y up; texture t = 0 is the buffer's first
+                // (top) row, so the sampling coordinate is (bx, 1 - by).
                 out[i * 4 + 2] = bx
-                out[i * 4 + 3] = by
+                out[i * 4 + 3] = 1f - by
             }
             return out
         }

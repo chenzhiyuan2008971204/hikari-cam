@@ -11,6 +11,7 @@ import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.util.Range
 import android.util.Size
+import android.view.OrientationEventListener
 import android.view.Surface
 import androidx.camera.camera2.interop.Camera2CameraControl
 import androidx.camera.camera2.interop.Camera2CameraInfo
@@ -70,6 +71,21 @@ class HikariCamera(private val context: Context) {
     private var pendingRequest: SurfaceRequest? = null
     private val main = ContextCompat.getMainExecutor(context)
 
+    // The UI is locked to portrait, so photos follow how the phone is actually held: a shot taken
+    // in landscape is saved landscape instead of sideways.
+    private val orientation = object : OrientationEventListener(context) {
+        override fun onOrientationChanged(deg: Int) {
+            if (deg == ORIENTATION_UNKNOWN) return
+            val r = when (deg) {
+                in 45 until 135 -> Surface.ROTATION_270
+                in 135 until 225 -> Surface.ROTATION_180
+                in 225 until 315 -> Surface.ROTATION_90
+                else -> Surface.ROTATION_0
+            }
+            imageCapture?.targetRotation = r
+        }
+    }
+
     var lensFacing = CameraSelector.LENS_FACING_BACK
         private set
 
@@ -112,6 +128,7 @@ class HikariCamera(private val context: Context) {
         preview = pv
         imageCapture = ic
         caps = readCaps(cam)
+        if (orientation.canDetectOrientation()) orientation.enable()
         return caps
     }
 
@@ -243,6 +260,7 @@ class HikariCamera(private val context: Context) {
     }
 
     fun unbind() {
+        orientation.disable()
         provider?.unbindAll()
         camera = null
     }
