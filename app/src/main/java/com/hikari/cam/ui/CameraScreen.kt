@@ -209,7 +209,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         val c = try {
             vm.controller.bind(owner, r, lens, settings.saveRaw)
         } catch (e: Throwable) {
-            cameraError = "無法開啟相機：${e.message ?: e.javaClass.simpleName}"
+            android.util.Log.w("HikariCamera", "bind failed", e)
+            cameraError = "無法開啟相機。\n這台裝置可能沒有可用的相機，或相機正被其他 App 使用。"
             return@LaunchedEffect
         }
         cameraError = null
@@ -295,7 +296,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             ) {
                 AndroidView({ glView }, Modifier.fillMaxSize())
                 cameraError?.let {
-                    Text("$it\n仍可在 Gallery 匯入照片套用濾鏡。", color = HikariColors.Dim, fontSize = 13.sp,
+                    Text("$it\n\n仍可在 Gallery 匯入照片套用濾鏡。", color = HikariColors.Dim, fontSize = 14.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         modifier = Modifier.align(Alignment.Center).padding(24.dp))
                 }
                 if (settings.grid) Canvas(Modifier.fillMaxSize()) {

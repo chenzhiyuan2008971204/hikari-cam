@@ -38,7 +38,7 @@ fun SettingsScreen(app: AppViewModel, rawSupported: Boolean?) {
         var q by remember(s.jpegQuality) { mutableFloatStateOf(s.jpegQuality.toFloat()) }
         Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("JPEG 品質 ${q.roundToInt()}", color = Color.White, modifier = Modifier.weight(1f))
-            Slider(q, { q = it }, valueRange = 80f..100f, steps = 19,
+            Slider(q, { q = it }, valueRange = 80f..100f,
                 onValueChangeFinished = { app.updateSettings { it.copy(jpegQuality = q.roundToInt()) } },
                 modifier = Modifier.weight(1.4f))
         }

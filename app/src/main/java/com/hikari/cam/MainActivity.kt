@@ -14,6 +14,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
@@ -65,10 +71,15 @@ private fun RouteContent(app: AppViewModel, r: Route) {
                 }
             }
             NavigationBar(containerColor = HikariColors.Panel, modifier = Modifier.navigationBarsPadding()) {
-                for ((route, label) in listOf(Route.Camera to "Camera", Route.Gallery to "Gallery", Route.Filters to "Filters", Route.Settings to "Settings")) {
+                for ((route, label, icon) in listOf(
+                    Triple(Route.Camera, "Camera", Icons.Outlined.PhotoCamera),
+                    Triple(Route.Gallery, "Gallery", Icons.Outlined.PhotoLibrary),
+                    Triple(Route.Filters, "Filters", Icons.Outlined.AutoAwesome),
+                    Triple(Route.Settings, "Settings", Icons.Outlined.Settings),
+                )) {
                     NavigationBarItem(
                         selected = r == route, onClick = { app.go(route) },
-                        icon = { Text(label.take(1), fontSize = 16.sp) },
+                        icon = { Icon(icon, contentDescription = label) },
                         label = { Text(label, fontSize = 11.sp) },
                     )
                 }
