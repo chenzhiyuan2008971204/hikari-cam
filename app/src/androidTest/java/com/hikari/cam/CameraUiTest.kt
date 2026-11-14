@@ -32,9 +32,11 @@ class CameraUiTest {
     val rule = createAndroidComposeRule<MainActivity>()
     private val ctx = InstrumentationRegistry.getInstrumentation().targetContext
 
+    /** a real screen capture: the GL camera preview is a SurfaceView, which Compose capture cannot see */
     private fun shot(name: String) {
         rule.waitForIdle()
-        Report.png(ctx, name, rule.onRoot().captureToImage().asAndroidBitmap())
+        val screen = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        Report.png(ctx, name, screen ?: rule.onRoot().captureToImage().asAndroidBitmap())
     }
 
     private fun has(text: String) = rule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().isNotEmpty()
@@ -55,6 +57,11 @@ class CameraUiTest {
         val ms = (System.nanoTime() - t0) / 1e6
         shot("cam_02_after_capture.png")
         val failed = has("拍攝失敗")
+        // the filtered photo itself, scaled down, for review
+        runBlocking { Media.list(ctx) }.firstOrNull { !it.name.contains("original") }?.let { p ->
+            val o = BitmapFactory.Options().apply { inSampleSize = 2 }
+            ctx.contentResolver.openInputStream(p.uri)!!.use { BitmapFactory.decodeStream(it, null, o) }?.let { Report.jpeg(ctx, "cam_photo.jpg", it) }
+        }
         val after = runBlocking { Media.list(ctx) }
         val newest = after.firstOrNull()
         var size = "?"
