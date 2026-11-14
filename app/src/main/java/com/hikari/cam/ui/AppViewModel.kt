@@ -1,30 +1,24 @@
 package com.hikari.cam.ui
 
 import android.app.Application
-import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hikari.cam.HikariApp
-import com.hikari.cam.lab.TestChart
 import com.hikari.data.Favorite
 import com.hikari.data.Preset
 import com.hikari.data.Recent
 import com.hikari.data.UserSettings
 import com.hikari.engine.Adjustments
 import com.hikari.engine.FilterSpec
-import com.hikari.engine.gl.OffscreenRenderer
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /** Where the app is. The four tabs, plus full-screen pages on top of them. */
 sealed interface Route {
@@ -58,9 +52,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** null until a camera has been opened once */
     var rawSupported by mutableStateOf<Boolean?>(null)
 
-    /** each look rendered on the built-in test chart (Filters page) */
-    val chartThumbs = mutableStateMapOf<String, Bitmap>()
-
     fun look(id: String?): FilterSpec = hikari.looks.look(id)
 
     fun go(r: Route) {
@@ -90,23 +81,4 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun deletePreset(id: Long) = viewModelScope.launch { db.looks().deletePreset(id) }
-
-    /** favourites first, then recents, then the rest in catalogue order */
-    fun ordered(): List<FilterSpec> {
-        val fav = favorites.value
-        val rec = recents.value
-        return looks.sortedWith(compareBy({ if (it.id in fav) 0 else if (it.id in rec) 1 else 2 }, { rec.indexOf(it.id) }))
-    }
-
-    init {
-        viewModelScope.launch {
-            val chart = withContext(Dispatchers.Default) { TestChart.draw(1200, 900) }
-            for (spec in looks) {
-                val lut = withContext(Dispatchers.IO) { hikari.looks.lut(spec) }
-                chartThumbs[spec.id] = hikari.renderer.render(chart, OffscreenRenderer.Request(spec, lut, Adjustments.DEFAULT, seed = 3f),
-                    chart.width, chart.height, cacheKey = "chart")
-            }
-            hikari.renderer.forget("chart")
-        }
-    }
 }

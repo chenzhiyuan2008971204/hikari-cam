@@ -177,9 +177,12 @@ fun LookStrip(
                 val shape = RoundedCornerShape(6.dp)
                 Box(Modifier.size(size.dp).clip(shape).background(HikariColors.Panel)
                     .border(if (selected) 2.dp else 0.dp, if (selected) HikariColors.Accent else Color.Transparent, shape)) {
-                    thumbs[spec.id]?.let { b ->
+                    val b = thumbs[spec.id]
+                    if (b != null) {
                         val img = remember(b) { b.asImageBitmap() }
                         Image(img, spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    } else {
+                        FilmIcon(spec, (size - 8).dp, Modifier.align(Alignment.Center))
                     }
                     if (spec.id in favorites) Text("★", color = HikariColors.Accent, fontSize = 11.sp,
                         modifier = Modifier.align(Alignment.TopEnd).padding(3.dp))

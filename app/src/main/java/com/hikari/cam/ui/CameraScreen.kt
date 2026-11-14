@@ -339,7 +339,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                 onReset = { app.updateSettings { it.copy(cameraAdjustJson = "") } },
                 modifier = Modifier.fillMaxWidth().weight(0.7f).background(HikariColors.Panel))
         } else {
-            LookStrip(app.ordered(), app.chartThumbs, look.id, favorites,
+            LookStrip(app.looks, emptyMap(), look.id, favorites,
                 onSelect = { s -> app.updateSettings { it.copy(lastLook = s.id) }; app.touch(s.id) },
                 modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), size = 72)
         }

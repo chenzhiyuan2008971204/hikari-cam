@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -55,13 +55,13 @@ fun FiltersScreen(app: AppViewModel) {
         if (recents.isNotEmpty()) {
             item { SectionTitle("最近使用") }
             item {
-                LookStrip(recents.map { app.look(it) }, app.chartThumbs, null, favorites, { detail = it }, size = 72)
+                LookStrip(recents.map { app.look(it) }, emptyMap(), null, favorites, { detail = it }, size = 72)
             }
         }
         if (favorites.isNotEmpty()) {
             item { SectionTitle("收藏") }
             item {
-                LookStrip(app.looks.filter { it.id in favorites }, app.chartThumbs, null, favorites, { detail = it }, size = 72)
+                LookStrip(app.looks.filter { it.id in favorites }, emptyMap(), null, favorites, { detail = it }, size = 72)
             }
         }
         if (presets.isNotEmpty()) {
@@ -91,9 +91,7 @@ fun FiltersScreen(app: AppViewModel) {
             title = { Text("${spec.name}　${spec.zh}") },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
-                    app.chartThumbs[spec.id]?.let {
-                        Image(it.asImageBitmap(), null, Modifier.fillMaxWidth().aspectRatio(4f / 3f).clip(RoundedCornerShape(6.dp)))
-                    }
+                    FilmIcon(spec, 120.dp, Modifier.align(Alignment.CenterHorizontally))
                     Text(spec.note, color = Color.White, fontSize = 13.sp, modifier = Modifier.padding(vertical = 8.dp))
                     for (line in spec.recipe) Text("• $line", color = HikariColors.Dim, fontSize = 11.sp, modifier = Modifier.padding(vertical = 1.dp))
                 }
@@ -116,15 +114,19 @@ fun FiltersScreen(app: AppViewModel) {
 
 @Composable
 private fun LookRow(spec: FilterSpec, favorite: Boolean, app: AppViewModel, onClick: () -> Unit) {
-    // full-width card: the rendered look is the main thing on this page
-    Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 8.dp)) {
-        Box(Modifier.fillMaxWidth().aspectRatio(4f / 3f).clip(RoundedCornerShape(10.dp)).background(HikariColors.Panel)) {
-            app.chartThumbs[spec.id]?.let { Image(it.asImageBitmap(), spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Box(Modifier.size(88.dp).clip(RoundedCornerShape(14.dp)).background(HikariColors.Panel), contentAlignment = Alignment.Center) {
+            FilmIcon(spec, 76.dp)
         }
-        Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.weight(1f)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text((if (favorite) "★ " else "") + spec.name, color = Color.White, fontSize = 17.sp)
             Text(spec.zh, color = HikariColors.Accent, fontSize = 13.sp)
         }
         Text(spec.note, color = HikariColors.Dim, fontSize = 12.sp, maxLines = 2)
+        }
     }
 }

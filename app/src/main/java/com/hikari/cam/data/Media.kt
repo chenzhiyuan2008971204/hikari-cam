@@ -140,6 +140,26 @@ object Media {
 
     data class Photo(val uri: Uri, val name: String, val dateTaken: Long)
 
+    /**
+     * Deleting photos. Android 11+ asks the user in a system dialog ([deleteRequest]); on Android 10
+     * files the app created are deleted directly, and a file it no longer owns (e.g. after a
+     * reinstall) comes back as the RecoverableSecurityException's confirmation intent.
+     */
+    fun deleteRequest(context: Context, uris: List<Uri>): android.content.IntentSender? =
+        if (android.os.Build.VERSION.SDK_INT >= 30) MediaStore.createDeleteRequest(context.contentResolver, uris).intentSender else null
+
+    /** Android 10: deletes directly; returns the confirmation needed for the first file it may not delete, if any. */
+    suspend fun deleteDirect(context: Context, uris: List<Uri>): android.content.IntentSender? = withContext(Dispatchers.IO) {
+        for (u in uris) {
+            try {
+                context.contentResolver.delete(u, null, null)
+            } catch (e: android.app.RecoverableSecurityException) {
+                return@withContext e.userAction.actionIntent.intentSender
+            }
+        }
+        null
+    }
+
     /** Photos this app saved (Pictures/Hikari), newest first. */
     suspend fun list(context: Context): List<Photo> = withContext(Dispatchers.IO) {
         val out = ArrayList<Photo>()
