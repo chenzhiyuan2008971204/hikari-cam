@@ -57,8 +57,8 @@ class LabUiTest {
         rule.onNodeWithText("檢查預覽＝匯出").performClick()
         Thread.sleep(500)
         waitIdleLab()
-        waitText("通過 ✓", 5_000)
         shot("ui_04_check.png")
+        waitText("通過 ✓", 5_000)
 
         rule.onNodeWithText("完整解析度匯出").performClick()
         Thread.sleep(500)

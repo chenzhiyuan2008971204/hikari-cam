@@ -59,7 +59,14 @@ class EngineDeviceTest {
             val r = ImageStats.compare(small, down)
             Report.line("${spec.id}: preview ${pw}x$ph ${f(prevMs)} ms, full ${full.width}x${full.height} ${f(fullMs)} ms; " +
                 "preview vs export mean ${f(r.meanAbs)} p99 ${r.p99} max ${r.max} bias ${f(r.biasR)}/${f(r.biasG)}/${f(r.biasB)} -> ${if (r.pass) "PASS" else "FAIL"}")
-            ok = ok && r.pass
+            val inLevel = ImageStats.meanLevel(prevSrc)
+            val outLevel = ImageStats.meanLevel(small)
+            val raw = renderer.render(prevSrc, OffscreenRenderer.Request(spec, lut, Adjustments(strength = 0f, grain = 0f), seed = 1f), pw, ph, cacheKey = "prev")
+            val rawLevel = ImageStats.meanLevel(raw)
+            raw.recycle()
+            val sane = outLevel > inLevel * 0.5 && outLevel < inLevel * 1.6 + 20
+            Report.line("${spec.id}: mean level input ${f(inLevel)}, strength 0 ${f(rawLevel)}, look ${f(outLevel)} -> ${if (sane) "OK" else "BROKEN OUTPUT"}")
+            ok = ok && r.pass && sane
             // with grain, as the user sees it
             val withGrain = renderer.render(prevSrc, OffscreenRenderer.Request(spec, lut, Adjustments(), seed = LabViewModel.SEED),
                 pw, ph, cacheKey = "prev")

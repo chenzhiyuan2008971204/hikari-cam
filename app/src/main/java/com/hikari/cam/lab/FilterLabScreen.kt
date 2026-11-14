@@ -347,8 +347,10 @@ private fun CheckPanel(vm: LabViewModel) {
             Text("尚未執行，按下方「檢查預覽＝匯出」。", color = Color.White, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
         } else {
             val r = c.result
-            Text(if (r.pass) "通過 ✓" else "未通過 ✗", color = if (r.pass) Color(0xFF7CD992) else Color(0xFFFF7070),
+            Text(if (c.pass) "通過 ✓" else "未通過 ✗", color = if (c.pass) Color(0xFF7CD992) else Color(0xFFFF7070),
                 fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+            if (!c.sane) Text("輸出異常：原圖平均亮度 ${"%.0f".format(c.inputLevel)}，濾鏡輸出 ${"%.0f".format(c.outputLevel)}（GPU 結果不正確）",
+                color = Color(0xFFFF7070), fontSize = 12.sp)
             Text("${c.look}：完整 ${c.fullW}×${c.fullH} → 縮小到 ${c.prevW}×${c.prevH}", color = Color.White, fontSize = 12.sp)
             Text("平均差 ${"%.2f".format(r.meanAbs)} 級　99% ${r.p99} 級　最大 ${r.max} 級", color = Color.White, fontSize = 12.sp)
             Text("整體色偏 R${signed(r.biasR.toFloat())} G${signed(r.biasG.toFloat())} B${signed(r.biasB.toFloat())}　耗時 ${"%.0f".format(c.ms)} ms",

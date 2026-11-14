@@ -20,6 +20,22 @@ object ImageStats {
         return out
     }
 
+    /** mean of (R+G+B)/3 over the image, 0..255 */
+    fun meanLevel(b: Bitmap): Double {
+        val step = maxOf(1, (b.width * b.height) / 250_000)
+        val px = IntArray(b.width * b.height).also { b.getPixels(it, 0, b.width, 0, 0, b.width, b.height) }
+        var sum = 0.0
+        var n = 0
+        var i = 0
+        while (i < px.size) {
+            val v = px[i]
+            sum += ((v shr 16 and 0xFF) + (v shr 8 and 0xFF) + (v and 0xFF)) / 3.0
+            n++
+            i += step
+        }
+        return sum / n
+    }
+
     class Result(
         /** mean |difference| over all pixels and channels, in 8-bit levels, after a light blur */
         val meanAbs: Double,

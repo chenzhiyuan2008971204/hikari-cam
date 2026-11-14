@@ -92,7 +92,12 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
                       val input: ImageStats.Result,
                       /** preview render of the scaled-down full input vs the full render scaled down:
                        *  the engine's share, with the decoder taken out */
-                      val engine: ImageStats.Result)
+                      val engine: ImageStats.Result,
+                      /** mean level of the input and of the rendered preview: a look must not black out the picture */
+                      val inputLevel: Double, val outputLevel: Double) {
+        val sane get() = inputLevel < 8 || (outputLevel > inputLevel * 0.5 && outputLevel < inputLevel * 1.6 + 20)
+        val pass get() = sane && result.pass
+    }
 
     private data class PreviewReq(val sourceId: Int, val lookId: String, val adjust: Adjustments)
 
@@ -314,17 +319,19 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
             val big = renderer.render(d.bitmap, req, w, h, releaseSource = true)
             val smallFromFull = renderer.render(inDown, req, s.outW, s.outH)
             busy = "一致性檢查：比對…"
+            var levels = 0.0 to 0.0
             val (r, inp, eng) = withContext(Dispatchers.Default) {
                 val down = ImageStats.downscale(big, s.outW, s.outH)
                 big.recycle()
                 val r = ImageStats.compare(small, down)
                 val inp = ImageStats.compare(s.original, inDown)
                 val eng = ImageStats.compare(smallFromFull, down)
+                levels = ImageStats.meanLevel(s.original) to ImageStats.meanLevel(small)
                 down.recycle(); inDown.recycle(); smallFromFull.recycle()
                 Triple(r, inp, eng)
             }
-            check = CheckReport(spec.name, w, h, s.outW, s.outH, r, ms(t0), inp, eng)
-            log.add(0, "一致性 ${spec.name}：平均 ${"%.2f".format(r.meanAbs)}、99% ${r.p99}、最大 ${r.max} 級 → ${if (r.pass) "通過" else "未通過"}")
+            check = CheckReport(spec.name, w, h, s.outW, s.outH, r, ms(t0), inp, eng, levels.first, levels.second)
+            log.add(0, "一致性 ${spec.name}：平均 ${"%.2f".format(r.meanAbs)}、99% ${r.p99}、最大 ${r.max} 級 → ${if (check?.pass == true) "通過" else "未通過"}")
         } catch (e: Throwable) {
             message = "檢查失敗：${e.message}"
         } finally {

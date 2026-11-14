@@ -3,6 +3,7 @@ package com.hikari.engine.gl
 import android.content.res.AssetManager
 import android.opengl.GLES11Ext
 import android.opengl.GLES30
+import android.util.Half
 import com.hikari.engine.CubeLut
 import com.hikari.engine.FilmParams
 import java.nio.ByteBuffer
@@ -156,11 +157,36 @@ class FilmPipeline(assets: AssetManager, private val oes: Boolean) {
         GLES30.glActiveTexture(GLES30.GL_TEXTURE4)
         GLES30.glBindTexture(GLES30.GL_TEXTURE_3D, lutTex)
         if (lut !== uploadedLut) {
-            val buf = ByteBuffer.allocateDirect(lut.data.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer()
-            buf.put(lut.data).position(0)
             GLES30.glPixelStorei(GLES30.GL_UNPACK_ALIGNMENT, 1)
-            GLES30.glTexImage3D(GLES30.GL_TEXTURE_3D, 0, GLES30.GL_RGB16F, lut.size, lut.size, lut.size, 0,
-                GLES30.GL_RGB, GLES30.GL_FLOAT, buf)
+            while (GLES30.glGetError() != GLES30.GL_NO_ERROR) { /* clear */ }
+            // RGBA16F + HALF_FLOAT is the combination every GLES 3.0 driver must accept (RGB16F with
+            // FLOAT data is legal but the Android emulator's GL translator drops it: the LUT became
+            // an incomplete texture and every look rendered black).
+            val n = lut.size * lut.size * lut.size
+            val half = ByteBuffer.allocateDirect(n * 4 * 2).order(ByteOrder.nativeOrder())
+            val hs = half.asShortBuffer()
+            for (i in 0 until n) {
+                hs.put(Half.toHalf(lut.data[i * 3]))
+                hs.put(Half.toHalf(lut.data[i * 3 + 1]))
+                hs.put(Half.toHalf(lut.data[i * 3 + 2]))
+                hs.put(Half.toHalf(1f))
+            }
+            half.position(0)
+            GLES30.glTexImage3D(GLES30.GL_TEXTURE_3D, 0, GLES30.GL_RGBA16F, lut.size, lut.size, lut.size, 0,
+                GLES30.GL_RGBA, GLES30.GL_HALF_FLOAT, half)
+            if (GLES30.glGetError() != GLES30.GL_NO_ERROR) {
+                // last resort: 8-bit LUT (slightly coarser, but never black)
+                val b = ByteBuffer.allocateDirect(n * 4).order(ByteOrder.nativeOrder())
+                for (i in 0 until n) {
+                    for (c in 0..2) b.put((lut.data[i * 3 + c].coerceIn(0f, 1f) * 255f + 0.5f).toInt().toByte())
+                    b.put(255.toByte())
+                }
+                b.position(0)
+                GLES30.glTexImage3D(GLES30.GL_TEXTURE_3D, 0, GLES30.GL_RGBA8, lut.size, lut.size, lut.size, 0,
+                    GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, b)
+                val err = GLES30.glGetError()
+                check(err == GLES30.GL_NO_ERROR) { "3D LUT upload failed (GL error 0x${Integer.toHexString(err)})" }
+            }
             GLES30.glTexParameteri(GLES30.GL_TEXTURE_3D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR)
             GLES30.glTexParameteri(GLES30.GL_TEXTURE_3D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
             GLES30.glTexParameteri(GLES30.GL_TEXTURE_3D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE)
