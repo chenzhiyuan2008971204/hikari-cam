@@ -167,7 +167,7 @@ fun FilterLabScreen(vm: LabViewModel = viewModel()) {
  * Holding a finger still on the picture shows the whole original.
  */
 @Composable
-private fun CompareView(original: Bitmap, effect: Bitmap) {
+fun CompareView(original: Bitmap, effect: Bitmap) {
     // divider position as a fraction of the width: original left of it, effect right of it
     var divider by remember { mutableFloatStateOf(0f) }
     var holding by remember { mutableStateOf(false) }

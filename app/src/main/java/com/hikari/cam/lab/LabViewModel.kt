@@ -31,8 +31,8 @@ import kotlin.math.roundToInt
  * [OffscreenRenderer] (same shaders, same LUTs); only the output size differs.
  */
 class LabViewModel(app: Application) : AndroidViewModel(app) {
-    private val repo = LookRepository(app)
-    private val renderer = OffscreenRenderer(app.assets)
+    private val repo = (app as com.hikari.cam.HikariApp).looks
+    private val renderer = (app as com.hikari.cam.HikariApp).renderer
     val looks: List<FilterSpec> = repo.looks
 
     class Source(
@@ -168,8 +168,8 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
         check = null
         export = null
         if (old != null) {
-            renderer.forget("p${old.id}")
-            renderer.forget("t${old.id}")
+            renderer.forget("labp${old.id}")
+            renderer.forget("labt${old.id}")
         }
         log.add(0, "載入 $label：原始 ${fullW}×${fullH}，預覽 ${s.outW}×${s.outH}")
         renderThumbs(s)
@@ -207,7 +207,7 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
         val spec = looks.first { it.id == r.lookId }
         val req = withContext(Dispatchers.IO) { request(spec, r.adjust) }
         val t0 = System.nanoTime()
-        val bmp = renderer.render(s.previewSrc, req, s.outW, s.outH, cacheKey = "p${s.id}")
+        val bmp = renderer.render(s.previewSrc, req, s.outW, s.outH, cacheKey = "labp${s.id}")
         val wall = ms(t0)
         if (source?.id != s.id) return
         preview = bmp
@@ -223,7 +223,7 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
         val t0 = System.nanoTime()
         for (spec in looks) {
             val req = withContext(Dispatchers.IO) { request(spec, Adjustments.DEFAULT) }
-            thumbs[spec.id] = renderer.render(s.thumbSrc, req, s.thumbSrc.width, s.thumbSrc.height, cacheKey = "t${s.id}")
+            thumbs[spec.id] = renderer.render(s.thumbSrc, req, s.thumbSrc.width, s.thumbSrc.height, cacheKey = "labt${s.id}")
         }
         thumbsMs = ms(t0)
     }
@@ -310,7 +310,7 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
             val t0 = System.nanoTime()
             busy = "一致性檢查：預覽尺寸渲染…"
             val req = withContext(Dispatchers.IO) { request(spec, a) }
-            val small = renderer.render(s.previewSrc, req, s.outW, s.outH, cacheKey = "p${s.id}")
+            val small = renderer.render(s.previewSrc, req, s.outW, s.outH, cacheKey = "labp${s.id}")
             busy = "一致性檢查：完整解析度渲染…"
             val d = full(s)
             val w = d.bitmap.width

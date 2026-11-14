@@ -1,0 +1,93 @@
+package com.hikari.cam.ui
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.hikari.cam.BuildConfig
+import com.hikari.data.UserSettings
+import kotlin.math.roundToInt
+
+@Composable
+fun SettingsScreen(app: AppViewModel, rawSupported: Boolean?) {
+    val s by app.settings.collectAsState()
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Text("Settings", color = Color.White, fontSize = 22.sp, modifier = Modifier.padding(16.dp))
+
+        SectionTitle("拍攝與儲存")
+        var q by remember(s.jpegQuality) { mutableFloatStateOf(s.jpegQuality.toFloat()) }
+        Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("JPEG 品質 ${q.roundToInt()}", color = Color.White, modifier = Modifier.weight(1f))
+            Slider(q, { q = it }, valueRange = 80f..100f, steps = 19,
+                onValueChangeFinished = { app.updateSettings { it.copy(jpegQuality = q.roundToInt()) } },
+                modifier = Modifier.weight(1.4f))
+        }
+        Toggle("同時保存未套濾鏡的原圖", "Pictures/Hikari/Originals", s.saveOriginal) { v -> app.updateSettings { it.copy(saveOriginal = v) } }
+        when (rawSupported) {
+            true -> Toggle("同時保存 DNG RAW", "Pictures/Hikari/RAW", s.saveRaw) { v -> app.updateSettings { it.copy(saveRaw = v) } }
+            false -> Info("DNG RAW", "這支手機的相機不提供 RAW 輸出，使用高品質 JPEG。")
+            null -> Info("DNG RAW", "開啟一次相機後才知道這支手機是否支援。")
+        }
+        Toggle("九宮格", "相機取景格線", s.grid) { v -> app.updateSettings { it.copy(grid = v) } }
+        Text("預設長寬比", color = Color.White, modifier = Modifier.padding(start = 16.dp, top = 10.dp))
+        Row(Modifier.padding(horizontal = 12.dp)) {
+            for (a in UserSettings.ASPECTS) {
+                FilterChip(selected = s.aspect == a, onClick = { app.updateSettings { it.copy(aspect = a) } },
+                    label = { Text(a) }, modifier = Modifier.padding(4.dp))
+            }
+        }
+
+        HorizontalDivider(Modifier.padding(vertical = 12.dp), color = HikariColors.Line)
+        SectionTitle("濾鏡品質工具")
+        Row(Modifier.fillMaxWidth().clickable { app.go(Route.Lab) }.padding(16.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text("Filter Lab", color = Color.White)
+                Text("匯入任意照片測試濾鏡、檢查預覽與完整解析度匯出是否一致、看效能數據", color = HikariColors.Dim, fontSize = 12.sp)
+            }
+            Text("›", color = HikariColors.Dim, fontSize = 20.sp)
+        }
+
+        HorizontalDivider(Modifier.padding(vertical = 12.dp), color = HikariColors.Line)
+        Info("版本", "${BuildConfig.VERSION_NAME} · 12 款原創濾鏡 · GPU 底片引擎")
+    }
+}
+
+@Composable
+private fun Toggle(title: String, sub: String, value: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable { onChange(!value) }.padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(title, color = Color.White)
+            Text(sub, color = HikariColors.Dim, fontSize = 12.sp)
+        }
+        Switch(value, onChange)
+    }
+}
+
+@Composable
+private fun Info(title: String, sub: String) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Text(title, color = Color.White)
+        Text(sub, color = HikariColors.Dim, fontSize = 12.sp)
+    }
+}

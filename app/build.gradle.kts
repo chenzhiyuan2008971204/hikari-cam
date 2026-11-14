@@ -12,8 +12,8 @@ android {
         applicationId = "com.hikari.cam"
         minSdk = 29
         targetSdk = 35
-        versionCode = 3
-        versionName = "3.0-lab"
+        versionCode = 4
+        versionName = "4.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -31,12 +31,18 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     testOptions { unitTests.isReturnDefaultValues = true }
 }
 
 dependencies {
     implementation(project(":engine"))
+    implementation(project(":data"))
+
+    val cameraX = "1.5.0"
+    implementation("androidx.camera:camera-core:$cameraX")
+    implementation("androidx.camera:camera-camera2:$cameraX")
+    implementation("androidx.camera:camera-lifecycle:$cameraX")
 
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.ui:ui")
@@ -59,4 +65,5 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test:core-ktx:1.6.1")
+    androidTestImplementation("androidx.test:rules:1.6.1")
 }

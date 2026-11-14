@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.rule.GrantPermissionRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +17,10 @@ import org.junit.runner.RunWith
 /** Drives the Filter Lab like a person: switch looks, run the check, export, open every tab. */
 @RunWith(AndroidJUnit4::class)
 class LabUiTest {
-    @get:Rule
+    @get:Rule(order = 0)
+    val permission: GrantPermissionRule = GrantPermissionRule.grant(android.Manifest.permission.CAMERA)
+
+    @get:Rule(order = 1)
     val rule = createAndroidComposeRule<MainActivity>()
     private val ctx = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -39,12 +43,25 @@ class LabUiTest {
 
     @Test
     fun filterLabFlow() {
+        // the app opens on the camera tab; walk the four tabs, then open Filter Lab from Settings
+        Thread.sleep(3000)
+        shot("app_01_camera.png")
+        rule.onNodeWithText("Gallery").performClick()
+        Thread.sleep(1000)
+        shot("app_02_gallery.png")
+        rule.onNodeWithText("Filters").performClick()
+        Thread.sleep(8000)
+        shot("app_03_filters.png")
+        rule.onNodeWithText("Settings").performClick()
+        Thread.sleep(800)
+        shot("app_04_settings.png")
+        rule.onNodeWithText("Filter Lab").performClick()
         waitText("內建測試圖卡 ·")
         waitIdleLab()
         Thread.sleep(1500)
         shot("ui_01_start.png")
 
-        for ((i, name) in listOf("Mellow 400", "Cinema 400", "Tokyo Blue", "Night Bloom").withIndex()) {
+        for ((i, name) in listOf("Mellow 400", "Gold Memory", "Cinema 400", "Vivid 100").withIndex()) {
             rule.onNodeWithText(name).performClick()
             Thread.sleep(2500)
             shot("ui_02_look_${i}.png")

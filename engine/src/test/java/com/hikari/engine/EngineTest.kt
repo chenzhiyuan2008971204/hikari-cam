@@ -16,7 +16,7 @@ class EngineTest {
 
     @Test
     fun shippedLooksParseAndTheirLutsLoad() {
-        assertEquals(4, ids.size)
+        assertEquals(12, ids.size)
         for (id in ids) {
             val spec = FilterSpec.parse(asset("filters/$id.json"))
             assertEquals(id, spec.id)

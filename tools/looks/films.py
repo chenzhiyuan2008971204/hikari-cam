@@ -89,8 +89,8 @@ FILMS = {
         colour=dict(
             temp=0.24,
             curve=filmic(exposure=0.04, contrast=1.04, toe=0.018, shoulder=0.99),
-            sat=0.06, vibrance=0.1,
-            hsl=dict(red=(-2, 0.08, 0.0), orange=(0, 0.04, 0.03), yellow=(-4, 0.20, 0.03),
+            sat=0.03, vibrance=0.03,
+            hsl=dict(red=(-2, -0.04, 0.0), orange=(0, -0.14, 0.04), yellow=(-4, 0.20, 0.03),
                      green=(-12, -0.10, 0.0), aqua=(0, -0.12, 0.0), blue=(-4, -0.10, -0.02)),
             split=dict(shadows=(40, 0.008), highlights=(82, 0.026)),
         ),
@@ -116,8 +116,8 @@ FILMS = {
         note="細顆粒高飽和正片風格：色彩分離度高、細節清晰，紅色與藍色的飽和度受控不溢出。",
         colour=dict(
             curve=filmic(contrast=1.12, toe=0.008, shoulder=0.995),
-            sat=0.16, vibrance=0.14,
-            hsl=dict(red=(-2, -0.06, 0.0), orange=(0, 0.05, 0.0), yellow=(0, 0.15, 0.0),
+            sat=0.12, vibrance=0.06,
+            hsl=dict(red=(-2, -0.12, 0.0), orange=(0, -0.14, 0.02), yellow=(0, 0.15, 0.0),
                      green=(-4, 0.12, -0.02), aqua=(0, 0.15, 0.0), blue=(-6, -0.04, -0.03),
                      purple=(0, -0.05, 0.0), magenta=(0, -0.04, 0.0)),
         ),
@@ -145,9 +145,9 @@ FILMS = {
         colour=dict(
             temp=0.02,
             curve=filmic(exposure=0.12, contrast=0.82, toe=0.03, shoulder=0.98),
-            sat=-0.24,
-            hsl=dict(red=(4, -0.10, 0.02), orange=(0, 0.04, 0.04), yellow=(-4, -0.25, 0.05),
-                     green=(-6, -0.30, 0.06), aqua=(0, -0.15, 0.04), blue=(-6, -0.20, 0.05)),
+            sat=-0.15,
+            hsl=dict(red=(4, -0.10, 0.02), orange=(0, 0.04, 0.04), yellow=(-4, -0.18, 0.05),
+                     green=(-6, -0.22, 0.06), aqua=(0, -0.15, 0.04), blue=(-6, -0.20, 0.05)),
             split=dict(shadows=(260, 0.006), highlights=(60, 0.006)),
         ),
         fx=fx(grain=0.2, grain_size=0.00112, grain_chroma=0.15, soft_focus=0.1, mist=0.08,
@@ -244,4 +244,4 @@ FILMS = {
 
 
 # Shipped in the app. The other recipes stay here for later, after these four are proven.
-SHIP = ["mellow400", "cinema400", "tokyo_blue", "night_bloom"]
+SHIP = ["mellow400", "gold_memory", "cinema400", "vivid100", "tokyo_blue", "kyoto_soft", "summer_green", "ccd2000", "flash_diary", "compact_chrome", "night_bloom", "dream1998"]

@@ -1,0 +1,64 @@
+{
+ "id": "compact_chrome",
+ "name": "Compact Chrome",
+ "zh": "隨身機鉻",
+ "series": "ccd",
+ "note": "數位隨身機：緊實的色彩、清晰的細節、冷暖分離。",
+ "lut": "luts/compact_chrome.cube",
+ "color": {
+  "lutAmount": 1.0,
+  "exposure": 0.0
+ },
+ "grain": {
+  "amount": 0.12,
+  "size": 0.0008,
+  "chroma": 0.3,
+  "rough": 0.1
+ },
+ "halation": {
+  "amount": 0.0,
+  "threshold": 0.82,
+  "radius": 0.012,
+  "tint": [
+   1.0,
+   0.32,
+   0.12
+  ]
+ },
+ "bloom": {
+  "amount": 0.0,
+  "threshold": 0.78,
+  "radius": 0.045
+ },
+ "diffusion": {
+  "softFocus": 0.0,
+  "mist": 0.0,
+  "radius": 0.006
+ },
+ "lens": {
+  "vignette": 0.15,
+  "vignetteSoft": 0.6,
+  "aberration": 0.1,
+  "edgeSoft": 0.0
+ },
+ "defects": {
+  "dust": 0.0,
+  "scratches": 0.0,
+  "leak": 0.0,
+  "leakColor": [
+   1.0,
+   0.45,
+   0.18
+  ],
+  "uneven": 0.0,
+  "drift": 0.0
+ },
+ "recipe": [
+  "影調曲線：18% 灰處斜率 1.14（加反差），黑位 0.010、白位肩部 0.995，曝光 +0.00 EV（線性光、不裁切）",
+  "飽和度（OKLab）：整體飽和 +0.08",
+  "分色 HSL：紅 色相+0° 飽和-0.05 亮度+0.00；橙 色相+0° 飽和+0.00 亮度+0.02；綠 色相+6° 飽和-0.10 亮度-0.02；藍 色相-4° 飽和+0.05 亮度-0.03；青 色相+0° 飽和+0.05 亮度+0.00",
+  "分離色調：暗部 240° × 0.017、高光 70° × 0.015",
+  "保護：中性白／灰、膚色色相、色域內壓縮（不爆色）",
+  "顆粒：強度 0.12、粒徑 0.80‰ 短邊、彩色 0.30、粗糙 0.10，中間調最強"
+ ]
+}
