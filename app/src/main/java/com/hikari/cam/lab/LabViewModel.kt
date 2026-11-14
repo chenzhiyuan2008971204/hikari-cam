@@ -17,6 +17,8 @@ import com.hikari.engine.FilterSpec
 import com.hikari.engine.LookRepository
 import com.hikari.engine.gl.OffscreenRenderer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
@@ -69,6 +71,7 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
     var previewAvgMs by mutableStateOf(0.0); private set
     var previewCount by mutableIntStateOf(0); private set
     var thumbsMs by mutableStateOf(0.0); private set
+    var lutLoadMs by mutableStateOf(0.0); private set
     var decodeMs by mutableStateOf(0.0); private set
     var export by mutableStateOf<ExportReport?>(null); private set
     var check by mutableStateOf<CheckReport?>(null); private set
@@ -95,6 +98,9 @@ class LabViewModel(app: Application) : AndroidViewModel(app) {
         // StateFlow is conflated: while one preview renders, slider moves collapse into the latest
         viewModelScope.launch { requests.filterNotNull().collect { renderPreview(it) } }
         viewModelScope.launch {
+            val t0 = System.nanoTime()
+            looks.map { spec -> async(Dispatchers.Default) { repo.lut(spec) } }.awaitAll()
+            lutLoadMs = ms(t0)
             renderer.maxTexture()
             gpu = renderer.gpuName
             loadChart()

@@ -119,4 +119,14 @@ class EngineTest {
         val (s2, t2) = m.apply(1f, 1f)
         assertEquals(0.1f, s2, 1e-6f); assertEquals(0.8f, t2, 1e-6f)
     }
+
+    @Test
+    fun fastDecimalParserMatchesToFloat() {
+        for (x in listOf("0", "1", "0.5", "-0.25", "0.0123", "1.0000", "+2.5", "1e-3", "-4.5E2", "0.99999994")) {
+            assertEquals(x, x.toFloat(), CubeLut.parseDecimal(x, 0, x.length), 1e-7f)
+        }
+        for (bad in listOf("", "-", ".", "1e", "abc", "1.2.3", "1x")) {
+            assertTrue(bad, CubeLut.parseDecimal(bad, 0, bad.length).isNaN())
+        }
+    }
 }

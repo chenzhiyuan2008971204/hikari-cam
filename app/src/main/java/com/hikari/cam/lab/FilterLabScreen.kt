@@ -62,6 +62,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -89,15 +91,15 @@ fun FilterLabScreen(vm: LabViewModel = viewModel()) {
     ) {
         // header
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Filter Lab", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-                Text(vm.source?.let { "${it.label} · ${it.fullW}×${it.fullH}" } ?: "", color = Dim, fontSize = 11.sp, maxLines = 1)
-            }
+            Text("Filter Lab", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             TextButton(onClick = { vm.loadChart() }) { Text("測試圖卡", color = Accent) }
             Button(onClick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
                 Text("匯入照片")
             }
         }
+        Text(vm.source?.let { "${it.label} · 原始 ${it.fullW}×${it.fullH} · 預覽 ${it.outW}×${it.outH}" } ?: "",
+            color = Dim, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp))
         if (vm.busy != null) {
             LinearProgressIndicator(Modifier.fillMaxWidth(), color = Accent)
             Text(vm.busy ?: "", color = Accent, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 12.dp))
@@ -109,6 +111,8 @@ fun FilterLabScreen(vm: LabViewModel = viewModel()) {
             val p = vm.preview
             if (s != null && p != null) CompareView(s.original, p)
         }
+        Text("在圖上左右拖曳＝分割比較（拖回最左結束）　按住＝看原圖", color = Dim, fontSize = 10.sp,
+            modifier = Modifier.fillMaxWidth().padding(top = 2.dp), textAlign = TextAlign.Center)
 
         // filter strip with real thumbnails
         LazyRow(
@@ -213,10 +217,6 @@ private fun CompareView(original: Bitmap, effect: Bitmap) {
                 Text("原圖", color = Color.White, fontSize = 12.sp, modifier = label)
             }
         }
-        Text(
-            if (divider <= 0f) "左右拖曳＝分割比較　按住＝看原圖" else "分割比較中（拖到最左恢復）",
-            color = Dim, fontSize = 10.sp, modifier = Modifier.align(Alignment.BottomCenter).padding(2.dp),
-        )
     }
 }
 
@@ -317,6 +317,7 @@ private fun PerfPanel(vm: LabViewModel) {
             line("預覽渲染 上次 ${"%.1f".format(vm.lastPreviewWallMs)} ms，近 20 次平均 ${"%.1f".format(vm.previewAvgMs)} ms（共 ${vm.previewCount} 次）")
             line("  上傳 ${"%.1f".format(t.uploadMs)}  光暈 ${"%.1f".format(t.glowMs)}  合成+讀回 ${"%.1f".format(t.compositeMs)} ms")
         }
+        line("LUT 載入 ${vm.looks.size} 個共 ${"%.0f".format(vm.lutLoadMs)} ms（啟動時一次）")
         line("縮圖     ${vm.looks.size} 款共 ${"%.0f".format(vm.thumbsMs)} ms")
         if (vm.decodeMs > 0) line("預覽解碼 ${"%.0f".format(vm.decodeMs)} ms")
         vm.export?.let { e ->

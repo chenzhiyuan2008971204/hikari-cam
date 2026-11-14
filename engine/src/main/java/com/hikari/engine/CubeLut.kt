@@ -44,9 +44,48 @@ class CubeLut(val size: Int, val data: FloatArray, val domainMin: FloatArray, va
                 val start = i
                 while (i < line.length && !line[i].isWhitespace()) i++
                 if (start == i) return false
-                out[at + k] = line.substring(start, i).toFloatOrNull() ?: return false
+                val f = parseDecimal(line, start, i)
+                if (f.isNaN()) return false
+                out[at + k] = f
             }
             return true
+        }
+
+        /**
+         * Plain decimal ("-0.1234", "1", "1e-3") without allocating; NaN if it is not one.
+         * String.toFloatOrNull validates with a regex on Android/JVM and was most of the LUT load time.
+         */
+        internal fun parseDecimal(s: String, from: Int, to: Int): Float {
+            var i = from
+            var neg = false
+            if (i < to && (s[i] == '-' || s[i] == '+')) { neg = s[i] == '-'; i++ }
+            var mant = 0L
+            var digits = 0
+            var scale = 0
+            var seenDot = false
+            while (i < to) {
+                val c = s[i]
+                if (c in '0'..'9') {
+                    if (digits < 18) { mant = mant * 10 + (c - '0'); digits++; if (seenDot) scale-- }
+                    else if (!seenDot) scale++
+                } else if (c == '.' && !seenDot) seenDot = true
+                else break
+                i++
+            }
+            if (digits == 0) return Float.NaN
+            if (i < to && (s[i] == 'e' || s[i] == 'E')) {
+                i++
+                var eneg = false
+                if (i < to && (s[i] == '-' || s[i] == '+')) { eneg = s[i] == '-'; i++ }
+                var e = 0
+                var ed = 0
+                while (i < to && s[i] in '0'..'9') { e = e * 10 + (s[i] - '0'); i++; ed++ }
+                if (ed == 0) return Float.NaN
+                scale += if (eneg) -e else e
+            }
+            if (i != to) return Float.NaN
+            val v = mant.toDouble() * Math.pow(10.0, scale.toDouble())
+            return (if (neg) -v else v).toFloat()
         }
     }
 }
