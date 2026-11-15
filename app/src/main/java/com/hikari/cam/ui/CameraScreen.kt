@@ -508,7 +508,11 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                     temp = adjust.temperature, tint = adjust.tint,
                     onTempTint = { t, g -> app.updateSettings { it.copy(cameraAdjustJson = adjust.copy(temperature = t, tint = g).toJson()) } },
                     onCommit = {},
-                    preset = wb, onPreset = { p -> wb = p; vm.controller.setWhiteBalance(p.mode) },
+                    // choosing a preset moves the dot to the preset and clears the fine adjustment
+                    preset = wb, onPreset = { p ->
+                        wb = p; vm.controller.setWhiteBalance(p.mode)
+                        app.updateSettings { it.copy(cameraAdjustJson = adjust.copy(temperature = 0f, tint = 0f).toJson()) }
+                    },
                     stamp = settings.dateStamp, note = settings.stampNote,
                     onStamp = { v -> app.updateSettings { it.copy(dateStamp = v) } },
                     onNote = { v -> app.updateSettings { it.copy(stampNote = v) } },

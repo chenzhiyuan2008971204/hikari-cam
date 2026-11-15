@@ -47,12 +47,15 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 
-/** White-balance presets: the camera's own AWB modes. */
-enum class WbPreset(val label: String, val mode: Int) {
-    AUTO("A", CameraMetadata.CONTROL_AWB_MODE_AUTO),
-    DAYLIGHT("☀", CameraMetadata.CONTROL_AWB_MODE_DAYLIGHT),
-    CLOUDY("☁", CameraMetadata.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT),
-    TUNGSTEN("💡", CameraMetadata.CONTROL_AWB_MODE_INCANDESCENT),
+/**
+ * White-balance presets: the camera's own AWB modes, and where each sits on the colour pad
+ * (temperature axis, -1..1 = 3000K..8000K): daylight 5500K, cloudy 6500K, tungsten 3200K.
+ */
+enum class WbPreset(val label: String, val mode: Int, val base: Float) {
+    AUTO("A", CameraMetadata.CONTROL_AWB_MODE_AUTO, 0f),
+    DAYLIGHT("☀", CameraMetadata.CONTROL_AWB_MODE_DAYLIGHT, 0f),
+    CLOUDY("☁", CameraMetadata.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT, 0.4f),
+    TUNGSTEN("💡", CameraMetadata.CONTROL_AWB_MODE_INCANDESCENT, -0.92f),
 }
 
 /** Temperature adjustment (-1..1, + = warmer picture) shown as Kelvin the way film apps label it. */
@@ -64,7 +67,9 @@ fun tintLabel(tint: Float) = "${(tint * 50).roundToInt()}"
  * (magenta..green). The dot is where the picture's adjustment sits; drag or tap to move it.
  */
 @Composable
-fun WhiteBalancePad(temp: Float, tint: Float, onChange: (Float, Float) -> Unit, onCommit: () -> Unit, modifier: Modifier = Modifier) {
+fun WhiteBalancePad(temp: Float, tint: Float, onChange: (Float, Float) -> Unit, onCommit: () -> Unit, modifier: Modifier = Modifier,
+                    /** double tap: back to the start position (the chosen preset; the centre for auto) */
+                    onReset: () -> Unit = { onChange(0f, 0f) }) {
     fun update(p: Offset, w: Float, h: Float) {
         val t = ((p.x / w) * 2f - 1f).coerceIn(-1f, 1f)
         val g = (1f - (p.y / h) * 2f).coerceIn(-1f, 1f)
@@ -83,7 +88,7 @@ fun WhiteBalancePad(temp: Float, tint: Float, onChange: (Float, Float) -> Unit, 
                 .pointerInput(Unit) {
                     detectTapGestures(
                         // double tap: back to neutral (centre)
-                        onDoubleTap = { onChange(0f, 0f); onCommit() },
+                        onDoubleTap = { onReset(); onCommit() },
                         onTap = { p -> update(p, size.width.toFloat(), size.height.toFloat()); onCommit() },
                     )
                 }
@@ -119,7 +124,11 @@ fun TonePanel(
             Text("%+.1f EV".format(evIndex * evStep), color = Color(0xFFAAAAAA), fontSize = 11.sp, modifier = Modifier.width(52.dp))
         }
         Row(verticalAlignment = Alignment.Bottom) {
-            WhiteBalancePad(temp, tint, onTempTint, onCommit, Modifier.weight(1f))
+            // the dot shows the preset's own position plus the user's fine adjustment on top of it
+            val b = preset.base
+            WhiteBalancePad((temp + b).coerceIn(-1f, 1f), tint,
+                { t, g -> onTempTint(((t - b) * 100).roundToInt() / 100f, g) }, onCommit, Modifier.weight(1f),
+                onReset = { onTempTint(0f, 0f) })
             Row(Modifier.padding(start = 10.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 for (p in WbPreset.entries) Box(
                     Modifier.size(36.dp).clip(CircleShape)
