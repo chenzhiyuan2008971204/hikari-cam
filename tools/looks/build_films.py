@@ -18,7 +18,9 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 ASSETS = os.path.join(ROOT, "engine/src/main/assets")
 
 
-HUE_ZH = dict(red="紅", orange="橙", yellow="黃", green="綠", aqua="青", blue="藍", purple="紫", magenta="洋紅")
+HUE_ZH = dict(red="紅", orange="橙", yellow="黃", green="綠", aqua="青", blue="藍", purple="紫", magenta="洋紅",
+              skin="膚色", amber="琥珀", lime="黃綠", teal="藍綠", cyan="青", sky="天藍")
+SEL_ZH = dict(reds="紅", yellows="黃", greens="綠", cyans="青", blues="藍", magentas="洋紅", whites="白", neutrals="中性灰", blacks="黑")
 
 
 def recipe(c, fx):
@@ -41,6 +43,24 @@ def recipe(c, fx):
     if hsl:
         parts = [f"{HUE_ZH.get(k, k)} 色相{h:+.0f}° 飽和{s:+.2f} 亮度{l:+.2f}" for k, (h, s, l) in hsl.items()]
         out.append("分色 HSL：" + "；".join(parts))
+    hd = c.get("hsl_dark", {})
+    if hd:
+        out.append("暗部 HSL（深綠／深藍分開處理）：" + "；".join(
+            f"{HUE_ZH.get(k, k)} 色相{h:+.0f}° 飽和{s:+.2f} 亮度{l:+.2f}" for k, (h, s, l) in hd.items()))
+    cc = c.get("chroma_cap", {})
+    if cc:
+        out.append("色度上限（不螢光）：" + "、".join(f"{HUE_ZH.get(k, k)} {v:.2f}" for k, v in cc.items()))
+    if c.get("hl_rolloff"):
+        k, a = c["hl_rolloff"]
+        out.append(f"高光色彩滾降：亮度 {k:.2f} 起漸淡 {a:.0%}（雲與白牆乾淨不泛黃）")
+    sel = c.get("selective", {})
+    if sel:
+        out.append("可選顏色：" + "；".join(f"{SEL_ZH.get(k, k)} C{v[0]:+.2f} M{v[1]:+.2f} Y{v[2]:+.2f} K{v[3]:+.2f}"
+                                       for k, v in sel.items()))
+    if c.get("rgb_curves"):
+        out.append("獨立 RGB 曲線：" + "、".join(k.upper() for k in c["rgb_curves"]) + " 通道交叉")
+    if c.get("bands") == "fine":
+        out.append("色彩管理：sRGB → 線性光 → OKLab 工作空間 → 色域映射 → sRGB；12 色相區段")
     sp = c.get("split", {})
     if sp:
         out.append("分離色調：" + "、".join(f"{dict(shadows='暗部', mids='中間調', highlights='高光')[k]} {h:.0f}° × {a:.3f}"

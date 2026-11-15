@@ -32,6 +32,15 @@ private data class IconStyle(
 )
 
 private val STYLES = mapOf(
+    // Daylight Collection: pale canisters with a sky stripe, each with its own colour
+    "muted_chrome" to IconStyle(Color(0xFF8E959B), Color(0xFF3F4A54), Color(0xFFC9B48A), "MUTED", "CHROME"),
+    "street_negative" to IconStyle(Color(0xFF2E4A4F), Color(0xFFC4473A), Color(0xFFE6D6B8), "STREET", "NEG"),
+    "portrait_soft" to IconStyle(Color(0xFFF4E6DC), Color(0xFFE3A99A), Color(0xFFB7C9D6), "PORTRAIT", "SOFT", textColor = Color(0xFF5A3E36)),
+    "vivid_landscape" to IconStyle(Color(0xFF1F5FA8), Color(0xFF3E8E3A), Color(0xFFF2D24B), "VIVID", "LAND"),
+    "cine_daylight" to IconStyle(Color(0xFF3A4048), Color(0xFF6E8A8C), Color(0xFFD9B98C), "CINE", "DAY"),
+    "nostalgic_summer" to IconStyle(Color(0xFFE9C98A), Color(0xFFB8643A), Color(0xFF7FA7B8), "NOSTALGIC", "SUMMER", textColor = Color(0xFF4A2E1C)),
+    "clear_daylight" to IconStyle(Color(0xFFEAF3F8), Color(0xFF4FA3D9), Color(0xFF9FD18B), "CLEAR", "DAY", textColor = Color(0xFF1E4E6E)),
+    "summer400" to IconStyle(Color(0xFFF6D64A), Color(0xFF2CA6C9), Color(0xFFE2563A), "SUMMER", "400", textColor = Color(0xFF3A2A00)),
     "mellow400" to IconStyle(Color(0xFFEADCC8), Color(0xFFE29B74), Color(0xFFB8664A), "MELLOW", "400"),
     "gold_memory" to IconStyle(Color(0xFFF2C14E), Color(0xFFC8432B), Color(0xFF7A2418), "GOLD", "200"),
     "cinema400" to IconStyle(Color(0xFF2C2C30), Color(0xFFB8382F), Color(0xFFE8C25A), "CINEMA", "400T"),

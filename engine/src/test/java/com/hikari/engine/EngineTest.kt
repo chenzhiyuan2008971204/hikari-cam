@@ -12,11 +12,14 @@ import kotlin.math.roundToInt
 class EngineTest {
     private val assets = File("src/main/assets")
     private fun asset(p: String) = File(assets, p).readText()
+    private val DAYLIGHT = setOf("muted_chrome", "street_negative", "portrait_soft", "vivid_landscape",
+        "cine_daylight", "nostalgic_summer", "clear_daylight", "summer400")
     private val ids: List<String> = JSONArray(asset("filters/index.json")).let { a -> (0 until a.length()).map { a.getString(it) } }
 
     @Test
     fun shippedLooksParseAndTheirLutsLoad() {
-        assertEquals(12, ids.size)
+        assertEquals(20, ids.size)
+        assertEquals(8, ids.count { it in DAYLIGHT })
         for (id in ids) {
             val spec = FilterSpec.parse(asset("filters/$id.json"))
             assertEquals(id, spec.id)

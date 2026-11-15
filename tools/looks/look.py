@@ -7,12 +7,15 @@ the LUT; the app's shader does those, driven by the preset's `fx` values.
 Pipeline (each step is optional):
   1. exposure / white balance        linear light
   2. mono channel mixer              B&W from weighted linear RGB
-  3. per-hue hue / sat / lightness   OKLab, 8 hue anchors with smooth partition of unity
+  3. per-hue hue / sat / lightness   OKLab, 8 hue anchors (12 with bands="fine") with smooth
+                                     partition of unity; hsl_dark adds a table for dark tones;
+                                     chroma_cap per band; hl_rolloff thins colour toward white
   4. saturation, vibrance            OKLab chroma
   5. tone curve                      on lightness, points given in display (gray sRGB) values
   6. saturation by brightness        desaturate shadows / highlights like film
   7. split toning                    OKLab a/b offsets for shadows, mids, highlights
   8. gamut map to sRGB               soft pull toward same-luminance grey (closed form)
+  8b. selective colour               CMYK-style per family (reds .. blacks), display RGB
   9. per-channel RGB curves          film crossover, in display values
  10. output levels                   black point lift (fade) and white cap, per channel
 Near-white is kept neutral by `clean` (0..1, default 0.85) so toned looks still have clean whites.
@@ -30,19 +33,82 @@ ANCHORS = {
 _NAMES = list(ANCHORS)
 _ANG = np.array([ANCHORS[n] for n in _NAMES], float)
 
+# Finer bands for the daylight looks (look["bands"] == "fine"): skies need cyan, sky blue and deep
+# blue apart, foliage needs yellow-green, grass green and blue-green apart. OKLab hue angles,
+# placed from measured daylight subjects: skin 45-65, dry grass / yellow-green 105-122,
+# sunlit foliage 125-140, conifer / blue-green 150-175, clear sky near the horizon 205-225,
+# zenith sky 235-250, saturated / deep blue 255-268.
+FINE = {
+    "red": 25, "skin": 55, "amber": 78, "yellow": 100, "lime": 118, "green": 138,
+    "teal": 165, "cyan": 200, "sky": 228, "blue": 252, "purple": 295, "magenta": 335,
+}
 
-def _hue_weights(h):
-    """Per-anchor weights (..., 8) that sum to 1, smooth across the circle."""
-    w = np.zeros(h.shape + (8,))
-    for i in range(8):
-        a0, a1 = _ANG[i], _ANG[(i + 1) % 8]
+
+def _band_weights(h, ang):
+    """Per-anchor weights (..., n) that sum to 1, smooth across the circle."""
+    n = len(ang)
+    w = np.zeros(h.shape + (n,))
+    for i in range(n):
+        a0, a1 = ang[i], ang[(i + 1) % n]
         span = (a1 - a0) % 360
         t = ((h - a0) % 360) / span
         inside = t <= 1
         s = np.where(inside, smoothstep(0, 1, t), 0)
         w[..., i] += np.where(inside, 1 - s, 0)
-        w[..., (i + 1) % 8] += s
+        w[..., (i + 1) % n] += s
     return w
+
+
+def _hue_weights(h):
+    return _band_weights(h, _ANG)
+
+
+def _bands(look):
+    """(names, weights function) for this look's hue bands."""
+    if look.get("bands") == "fine":
+        names = list(FINE)
+        ang = np.array([FINE[k] for k in names], float)
+        return names, lambda h: _band_weights(h, ang)
+    return _NAMES, _hue_weights
+
+
+def _soft_cap(C, cap):
+    """Chroma ceiling with a soft knee from 70 % of the cap: no hard edge, no neon."""
+    k = 0.7 * cap
+    over = np.maximum(C - k, 0)
+    room = np.maximum(cap - k, 1e-6)
+    return np.where(C > k, k + room * np.tanh(over / room), C)
+
+
+def selective(rgb, table):
+    """Photoshop-style selective colour in display RGB (absolute mode).
+
+    table: family -> (cyan, magenta, yellow, black), each -1..1. A family's weight per pixel is how
+    strongly the pixel belongs to it (reds: R above the other two, whites: all channels high, ...).
+    + cyan lowers R, + magenta lowers G, + yellow lowers B, + black lowers all three.
+    """
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    mx = np.maximum(np.maximum(r, g), b)
+    mn = np.minimum(np.minimum(r, g), b)
+    mid = r + g + b - mx - mn
+    fam = {
+        "reds": np.where(r == mx, mx - mid, 0),
+        "yellows": np.where(b == mn, mid - mn, 0),
+        "greens": np.where(g == mx, mx - mid, 0),
+        "cyans": np.where(r == mn, mid - mn, 0),
+        "blues": np.where(b == mx, mx - mid, 0),
+        "magentas": np.where(g == mn, mid - mn, 0),
+        "whites": np.clip((mn - 0.5) * 2, 0, 1) * (1 - np.clip((mx - mn) * 4, 0, 1)),
+        "neutrals": (1 - np.clip((mx - mn) * 3, 0, 1)) * (1 - np.abs(mx + mn - 1)),
+        "blacks": np.clip((0.5 - mx) * 2, 0, 1),
+    }
+    out = rgb.copy()
+    for k, (c, m, y, kk) in table.items():
+        w = fam[k]
+        out[..., 0] -= w * (c + kk) * np.where(c + kk > 0, out[..., 0], 1 - out[..., 0])
+        out[..., 1] -= w * (m + kk) * np.where(m + kk > 0, out[..., 1], 1 - out[..., 1])
+        out[..., 2] -= w * (y + kk) * np.where(y + kk > 0, out[..., 2], 1 - out[..., 2])
+    return np.clip(out, 0, 1)
 
 
 def _disp_to_L(v):
@@ -92,11 +158,21 @@ def apply(look, rgb):
 
     # 3. per-hue adjustments: name -> (hue shift deg, sat delta, lightness delta)
     hsl = look.get("hsl", {})
-    if hsl and mono is None:
-        tab = np.array([hsl.get(n, (0, 0, 0)) for n in _NAMES], float)
-        w = _hue_weights(h)
-        dh, ds, dl = (w @ tab[:, 0]), (w @ tab[:, 1]), (w @ tab[:, 2])
+    hsl_dark = look.get("hsl_dark", {})
+    names, weights = _bands(look)
+    if (hsl or hsl_dark) and mono is None:
+        w = weights(h)
         colourful = smoothstep(0.015, 0.08, C)
+        # dark tones (deep foliage, deep sky) get their own table on top of the main one
+        dark = 1 - smoothstep(0.40, 0.66, L)
+        dh = np.zeros_like(h); ds = np.zeros_like(h); dl = np.zeros_like(h)
+        for tbl, wt in ((hsl, 1.0), (hsl_dark, dark)):
+            if not tbl:
+                continue
+            tab = np.array([tbl.get(n, (0, 0, 0)) for n in names], float)
+            dh = dh + (w @ tab[:, 0]) * wt
+            ds = ds + (w @ tab[:, 1]) * wt
+            dl = dl + (w @ tab[:, 2]) * wt
         h = (h + dh * colourful) % 360
         C = C * np.clip(1 + ds, 0, None)
         L = L + dl * colourful * 0.25
@@ -130,6 +206,21 @@ def apply(look, rgb):
         m = C / np.maximum(C_in, 1e-9)
         room = 1 - smoothstep(0.55, 1.0, edge)
         C = np.where(m > 1, C_in * (1 + (m - 1) * room), C)
+
+    # per-band chroma ceilings: skies and foliage stay rich without turning fluorescent
+    caps = look.get("chroma_cap")
+    if caps:
+        w = weights(h)
+        # harmonic blend between bands, so an unlimited neighbour does not wash out a band's ceiling
+        cap = 1.0 / (w @ (1.0 / np.array([caps.get(n, 1.0) for n in names], float)))
+        C = np.minimum(C, _soft_cap(C, cap))
+
+    # highlight chroma roll-off: colour thins out smoothly as it nears white (clouds, white walls
+    # keep detail and never turn yellow or grey)
+    hr = look.get("hl_rolloff")
+    if hr:
+        knee, amount = hr
+        C = C * (1 - amount * smoothstep(knee, 1.0, L))
 
     a = C * np.cos(np.radians(h))
     b = C * np.sin(np.radians(h))
@@ -173,6 +264,10 @@ def apply(look, rgb):
     # 8. back to sRGB without hue skew
     lin = gamut_map(np.stack([L, a, b], -1))
     out = linear_to_srgb(lin)
+
+    # 8b. selective colour (display RGB, per colour family)
+    if look.get("selective"):
+        out = selective(out, look["selective"])
 
     # 9. per-channel curves in display values
     for i, ch in enumerate("rgb"):

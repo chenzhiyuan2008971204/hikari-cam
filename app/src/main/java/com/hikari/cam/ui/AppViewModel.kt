@@ -28,6 +28,7 @@ sealed interface Route {
     data object Settings : Route
     data class Editor(val uri: Uri, val lookId: String? = null) : Route
     data object Lab : Route
+    data object DaylightLab : Route
 }
 
 /** State shared by every screen: settings, favourites, recents, presets and look thumbnails. */

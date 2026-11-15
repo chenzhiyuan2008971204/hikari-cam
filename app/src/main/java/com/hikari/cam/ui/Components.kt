@@ -62,7 +62,7 @@ fun HikariTheme(content: @Composable () -> Unit) {
     )
 }
 
-val SERIES_ZH = mapOf("film" to "Film 底片", "japanese" to "Japanese 日系", "ccd" to "CCD 數位", "special" to "Special 特殊")
+val SERIES_ZH = mapOf("daylight" to "Daylight 日光系列", "film" to "Film 底片", "japanese" to "Japanese 日系", "ccd" to "CCD 數位", "special" to "Special 特殊")
 
 /** One adjustable parameter: [get] shows the look's own value when the user has not changed it. */
 class Param(

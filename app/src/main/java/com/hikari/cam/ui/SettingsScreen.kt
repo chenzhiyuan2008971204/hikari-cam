@@ -67,6 +67,13 @@ fun SettingsScreen(app: AppViewModel, rawSupported: Boolean?) {
 
         HorizontalDivider(Modifier.padding(vertical = 12.dp), color = HikariColors.Line)
         SectionTitle("濾鏡品質工具")
+        Row(Modifier.fillMaxWidth().clickable { app.go(Route.DaylightLab) }.padding(16.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text("Daylight Filter Lab", color = Color.White)
+                Text("同一組白天測試照片（天空、樹木、街道、建築、白衣、人像、逆光）比較日光系列 8 款", color = HikariColors.Dim, fontSize = 12.sp)
+            }
+            Text("›", color = HikariColors.Dim, fontSize = 20.sp)
+        }
         Row(Modifier.fillMaxWidth().clickable { app.go(Route.Lab) }.padding(16.dp)) {
             Column(Modifier.weight(1f)) {
                 Text("Filter Lab", color = Color.White)
