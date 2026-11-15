@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
@@ -52,6 +53,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun HikariAppUi(app: AppViewModel = viewModel()) {
     // pages cross-fade; full-screen pages (editor, lab) fade over the tabs
+    // look thumbnails come from the real engine on the chosen standard photo
+    val settings = app.settings.collectAsState().value
+    androidx.compose.runtime.LaunchedEffect(settings.thumbScene) { app.loadThumbs(settings.thumbScene) }
     Crossfade(targetState = app.route, animationSpec = tween(220), label = "route") { r -> RouteContent(app, r) }
 }
 

@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ fun FiltersScreen(app: AppViewModel) {
     val favorites by app.favorites.collectAsState()
     val recents by app.recents.collectAsState()
     val presets by app.presets.collectAsState()
+    val settings by app.settings.collectAsState()
     var detail by remember { mutableStateOf<FilterSpec?>(null) }
     var pendingLook by remember { mutableStateOf<String?>(null) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -51,17 +53,31 @@ fun FiltersScreen(app: AppViewModel) {
     }
 
     LazyColumn(Modifier.fillMaxSize()) {
-        item { Text("Filters", color = Color.White, fontSize = 22.sp, modifier = Modifier.padding(16.dp)) }
+        item { Text("Filters", color = Color.White, fontSize = 22.sp, modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 6.dp)) }
+        // every thumbnail is the real filter on the same standard photo; pick which photo here
+        item {
+            Text("預覽照片（所有縮圖都是用正式濾鏡引擎在同一張照片上算出來的）", color = HikariColors.Dim, fontSize = 11.sp,
+                modifier = Modifier.padding(horizontal = 16.dp))
+            Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                for (sm in app.samples) {
+                    val on = sm.id == settings.thumbScene
+                    Text(sm.zh, color = if (on) Color.Black else Color.White, fontSize = 12.sp,
+                        modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (on) HikariColors.Accent else Color(0xFF222222))
+                            .clickable { app.updateSettings { it.copy(thumbScene = sm.id) } }.padding(horizontal = 10.dp, vertical = 5.dp))
+                }
+            }
+        }
         if (recents.isNotEmpty()) {
             item { SectionTitle("最近使用") }
             item {
-                LookStrip(recents.map { app.look(it) }, emptyMap(), null, favorites, { detail = it }, size = 72)
+                LookStrip(recents.map { app.look(it) }, app.thumbs, null, favorites, { detail = it }, size = 72)
             }
         }
         if (favorites.isNotEmpty()) {
             item { SectionTitle("收藏") }
             item {
-                LookStrip(app.looks.filter { it.id in favorites }, emptyMap(), null, favorites, { detail = it }, size = 72)
+                LookStrip(app.looks.filter { it.id in favorites }, app.thumbs, null, favorites, { detail = it }, size = 72)
             }
         }
         if (presets.isNotEmpty()) {
@@ -91,8 +107,18 @@ fun FiltersScreen(app: AppViewModel) {
             title = { Text("${spec.name}　${spec.zh}") },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
-                    FilmIcon(spec, 120.dp, Modifier.align(Alignment.CenterHorizontally))
+                    // the look on several standard scenes, rendered now by the engine
+                    val previews by androidx.compose.runtime.produceState(emptyList<Pair<String, android.graphics.Bitmap>>(), spec.id) { value = app.scenePreviews(spec) }
+                    if (previews.isEmpty()) Text("正在用濾鏡引擎算繪預覽…", color = HikariColors.Dim, fontSize = 11.sp)
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        for ((name, bmp) in previews) Column {
+                            Image(bmp.asImageBitmap(), name, Modifier.size(width = 200.dp, height = 140.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
+                            Text(name, color = HikariColors.Dim, fontSize = 10.sp)
+                        }
+                    }
                     Text(spec.note, color = Color.White, fontSize = 13.sp, modifier = Modifier.padding(vertical = 8.dp))
+                    if (spec.inspired.isNotEmpty()) Text("原創配方，色彩靈感來自 ${spec.inspired} 這一類底片模擬的風格（非官方演算法）", color = HikariColors.Dim, fontSize = 11.sp,
+                        modifier = Modifier.padding(bottom = 6.dp))
                     for (line in spec.recipe) Text("• $line", color = HikariColors.Dim, fontSize = 11.sp, modifier = Modifier.padding(vertical = 1.dp))
                 }
             },
@@ -119,7 +145,9 @@ private fun LookRow(spec: FilterSpec, favorite: Boolean, app: AppViewModel, onCl
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Box(Modifier.size(88.dp).clip(RoundedCornerShape(14.dp)).background(HikariColors.Panel), contentAlignment = Alignment.Center) {
-            FilmIcon(spec, 76.dp)
+            val b = app.thumbs[spec.id]
+            if (b != null) Image(remember(b) { b.asImageBitmap() }, spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            else FilmIcon(spec, 76.dp)
         }
         Column(Modifier.weight(1f)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -108,6 +108,16 @@ class CameraController(private val context: Context) {
                 .build())
     }
 
+    /** Test source that plays the bundled photos through the normal preview / analysis / capture path. */
+    private var virtualCam: VirtualCamera? = null
+    private var virtualIndex = 0
+    private var virtualLens = -1
+    val isVirtual get() = virtualCam != null
+
+    /** A small upright frame of what the camera sees, about every 1.5 s (main thread), for scene analysis. */
+    @Volatile var onScene: ((com.hikari.vision.Frame) -> Unit)? = null
+    private var lastScene = 0L
+
     /** Live subject updates for composition guidance (main thread); null = no subject found. */
     @Volatile var onSubject: ((Subject?) -> Unit)? = null
 
@@ -140,10 +150,30 @@ class CameraController(private val context: Context) {
                      /** report the streaming physical lens (only on phones with a multi-lens logical camera) */
                      trackPhysical: Boolean = false,
                      /** which camera screen asked; only that screen's [unbind] releases the camera */
-                     owner2: Any? = null): CameraCaps {
+                     owner2: Any? = null,
+                     /** play the bundled test photos instead of opening a camera */
+                     virtual: Boolean = false): CameraCaps {
         bindOwner = owner2
         renderer = r
         direct?.close(); direct = null
+        virtualCam?.close(); virtualCam = null
+        if (virtual) {
+            runCatching { provider?.unbindAll() }
+            camera = null; preview = null; capture = null; analysis = null
+            var waited = 0
+            while (surfaceTexture == null && waited < 80) { kotlinx.coroutines.delay(100); waited++ }
+            val st = surfaceTexture ?: error("預覽尚未就緒")
+            // the flip button steps to the next test photo
+            if (virtualLens != -1 && lens != virtualLens) virtualIndex++
+            virtualLens = lens
+            facing = CameraSelector.LENS_FACING_BACK
+            val v = VirtualCamera(context)
+            v.onFrame = { bmp -> analyzeBitmap(bmp) }
+            v.start(st, r, virtualIndex)
+            virtualCam = v
+            return CameraCaps(false, Range(0, 0), 0f, 1f, 1f, false, hasFront = true, hasBack = true, focus = false,
+                report = "虛擬相機（測試用）：${v.current.zh} · ${v.current.source}").also { caps = it }
+        }
         val p = provider ?: suspendCancellableCoroutine<ProcessCameraProvider> { cont ->
             val f = ProcessCameraProvider.getInstance(context)
             f.addListener({ runCatching { f.get() }.onSuccess { cont.resume(it) }.onFailure { cont.resumeWithException(it) } }, main)
@@ -321,14 +351,35 @@ class CameraController(private val context: Context) {
     private fun analyze(image: androidx.camera.core.ImageProxy) {
         val media = image.image
         val now = System.currentTimeMillis()
-        if (media == null || onSubject == null || now - lastAnalysis < 120) { image.close(); return }
+        if (media == null || (onSubject == null && onScene == null) || now - lastAnalysis < 120) { image.close(); return }
         lastAnalysis = now
         val rot = image.imageInfo.rotationDegrees
         val uw = if (rot % 180 == 0) image.width else image.height
         val uh = if (rot % 180 == 0) image.height else image.width
         val crop = renderer?.cropAspect ?: 0.75f
         val mirror = facing == CameraSelector.LENS_FACING_FRONT
-        val input = com.google.mlkit.vision.common.InputImage.fromMediaImage(media, rot)
+        if (onScene != null && now - lastScene > 1500) {
+            lastScene = now
+            runCatching { yuvFrame(image) }.getOrNull()?.let { fr -> main.execute { onScene?.invoke(fr) } }
+        }
+        if (onSubject == null) { image.close(); return }
+        detect(com.google.mlkit.vision.common.InputImage.fromMediaImage(media, rot), uw, uh, crop, mirror) { image.close() }
+    }
+
+    /** A frame from the virtual camera: same detectors, same mapping, same callbacks as a real frame. */
+    private fun analyzeBitmap(bmp: android.graphics.Bitmap) {
+        val now = System.currentTimeMillis()
+        if (onScene != null && now - lastScene > 1500) {
+            lastScene = now
+            val fr = com.hikari.cam.smart.Smart.frame(bmp, 160)
+            main.execute { onScene?.invoke(fr) }
+        }
+        if (onSubject == null || now - lastAnalysis < 120) { bmp.recycle(); return }
+        lastAnalysis = now
+        detect(com.google.mlkit.vision.common.InputImage.fromBitmap(bmp, 0), bmp.width, bmp.height, renderer?.cropAspect ?: 0.75f, false) { bmp.recycle() }
+    }
+
+    private fun detect(input: com.google.mlkit.vision.common.InputImage, uw: Int, uh: Int, crop: Float, mirror: Boolean, done: () -> Unit) {
         val objTask = detector.process(input)
         val faceTask = faceDetector.process(input)
         com.google.android.gms.tasks.Tasks.whenAllComplete(objTask, faceTask)
@@ -348,7 +399,31 @@ class CameraController(private val context: Context) {
                 } else boxes.maxByOrNull { it.w * it.h }
                 onSubject?.invoke(subject)
             }
-            .addOnCompleteListener { image.close() }
+            .addOnCompleteListener { done() }
+    }
+
+    /** The camera's YUV frame, subsampled to about 160 px and turned upright, as an sRGB analysis frame. */
+    private fun yuvFrame(image: androidx.camera.core.ImageProxy): com.hikari.vision.Frame {
+        val w = image.width; val h = image.height; val rot = image.imageInfo.rotationDegrees
+        val yP = image.planes[0]; val uP = image.planes[1]; val vP = image.planes[2]
+        val yB = yP.buffer; val uB = uP.buffer; val vB = vP.buffer
+        val step = maxOf(1, maxOf(w, h) / 160)
+        val sw = w / step; val sh = h / step
+        val ow = if (rot % 180 == 0) sw else sh; val oh = if (rot % 180 == 0) sh else sw
+        val out = FloatArray(ow * oh * 3)
+        for (oy in 0 until oh) for (ox in 0 until ow) {
+            // upright output pixel -> sensor pixel
+            val (sx, sy) = when (rot) { 90 -> oy to (sh - 1 - ox); 180 -> (sw - 1 - ox) to (sh - 1 - oy); 270 -> (sw - 1 - oy) to ox; else -> ox to oy }
+            val px = sx * step; val py = sy * step
+            val y = (yB.get(py * yP.rowStride + px * yP.pixelStride).toInt() and 255).toFloat()
+            val u = (uB.get((py / 2) * uP.rowStride + (px / 2) * uP.pixelStride).toInt() and 255) - 128f
+            val v = (vB.get((py / 2) * vP.rowStride + (px / 2) * vP.pixelStride).toInt() and 255) - 128f
+            val i = (oy * ow + ox) * 3
+            out[i] = ((y + 1.402f * v) / 255f).coerceIn(0f, 1f)
+            out[i + 1] = ((y - 0.344f * u - 0.714f * v) / 255f).coerceIn(0f, 1f)
+            out[i + 2] = ((y + 1.772f * u) / 255f).coerceIn(0f, 1f)
+        }
+        return com.hikari.vision.Frame(ow, oh, out)
     }
 
     /** Upright analysis-frame pixels -> fractions of the centre-cropped, maybe mirrored preview. */
@@ -372,6 +447,7 @@ class CameraController(private val context: Context) {
     fun unbind(owner: Any? = null) {
         if (owner != null && bindOwner !== owner) return
         direct?.close(); direct = null
+        virtualCam?.close(); virtualCam = null
         orientation.disable()
         provider?.unbindAll()
         camera = null
@@ -453,6 +529,7 @@ class CameraController(private val context: Context) {
     /** Takes the full-resolution photo into [jpeg]; with RAW enabled also writes a DNG to the gallery. */
     suspend fun takePicture(jpeg: File): Shot {
         direct?.let { it.takePicture(jpeg); return Shot(jpeg, null) }
+        virtualCam?.let { v -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { v.takePicture(jpeg) }; return Shot(jpeg, null) }
         val ic = capture ?: error("相機尚未就緒")
         val jpegOpts = ImageCapture.OutputFileOptions.Builder(jpeg)
             .setMetadata(ImageCapture.Metadata().apply { isReversedHorizontal = facing == CameraSelector.LENS_FACING_FRONT })

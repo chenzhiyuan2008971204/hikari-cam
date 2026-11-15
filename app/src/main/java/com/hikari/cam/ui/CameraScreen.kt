@@ -271,11 +271,11 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         onDispose { if (vm.controller.onActivePhysical === cb) vm.controller.onActivePhysical = null }
     }
     LaunchedEffect(lensMsg) { if (lensMsg != null) { delay(3500); lensMsg = null } }
-    LaunchedEffect(lens, settings.saveRaw, settings.naturalDetail, lensOpt) {
+    LaunchedEffect(lens, settings.saveRaw, settings.naturalDetail, lensOpt, settings.virtualCamera) {
         val opt = lensOpt.takeIf { lens == CameraSelector.LENS_FACING_BACK }
         val c = try {
             vm.controller.bind(owner, r, lens, settings.saveRaw, settings.naturalDetail, opt,
-                trackPhysical = false, owner2 = screenToken)
+                trackPhysical = false, owner2 = screenToken, virtual = settings.virtualCamera)
         } catch (e: Throwable) {
             android.util.Log.w("HikariCamera", "bind failed", e)
             if (opt != null) {
@@ -287,6 +287,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             cameraError = "無法開啟相機。\n這台裝置可能沒有可用的相機，或相機正被其他 App 使用。"
             return@LaunchedEffect
         }
+        if (settings.virtualCamera) lensMsg = "虛擬相機：正在播放內建測試照片（設定可關閉）"
         if (opt != null) lensMsg = "已切換：${opt.label(probe.first.firstOrNull()?.focal35)}（${opt.source}）"
         cameraError = null
         vm.onCaps(c)
@@ -388,6 +389,23 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     // the last target shown: the smart guide keeps it unless another point is clearly better
     val lastTarget = remember { arrayOfNulls<androidx.compose.ui.geometry.Offset>(1) }
     val guidance = if (guide != null) subject?.let { guidance(guide.id, it, lastTarget[0]) }?.also { lastTarget[0] = it.target } else null
+    // what the camera sees -> the three looks that suit it (measured scene x measured look traits)
+    var recs by remember { mutableStateOf<List<com.hikari.vision.Recommendation>>(emptyList()) }
+    var sceneLabel by remember { mutableStateOf("") }
+    val stableTop = remember { com.hikari.vision.StableTop() }
+    val lookTraits = remember { com.hikari.cam.smart.Smart.traits(app.looks) }
+    DisposableEffect(settings.recommend) {
+        if (!settings.recommend) { vm.controller.onScene = null; recs = emptyList(); return@DisposableEffect onDispose {} }
+        val cb: (com.hikari.vision.Frame) -> Unit = { fr ->
+            scope.launch(Dispatchers.Default) {
+                val scene = com.hikari.vision.SceneAnalyzer.analyze(fr)
+                val top = stableTop.update(com.hikari.vision.FilterRecommender.rank(scene, lookTraits))
+                withContext(Dispatchers.Main) { recs = top; sceneLabel = scene.top.take(2).joinToString("・") { it.zh } }
+            }
+        }
+        vm.controller.onScene = cb
+        onDispose { if (vm.controller.onScene === cb) vm.controller.onScene = null }
+    }
     var wasAligned by remember { mutableStateOf(false) }
     LaunchedEffect(guidance?.aligned) {
         val a = guidance?.aligned == true
@@ -446,9 +464,13 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             ) {
                 AndroidView({ glView }, Modifier.fillMaxSize())
                 cameraError?.let {
-                    Text("$it\n\n仍可在 Gallery 匯入照片套用濾鏡。", color = HikariColors.Dim, fontSize = 14.sp,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        modifier = Modifier.align(Alignment.Center).padding(24.dp))
+                    Column(Modifier.align(Alignment.Center).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("$it\n\n仍可在 Gallery 匯入照片套用濾鏡。", color = HikariColors.Dim, fontSize = 14.sp,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        Text("改用虛擬相機（內建測試照片）", color = Color.Black, fontSize = 13.sp,
+                            modifier = Modifier.padding(top = 14.dp).clip(RoundedCornerShape(18.dp)).background(HikariColors.Accent)
+                                .clickable { app.updateSettings { it.copy(virtualCamera = true) } }.padding(horizontal = 14.dp, vertical = 8.dp))
+                    }
                 }
                 if (settings.grid) Canvas(Modifier.fillMaxSize()) {
                     val c = Color(0x55FFFFFF)
@@ -509,9 +531,20 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                 if (panel >= 0) Box(Modifier.fillMaxWidth().background(Color(0xD9101010), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                     .padding(top = 4.dp)) {
             when (panel) {
-                0 -> LookStrip(app.looks, emptyMap(), look.id, favorites,
-                    onSelect = { s -> app.updateSettings { it.copy(lastLook = s.id) }; app.touch(s.id) },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), size = 56)
+                0 -> Column {
+                    if (recs.isNotEmpty()) Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(if (sceneLabel.isNotEmpty()) "推薦・$sceneLabel" else "推薦", color = HikariColors.Dim, fontSize = 10.sp)
+                        for (rc in recs) Text("${rc.look.name} ${rc.score}", color = if (rc.look.id == look.id) Color.Black else Color.White, fontSize = 11.sp,
+                            maxLines = 1, modifier = Modifier.clip(RoundedCornerShape(10.dp))
+                                .background(if (rc.look.id == look.id) HikariColors.Accent else Color(0xFF2A2A2A))
+                                .clickable { app.updateSettings { it.copy(lastLook = rc.look.id) }; app.touch(rc.look.id) }
+                                .padding(horizontal = 8.dp, vertical = 3.dp).testTag("rec"))
+                    }
+                    LookStrip(app.looks, app.thumbs, look.id, favorites,
+                        onSelect = { s -> app.updateSettings { it.copy(lastLook = s.id) }; app.touch(s.id) },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), size = 56)
+                }
                 1 -> CompositionStrip(guide?.id, { id -> app.updateSettings { it.copy(composition = id ?: "") } },
                     Modifier.fillMaxWidth().padding(vertical = 6.dp))
                 2 -> TonePanel(

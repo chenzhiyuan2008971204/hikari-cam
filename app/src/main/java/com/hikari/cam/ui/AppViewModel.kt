@@ -59,6 +59,56 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** cameras the phone shows to apps (Settings → 相機資訊) */
     var cameraReport by mutableStateOf("")
 
+    /**
+     * Look thumbnails: every look rendered by the real engine (same shaders and LUTs as capture
+     * and export) on one bundled standard photo, so they can be compared like for like.
+     */
+    val thumbs = androidx.compose.runtime.mutableStateMapOf<String, android.graphics.Bitmap>()
+    val samples by lazy { com.hikari.cam.smart.Samples.list(app) }
+    private var thumbJob: kotlinx.coroutines.Job? = null
+    private var thumbScene: String? = null
+
+    fun loadThumbs(sceneId: String) {
+        if (sceneId == thumbScene) return
+        thumbScene = sceneId
+        thumbJob?.cancel()
+        thumbJob = viewModelScope.launch {
+            val sample = samples.firstOrNull { it.id == sceneId } ?: samples.first()
+            val src = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val b = com.hikari.cam.smart.Samples.bitmap(getApplication(), sample)
+                // centre square, 256 px: the same crop, exposure and size for every look
+                val side = minOf(b.width, b.height)
+                val sq = android.graphics.Bitmap.createBitmap(b, (b.width - side) / 2, (b.height - side) / 2, side, side)
+                android.graphics.Bitmap.createScaledBitmap(sq, 256, 256, true)
+            }
+            hikari.renderer.forget("appthumbs")
+            for (spec in looks) {
+                val req = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.hikari.engine.gl.OffscreenRenderer.Request(spec, hikari.looks.lut(spec), Adjustments.DEFAULT, seed = 7f)
+                }
+                thumbs[spec.id] = hikari.renderer.render(src, req, 256, 256, cacheKey = "appthumbs")
+            }
+        }
+    }
+
+    /** One look on several standard scenes (sky, people, plants, city ...), rendered by the engine. */
+    suspend fun scenePreviews(spec: FilterSpec, ids: List<String> = listOf("sunny", "portrait", "foliage", "city", "overcast", "backlight")): List<Pair<String, android.graphics.Bitmap>> {
+        val out = ArrayList<Pair<String, android.graphics.Bitmap>>()
+        val req = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            com.hikari.engine.gl.OffscreenRenderer.Request(spec, hikari.looks.lut(spec), Adjustments.DEFAULT, seed = 7f)
+        }
+        for (id in ids) {
+            val sample = samples.firstOrNull { it.id == id } ?: continue
+            val src = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val b = com.hikari.cam.smart.Samples.bitmap(getApplication(), sample)
+                val s = 480f / maxOf(b.width, b.height)
+                android.graphics.Bitmap.createScaledBitmap(b, (b.width * s).toInt(), (b.height * s).toInt(), true)
+            }
+            out += sample.zh to hikari.renderer.render(src, req, src.width, src.height, cacheKey = null)
+        }
+        return out
+    }
+
     fun look(id: String?): FilterSpec = hikari.looks.look(id)
 
     fun go(r: Route) {

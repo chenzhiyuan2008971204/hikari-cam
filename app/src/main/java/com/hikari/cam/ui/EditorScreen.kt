@@ -6,6 +6,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -71,7 +76,8 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
     val favorites by app.favorites.collectAsState()
     val presets by app.presets.collectAsState()
     val settings by app.settings.collectAsState()
-    var tab by remember { mutableStateOf(0) } // 0 looks, 1 effects
+    var tab by remember { mutableStateOf(0) } // 0 looks, 1 effects, 2 smart
+    var pick by remember { mutableStateOf(0) } // which composition suggestion is drawn on the photo
     var showStrength by remember { mutableStateOf(false) }
     var naming by remember { mutableStateOf(false) }
     var showPresets by remember { mutableStateOf(false) }
@@ -101,7 +107,9 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
         Box(Modifier.fillMaxWidth().weight(1f).padding(horizontal = 10.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
             val o = vm.original
             val p = vm.preview
-            if (o != null && p != null) Box(Modifier.clip(RoundedCornerShape(14.dp))) { CompareView(o, p) }
+            if (o != null && p != null) Box(Modifier.clip(RoundedCornerShape(14.dp))) {
+                if (tab == 2) AnalysisView(p, vm.report?.suggestions?.getOrNull(pick)) else CompareView(o, p)
+            }
             // look name over the photo, like a print label
             Text(vm.look.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.TopCenter).padding(top = 18.dp)
@@ -143,6 +151,8 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
             }
             if (showStrength) RulerSlider(vm.adjust.strength, { vm.updateAdjust(vm.adjust.copy(strength = it)) }, { vm.commit() },
                 Modifier.fillMaxWidth().padding(horizontal = 24.dp))
+        } else if (tab == 2) {
+            SmartPanel(vm, pick, { pick = it }, { spec -> vm.selectLook(spec); app.touch(spec.id) })
         } else {
             AdjustSliders(
                 spec = vm.look, adjust = vm.adjust,
@@ -152,14 +162,14 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
         }
         // tabs
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            for ((i, label) in listOf("濾鏡", "效果").withIndex()) {
-                Column(Modifier.clickable { tab = i }.padding(horizontal = 22.dp, vertical = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            for ((i, label) in listOf("濾鏡", "效果", "智慧").withIndex()) {
+                Column(Modifier.clickable { tab = i }.padding(horizontal = 16.dp, vertical = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(Modifier.size(4.dp).clip(CircleShape).background(if (tab == i) HikariColors.Accent else Color.Transparent))
                     Text(label, color = if (tab == i) Color.White else Color(0xFF8A8A8A), fontSize = 13.sp,
                         fontWeight = if (tab == i) FontWeight.Bold else FontWeight.Normal)
                 }
             }
-            Text("預設", color = Color(0xFF8A8A8A), fontSize = 13.sp, modifier = Modifier.clickable { showPresets = true }.padding(horizontal = 22.dp))
+            Text("預設", color = Color(0xFF8A8A8A), fontSize = 13.sp, modifier = Modifier.clickable { showPresets = true }.padding(horizontal = 16.dp))
         }
     }
 
@@ -262,5 +272,106 @@ fun Toast(msg: String?, onDone: () -> Unit) {
         Text(msg, color = Color.White, modifier = Modifier
             .background(Color(0xE0303030), RoundedCornerShape(8.dp))
             .padding(horizontal = 14.dp, vertical = 8.dp))
+    }
+}
+
+
+private fun roleColor(role: String) = when (role) {
+    "thirds" -> Color(0x66FFFFFF)
+    "horizon" -> Color(0xFF5CC8FF)
+    "vertical" -> Color(0xFFB48CFF)
+    "leading" -> Color(0xFFFFB74D)
+    "subject" -> Color(0xFFFFE066)
+    "target" -> Color(0xFF6BE38A)
+    else -> Color.White
+}
+
+/** The photo with the evidence of one suggestion drawn on it: the lines, boxes and points that were measured. */
+@Composable
+fun AnalysisView(photo: android.graphics.Bitmap, s: com.hikari.vision.Suggestion?) {
+    val ratio = photo.width.toFloat() / photo.height
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        val fitWide = maxWidth / maxHeight > ratio
+        val m = if (fitWide) Modifier.fillMaxHeight().aspectRatio(ratio) else Modifier.fillMaxWidth().aspectRatio(ratio)
+        Box(m) {
+            Image(remember(photo) { photo.asImageBitmap() }, "照片", Modifier.fillMaxSize())
+            androidx.compose.foundation.Canvas(Modifier.fillMaxSize().testTag("analysisOverlay")) {
+                val w = size.width; val h = size.height
+                fun o(x: Float, y: Float) = androidx.compose.ui.geometry.Offset(x * w, y * h)
+                if (s == null) return@Canvas
+                s.crop?.let { c ->
+                    // outside the suggested crop is dimmed
+                    val dim = Color(0x99000000)
+                    drawRect(dim, o(0f, 0f), androidx.compose.ui.geometry.Size(w, c.top * h))
+                    drawRect(dim, o(0f, c.bottom), androidx.compose.ui.geometry.Size(w, (1f - c.bottom) * h))
+                    drawRect(dim, o(0f, c.top), androidx.compose.ui.geometry.Size(c.left * w, c.h * h))
+                    drawRect(dim, o(c.right, c.top), androidx.compose.ui.geometry.Size((1f - c.right) * w, c.h * h))
+                    drawRect(Color.White, o(c.left, c.top), androidx.compose.ui.geometry.Size(c.w * w, c.h * h),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
+                }
+                for (ov in s.overlays) when (ov) {
+                    is com.hikari.vision.Overlay.Seg -> drawLine(roleColor(ov.role), o(ov.x0, ov.y0), o(ov.x1, ov.y1),
+                        if (ov.role == "thirds") 1.dp.toPx() else 2.5.dp.toPx(),
+                        pathEffect = if (ov.role == "target") androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(14f, 10f)) else null)
+                    is com.hikari.vision.Overlay.Rect -> drawRect(roleColor(ov.role), o(ov.box.left, ov.box.top),
+                        androidx.compose.ui.geometry.Size(ov.box.w * w, ov.box.h * h), style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
+                    is com.hikari.vision.Overlay.Point -> {
+                        drawCircle(roleColor(ov.role), 7.dp.toPx(), o(ov.x, ov.y), style = androidx.compose.ui.graphics.drawscope.Stroke(2.5.dp.toPx()))
+                        if (ov.role != "target") drawCircle(roleColor(ov.role), 2.5.dp.toPx(), o(ov.x, ov.y))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Top-3 looks for this photo and up to three composition suggestions, each with its measured evidence. */
+@Composable
+private fun SmartPanel(vm: EditorViewModel, pick: Int, onPick: (Int) -> Unit, onLook: (com.hikari.engine.FilterSpec) -> Unit) {
+    Column(Modifier.fillMaxWidth().heightIn(max = 300.dp).verticalScroll(rememberScrollState()).padding(horizontal = 12.dp)) {
+        if (vm.analysing) { Text("正在分析照片…", color = HikariColors.Dim, fontSize = 12.sp, modifier = Modifier.padding(8.dp)); return@Column }
+        Text("濾鏡推薦 · 場景：${vm.sceneLabel}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
+        Text("依照片量測到的光線、色彩與場景，對全部 ${vm.looks.size} 款濾鏡評分後取前三名", color = HikariColors.Dim, fontSize = 10.sp)
+        for ((i, rc) in vm.recs.withIndex()) {
+            val spec = vm.looks.firstOrNull { it.id == rc.look.id } ?: continue
+            val sel = spec.id == vm.look.id
+            Row(Modifier.fillMaxWidth().padding(top = 6.dp).clip(RoundedCornerShape(10.dp)).background(if (sel) Color(0xFF2A2620) else HikariColors.Panel)
+                .clickable { onLook(spec) }.padding(8.dp).testTag("recCard"), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)).background(Color.Black)) {
+                    vm.thumbs[spec.id]?.let { b -> Image(remember(b) { b.asImageBitmap() }, spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
+                }
+                Column(Modifier.weight(1f).padding(start = 10.dp)) {
+                    Text("${i + 1}. ${spec.name}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(rc.reason, color = Color(0xFFD8D2C4), fontSize = 11.sp)
+                    Text("與原圖差異：${com.hikari.cam.smart.Smart.difference(rc.look)}", color = HikariColors.Dim, fontSize = 10.sp)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("${rc.score}", color = HikariColors.Accent, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("適合度", color = HikariColors.Dim, fontSize = 9.sp)
+                }
+            }
+        }
+        Text("構圖分析", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp))
+        Text("${vm.detectorNote} · 分析 ${vm.analysisMs.roundToInt()} ms · 只在量到明確依據時才給建議", color = HikariColors.Dim, fontSize = 10.sp)
+        val rep = vm.report
+        if (rep == null || rep.suggestions.isEmpty()) {
+            Text(rep?.note?.ifEmpty { null } ?: "沒有可用的分析結果。", color = Color(0xFFD8D2C4), fontSize = 12.sp,
+                modifier = Modifier.padding(vertical = 8.dp).testTag("compNote"))
+        } else for ((i, sg) in rep.suggestions.withIndex()) {
+            val sel = i == pick
+            Column(Modifier.fillMaxWidth().padding(top = 6.dp).clip(RoundedCornerShape(10.dp)).background(if (sel) Color(0xFF2A2620) else HikariColors.Panel)
+                .clickable { onPick(i) }.padding(8.dp).testTag("compCard")) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(sg.title, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Text("信心 ${(sg.confidence * 100).roundToInt()}%", color = HikariColors.Accent, fontSize = 11.sp)
+                }
+                Text("依據：${sg.evidence}", color = Color(0xFFD8D2C4), fontSize = 11.sp)
+                Text("目前：${sg.current}", color = Color(0xFFD8D2C4), fontSize = 11.sp)
+                Text("建議：${sg.action}", color = Color.White, fontSize = 11.sp)
+                Text("預期：${sg.benefit}", color = HikariColors.Dim, fontSize = 11.sp)
+                if (sel && sg.crop != null) Text("照片上的白框是建議的裁切範圍", color = HikariColors.Dim, fontSize = 10.sp)
+            }
+        }
+        Box(Modifier.height(8.dp))
     }
 }

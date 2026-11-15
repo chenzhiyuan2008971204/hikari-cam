@@ -23,6 +23,12 @@ data class UserSettings(
     val dateStamp: Boolean = false,
     /** the user's own words after the time, e.g. "晴 / Hokkaido" */
     val stampNote: String = "",
+    /** play the bundled test photos instead of the real camera (testing without a phone camera) */
+    val virtualCamera: Boolean = false,
+    /** which bundled photo the filter thumbnails are rendered from */
+    val thumbScene: String = "sunny",
+    /** show the three recommended looks for what the camera sees */
+    val recommend: Boolean = true,
 ) {
     fun toRows(): List<Setting> = listOf(
         Setting("jpegQuality", jpegQuality.toString()),
@@ -36,6 +42,9 @@ data class UserSettings(
         Setting("composition", composition),
         Setting("dateStamp", dateStamp.toString()),
         Setting("stampNote", stampNote),
+        Setting("virtualCamera", virtualCamera.toString()),
+        Setting("thumbScene", thumbScene),
+        Setting("recommend", recommend.toString()),
     )
 
     companion object {
@@ -56,6 +65,9 @@ data class UserSettings(
                 composition = m["composition"] ?: d.composition,
                 dateStamp = m["dateStamp"]?.toBooleanStrictOrNull() ?: d.dateStamp,
                 stampNote = m["stampNote"] ?: d.stampNote,
+                virtualCamera = m["virtualCamera"]?.toBooleanStrictOrNull() ?: d.virtualCamera,
+                thumbScene = m["thumbScene"] ?: d.thumbScene,
+                recommend = m["recommend"]?.toBooleanStrictOrNull() ?: d.recommend,
             )
         }
 

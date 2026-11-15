@@ -50,6 +50,35 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
     var message by mutableStateOf<String?>(null)
     var lastRenderMs by mutableStateOf(0.0); private set
 
+    // smart analysis of the opened photo: measured scene, ranked looks, composition findings
+    var recs by mutableStateOf<List<com.hikari.vision.Recommendation>>(emptyList()); private set
+    var sceneLabel by mutableStateOf(""); private set
+    var report by mutableStateOf<com.hikari.vision.CompositionReport?>(null); private set
+    var analysing by mutableStateOf(false); private set
+    var analysisMs by mutableStateOf(0.0); private set
+    var detectorNote by mutableStateOf(""); private set
+
+    /** Runs on the unfiltered photo, off the main thread; the preview keeps working meanwhile. */
+    private fun analyse(src: Bitmap) = viewModelScope.launch {
+        analysing = true
+        try {
+            val t0 = System.nanoTime()
+            val det = com.hikari.cam.smart.Smart.detect(src)
+            val (scene, rep) = withContext(Dispatchers.Default) {
+                val f = com.hikari.cam.smart.Smart.frame(src)
+                val r = com.hikari.vision.CompositionAnalyzer.analyze(f, det)
+                r.findings.scene to r
+            }
+            recs = com.hikari.vision.FilterRecommender.rank(scene, com.hikari.cam.smart.Smart.traits(looks)).take(3)
+            sceneLabel = scene.top.take(3).joinToString("・") { it.zh }.ifEmpty { "一般場景" }
+            report = rep
+            detectorNote = "偵測到 ${det.count { it.kind == com.hikari.vision.Detection.Kind.FACE }} 張臉、${det.count { it.kind != com.hikari.vision.Detection.Kind.FACE }} 個物體"
+            analysisMs = (System.nanoTime() - t0) / 1e6
+        } catch (e: Throwable) {
+            report = null; recs = emptyList(); detectorNote = "分析失敗：${e.message}"
+        } finally { analysing = false }
+    }
+
     private data class Req(val key: String, val look: String, val adjust: Adjustments)
     private val requests = MutableStateFlow<Req?>(null)
     private var cacheKey = "ed0"
@@ -84,6 +113,8 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
                 adjust = Adjustments.fromJson(saved?.adjustJson)
                 undo.clear(); redo.clear(); syncHistory()
                 refresh()
+                recs = emptyList(); report = null
+                analyse(orig)
                 for (spec in looks) {
                     val req = withContext(Dispatchers.IO) { OffscreenRenderer.Request(spec, hikari.looks.lut(spec), Adjustments.DEFAULT, seed = SEED) }
                     thumbs[spec.id] = renderer.render(thumb, req, thumb.width, thumb.height, cacheKey = "$cacheKey-t")
