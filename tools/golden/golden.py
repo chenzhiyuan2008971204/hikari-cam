@@ -29,7 +29,7 @@ import tempfile
 import time
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "../.."))
@@ -108,7 +108,15 @@ def band(path):
     return float(np.abs(np.diff(sm, axis=0)).max() * 8)                          # step per 8 px, in levels
 
 
+def font(size):
+    for f in ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"):
+        if os.path.exists(f):
+            return ImageFont.truetype(f, size)
+    return ImageFont.load_default()
+
+
 def sheet(title, tiles, out, tile_w=420, cols=4):
+    big, norm = font(22), font(16)
     ims = []
     for label, im in tiles:
         t = im.copy()
@@ -118,13 +126,13 @@ def sheet(title, tiles, out, tile_w=420, cols=4):
     hs = [max(t.height for _, t in r) + 26 for r in rows]
     sh = Image.new("RGB", (cols * (tile_w + 6) + 6, sum(hs) + 44), (16, 16, 16))
     d = ImageDraw.Draw(sh)
-    d.text((8, 12), title, fill=(255, 255, 255))
+    d.text((8, 8), title, fill=(255, 255, 255), font=big)
     y = 40
     for r, h in zip(rows, hs):
         for i, (label, t) in enumerate(r):
             x = 6 + i * (tile_w + 6)
             sh.paste(t, (x + (tile_w - t.width) // 2, y))
-            d.text((x + 4, y + h - 22), label, fill=(210, 210, 210))
+            d.text((x + 4, y + h - 23), label, fill=(210, 210, 210), font=norm)
         y += h
     sh.save(out, quality=88)
 
@@ -210,9 +218,9 @@ def main():
             table[i] = row
             if args.sheets:
                 os.makedirs(args.sheets, exist_ok=True)
-                sheet(f"{spec['name']}  ({i})  - real engine output on the standard photos", tiles, os.path.join(args.sheets, f"{i}.jpg"))
+                sheet(f"{spec['name']}  {spec.get('zh', '')}  ({i})  正式濾鏡引擎在標準照片上的實際輸出", tiles, os.path.join(args.sheets, f"{i}.jpg"))
         if args.sheets:
-            sheet("Originals (no filter)", [(s["zh"], Image.fromarray(srcs[s["id"]][1])) for s in samples], os.path.join(args.sheets, "_originals.jpg"))
+            sheet("原圖（未套濾鏡）", [(s["zh"], Image.fromarray(srcs[s["id"]][1])) for s in samples], os.path.join(args.sheets, "_originals.jpg"))
         # self-test: the comparison must notice a wrong render (another look against this golden)
         if not args.update and len(ids) >= 2:
             a, b = ids[0], ids[1]
