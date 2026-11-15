@@ -55,8 +55,12 @@ object LensProbe {
         c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)?.contains(
             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA) == true
 
-    /** All back lenses reachable by any route, plus a text report of what was found. */
-    fun discover(context: Context): Pair<List<LensOption>, String> {
+    /**
+     * All back lenses reachable by any route, plus a text report of what was found. Probing ids the
+     * system does not list ([hidden]) is opt-in: some camera services (the emulator's among them)
+     * do not cope with being asked about cameras that are not there.
+     */
+    fun discover(context: Context, hidden: Boolean = false): Pair<List<LensOption>, String> {
         val m = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         val listed = runCatching { m.cameraIdList.toList() }.getOrDefault(emptyList())
         val out = mutableListOf<LensOption>()
@@ -81,15 +85,19 @@ object LensProbe {
             }
         }
         // ids the system does not list: vendors hide aux cameras from apps outside a whitelist
-        val hidden = mutableListOf<String>()
-        for (i in 0..31) {
+        if (!hidden) {
+            report.append("未列出的相機：尚未搜尋（在鏡頭選單按「搜尋隱藏鏡頭」）")
+            return out to report.toString()
+        }
+        val found = mutableListOf<String>()
+        for (i in 0..15) {
             val id = "$i"
             if (id in listed || out.any { it.physicalId == id }) continue
             val c = runCatching { m.getCameraCharacteristics(id) }.getOrNull() ?: continue
-            hidden += "#$id ${focal35(c)?.let { "${Math.round(it)}mm" } ?: "?"}${if (isBack(c)) "" else "（非後鏡頭）"}"
+            found += "#$id ${focal35(c)?.let { "${Math.round(it)}mm" } ?: "?"}${if (isBack(c)) "" else "（非後鏡頭）"}"
             if (isBack(c)) out += LensOption(id, null, LensOption.Kind.HIDDEN, focal35(c), isLogical(c))
         }
-        report.append("未列出但可讀取的相機：${hidden.joinToString("、").ifEmpty { "無" }}")
+        report.append("未列出但可讀取的相機：${found.joinToString("、").ifEmpty { "無" }}")
         return out to report.toString()
     }
 }

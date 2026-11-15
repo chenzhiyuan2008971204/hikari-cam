@@ -243,7 +243,13 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     }
     var cameraError by remember { mutableStateOf<String?>(null) }
     // every lens this phone exposes by any route (listed, physical, hidden) for the lens picker
-    val probe = remember { runCatching { com.hikari.cam.camera.LensProbe.discover(ctx) }.getOrDefault(emptyList<com.hikari.cam.camera.LensOption>() to "") }
+    // hidden-id probing is opt-in and remembered: the user asks for it once from the lens menu
+    val prefs = remember { ctx.getSharedPreferences("lens", android.content.Context.MODE_PRIVATE) }
+    var probeHidden by remember { mutableStateOf(prefs.getBoolean("probeHidden", false)) }
+    val probe = remember(probeHidden) {
+        runCatching { com.hikari.cam.camera.LensProbe.discover(ctx, probeHidden) }
+            .getOrDefault(emptyList<com.hikari.cam.camera.LensOption>() to "")
+    }
     var lensOpt by remember { mutableStateOf<com.hikari.cam.camera.LensOption?>(null) }
     var lensMsg by remember { mutableStateOf<String?>(null) }
     var activePhysical by remember { mutableStateOf<String?>(null) }
@@ -456,8 +462,12 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                 Text(look.name, color = Color.White, fontSize = 11.sp,
                     modifier = Modifier.align(Alignment.TopStart).padding(10.dp)
                         .background(Color(0x55000000), RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
-                if (lens == CameraSelector.LENS_FACING_BACK && probe.first.size > 1) Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
-                    LensPicker(probe.first, lensOpt, activePhysical) { lensOpt = it }
+                if (lens == CameraSelector.LENS_FACING_BACK && probe.first.isNotEmpty()) Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
+                    LensPicker(probe.first, lensOpt, activePhysical, probeHidden,
+                        onSearchHidden = {
+                            prefs.edit().putBoolean("probeHidden", true).apply(); probeHidden = true
+                            lensMsg = "已搜尋系統未列出的鏡頭"
+                        }) { lensOpt = it }
                 }
                 lensMsg?.let {
                     Text(it, color = Color.White, fontSize = 12.sp,
@@ -620,6 +630,8 @@ private fun LensPicker(
     options: List<com.hikari.cam.camera.LensOption>,
     selected: com.hikari.cam.camera.LensOption?,
     active: String?,
+    searched: Boolean,
+    onSearchHidden: () -> Unit,
     onSelect: (com.hikari.cam.camera.LensOption?) -> Unit,
 ) {
     var open by remember { mutableStateOf(false) }
@@ -643,6 +655,9 @@ private fun LensPicker(
                     }
                 },
                 onClick = { open = false; onSelect(o) })
+            if (!searched) androidx.compose.material3.DropdownMenuItem(
+                text = { Text("搜尋隱藏鏡頭（實驗）", color = Color(0xFFFFB86B)) },
+                onClick = { open = false; onSearchHidden() })
         }
     }
 }

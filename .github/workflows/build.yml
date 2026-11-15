@@ -81,9 +81,9 @@ jobs:
             mkdir -p lab-emulator
             adb logcat -c || true
             ./gradlew connectedDebugAndroidTest --stacktrace || touch lab-emulator/TESTS_FAILED
-            adb logcat -d -s LabReport:I AndroidRuntime:E TestRunner:* > lab-emulator/logcat.txt || true
-            adb pull /sdcard/Download/HikariLab lab-emulator/ || true
-            adb shell ls -l /sdcard/Pictures/Hikari > lab-emulator/exported_files.txt || true
+            timeout 60 adb logcat -d -s LabReport:I AndroidRuntime:E TestRunner:* > lab-emulator/logcat.txt || true
+            timeout 120 adb pull /sdcard/Download/HikariLab lab-emulator/ || true
+            timeout 30 adb shell ls -l /sdcard/Pictures/Hikari > lab-emulator/exported_files.txt || true
       - name: Print device reports
         if: always()
         run: |
