@@ -13,10 +13,10 @@ import org.junit.runner.RunWith
 /**
  * The editor's logic without its screen: open a photo from the gallery, render the preview and all
  * look thumbnails, analyse it (scene, top-three looks, composition), apply the first recommendation
- * and export at full size. Runs last (class name) and reports every step to logcat.
+ * and export at full size. Reports every step to logcat.
  */
 @RunWith(AndroidJUnit4::class)
-class ZEditorModelTest {
+class EditorModelTest {
     private val inst = InstrumentationRegistry.getInstrumentation()
     private val ctx = inst.targetContext
     private fun poll(timeout: Long, what: () -> Boolean): Boolean {
