@@ -43,6 +43,8 @@ dependencies {
     implementation("androidx.camera:camera-core:$cameraX")
     implementation("androidx.camera:camera-camera2:$cameraX")
     implementation("androidx.camera:camera-lifecycle:$cameraX")
+    // on-device subject detection for live composition guidance (model bundled, works offline)
+    implementation("com.google.mlkit:object-detection:17.0.2")
 
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.ui:ui")

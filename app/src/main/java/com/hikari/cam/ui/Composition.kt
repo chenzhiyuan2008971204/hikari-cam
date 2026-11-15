@@ -62,7 +62,10 @@ private fun DrawScope.dot(x: Float, y: Float, s: Float) =
     drawCircle(ink, radius = 5f * s, center = Offset(size.width * x, size.height * y))
 
 val COMPOSITIONS: List<CompositionGuide> = listOf(
-    CompositionGuide("thirds", "三分法", "主體放在任一交叉點上，畫面最穩") { s ->
+    CompositionGuide("smart", "智慧構圖", "自動找出主體，帶你把它放到最近的三分點") { s ->
+        for (f in listOf(1f / 3, 2f / 3)) { line(f, 0f, f, 1f, s, soft.copy(alpha = 0.35f)); hline(f, s, color = soft.copy(alpha = 0.35f)) }
+    },
+    CompositionGuide("thirds", "三分法", "主體放在任一交叉點上，畫面最穩（會即時提示移動方向）") { s ->
         for (f in listOf(1f / 3, 2f / 3)) { line(f, 0f, f, 1f, s, soft); hline(f, s, color = soft) }
         for (x in listOf(1f / 3, 2f / 3)) for (y in listOf(1f / 3, 2f / 3)) dot(x, y, s)
     },
@@ -179,3 +182,111 @@ private fun Tile(label: String, on: Boolean, onClick: () -> Unit, content: @Comp
             modifier = Modifier.padding(top = 3.dp))
     }
 }
+
+
+/**
+ * Where the subject's centre should go for a guide, given where it is now (fractions of the
+ * preview), and the subject height that fits it (null = any size).
+ */
+fun guideTarget(id: String, cx: Float, cy: Float): Pair<Offset, Float?> {
+    fun nearestThird(): Offset {
+        val xs = listOf(1f / 3, 2f / 3)
+        val ys = listOf(1f / 3, 2f / 3)
+        return Offset(xs.minBy { kotlin.math.abs(it - cx) }, ys.minBy { kotlin.math.abs(it - cy) })
+    }
+    return when (id) {
+        "portrait_full" -> Offset(0.67f, 0.58f) to 0.66f
+        "portrait_half" -> Offset(0.5f, 0.62f) to 0.8f
+        "small_subject" -> Offset(0.5f, 0.73f) to 0.24f
+        "center", "triangle", "one_point" -> Offset(0.5f, 0.5f) to null
+        "symmetry", "two_point" -> Offset(0.5f, cy.coerceIn(0.3f, 0.7f)) to null
+        "spiral" -> Offset(0.62f, 0.62f) to null
+        "frame" -> Offset(0.5f, 0.6f) to null
+        "horizon_low" -> Offset(cx.coerceIn(0.25f, 0.75f), 0.55f) to null
+        "horizon_high" -> Offset(cx.coerceIn(0.25f, 0.75f), 0.62f) to null
+        else -> nearestThird() to null
+    }
+}
+
+/** Live guidance state for the UI: what to tell the photographer, and whether it is lined up. */
+data class Guidance(val target: Offset, val tip: String, val aligned: Boolean)
+
+/**
+ * Turns the tracked subject into an instruction. Directions are for the camera (the way people
+ * think when framing): the subject left of its target means "pan left".
+ */
+fun guidance(guideId: String, s: com.hikari.cam.camera.Subject): Guidance {
+    val (t, wantH) = guideTarget(guideId, s.cx, s.cy)
+    val dx = s.cx - t.x
+    val dy = s.cy - t.y
+    val tips = mutableListOf<String>()
+    if (kotlin.math.abs(dx) > 0.04f) tips += if (dx < 0) "鏡頭往左" else "鏡頭往右"
+    if (kotlin.math.abs(dy) > 0.04f) tips += if (dy < 0) "鏡頭往上" else "鏡頭往下"
+    if (wantH != null && s.h > 0.05f) {
+        if (s.h < wantH * 0.8f) tips += "靠近一點" else if (s.h > wantH * 1.2f) tips += "退後一點"
+    }
+    val aligned = tips.isEmpty()
+    return Guidance(t, if (aligned) "構圖完美，按下快門" else tips.joinToString(" · "), aligned)
+}
+
+/**
+ * Drawn on top of the preview every frame: the tracked subject (corner brackets), its target, an
+ * arrow between them, and a level line from the phone's tilt.
+ */
+@Composable
+fun LiveGuideOverlay(subject: com.hikari.cam.camera.Subject?, guidance: Guidance?, tiltDeg: Float?, modifier: Modifier = Modifier) {
+    val accent = HikariColors.Accent
+    val yellow = Color(0xFFF5D04C)
+    Box(modifier.fillMaxSize()) {
+        Canvas(Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
+            // level
+            tiltDeg?.let { deg ->
+                val level = kotlin.math.abs(deg) < 1f
+                val c = Offset(w / 2, h / 2)
+                val len = w * 0.16f
+                val rad = Math.toRadians(deg.toDouble())
+                val dxl = (cos(rad) * len).toFloat()
+                val dyl = (sin(rad) * len).toFloat()
+                drawLine(if (level) accent else Color.White.copy(alpha = 0.8f), Offset(c.x - dxl, c.y - dyl), Offset(c.x + dxl, c.y + dyl), 2.5f)
+                drawLine(Color.White.copy(alpha = 0.5f), Offset(c.x - len * 1.3f, c.y), Offset(c.x - len * 1.1f, c.y), 2f)
+                drawLine(Color.White.copy(alpha = 0.5f), Offset(c.x + len * 1.1f, c.y), Offset(c.x + len * 1.3f, c.y), 2f)
+            }
+            if (subject != null && guidance != null) {
+                val col = if (guidance.aligned) accent else yellow
+                val l = subject.left * w
+                val t = subject.top * h
+                val r = subject.right * w
+                val b = subject.bottom * h
+                val k = min(r - l, b - t) * 0.22f
+                for ((x, y, sx, sy) in listOf(Quad(l, t, 1f, 1f), Quad(r, t, -1f, 1f), Quad(l, b, 1f, -1f), Quad(r, b, -1f, -1f))) {
+                    drawLine(col, Offset(x, y), Offset(x + k * sx, y), 3f)
+                    drawLine(col, Offset(x, y), Offset(x, y + k * sy), 3f)
+                }
+                val from = Offset(subject.cx * w, subject.cy * h)
+                val to = Offset(guidance.target.x * w, guidance.target.y * h)
+                drawCircle(col, radius = 14f, center = to, style = Stroke(2.5f))
+                drawCircle(col, radius = 4f, center = to)
+                if (!guidance.aligned) {
+                    drawLine(col.copy(alpha = 0.9f), from, to, 2.5f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)))
+                    // arrow head at the target
+                    val ang = kotlin.math.atan2((to.y - from.y).toDouble(), (to.x - from.x).toDouble())
+                    for (d in listOf(2.6, -2.6)) {
+                        val a = ang + d
+                        drawLine(col, to, Offset(to.x + (cos(a) * 18).toFloat(), to.y + (sin(a) * 18).toFloat()), 3f)
+                    }
+                    drawCircle(col, radius = 5f, center = from)
+                }
+            }
+        }
+        guidance?.let { g ->
+            Text(g.tip, color = if (g.aligned) Color.Black else Color.White, fontSize = 13.sp,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 74.dp)
+                    .background(if (g.aligned) accent else Color(0x88000000), RoundedCornerShape(14.dp))
+                    .padding(horizontal = 12.dp, vertical = 4.dp))
+        }
+    }
+}
+
+private data class Quad(val x: Float, val y: Float, val sx: Float, val sy: Float)

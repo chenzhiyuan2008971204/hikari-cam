@@ -307,6 +307,43 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     var panel by remember { mutableIntStateOf(0) } // 0 looks, 1 composition, 2 tone, 3 adjust
     val guide = composition(settings.composition)
     var showHint by remember { mutableStateOf(false) }
+
+    // live composition: tracked subject (smoothed) and the phone's tilt, only while a guide is on
+    var subject by remember { mutableStateOf<com.hikari.cam.camera.Subject?>(null) }
+    var lastSeen by remember { mutableStateOf(0L) }
+    var tilt by remember { mutableStateOf<Float?>(null) }
+    DisposableEffect(guide?.id) {
+        if (guide == null) { vm.controller.onSubject = null; subject = null; tilt = null; return@DisposableEffect onDispose {} }
+        vm.controller.onSubject = { n ->
+            val now = System.currentTimeMillis()
+            if (n != null) {
+                val o = subject
+                subject = if (o == null) n else com.hikari.cam.camera.Subject(
+                    o.left + (n.left - o.left) * 0.5f, o.top + (n.top - o.top) * 0.5f,
+                    o.right + (n.right - o.right) * 0.5f, o.bottom + (n.bottom - o.bottom) * 0.5f)
+                lastSeen = now
+            } else if (now - lastSeen > 700) subject = null
+        }
+        val sm = ctx.getSystemService(android.content.Context.SENSOR_SERVICE) as android.hardware.SensorManager
+        val sensor = sm.getDefaultSensor(android.hardware.Sensor.TYPE_GRAVITY) ?: sm.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)
+        val listener = object : android.hardware.SensorEventListener {
+            override fun onSensorChanged(e: android.hardware.SensorEvent) {
+                val roll = Math.toDegrees(kotlin.math.atan2(e.values[0].toDouble(), e.values[1].toDouble())).toFloat()
+                // relative to the nearest upright or landscape orientation
+                tilt = roll - Math.round(roll / 90f) * 90f
+            }
+            override fun onAccuracyChanged(s: android.hardware.Sensor?, a: Int) {}
+        }
+        sensor?.let { sm.registerListener(listener, it, android.hardware.SensorManager.SENSOR_DELAY_UI) }
+        onDispose { vm.controller.onSubject = null; sm.unregisterListener(listener) }
+    }
+    val guidance = if (guide != null) subject?.let { guidance(guide.id, it) } else null
+    var wasAligned by remember { mutableStateOf(false) }
+    LaunchedEffect(guidance?.aligned) {
+        val a = guidance?.aligned == true
+        if (a && !wasAligned) view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY)
+        wasAligned = a
+    }
     LaunchedEffect(settings.composition) {
         if (guide != null) { showHint = true; delay(4000); showHint = false }
     }
@@ -368,7 +405,10 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                         drawLine(c, Offset(0f, size.height * i / 3), Offset(size.width, size.height * i / 3), 1f)
                     }
                 }
-                guide?.let { CompositionOverlay(it) }
+                guide?.let {
+                    CompositionOverlay(it)
+                    LiveGuideOverlay(subject, guidance, tilt)
+                }
                 focusAt?.let { f ->
                     LaunchedEffect(f) { delay(1200); focusAt = null }
                     Canvas(Modifier.fillMaxSize()) {

@@ -51,6 +51,13 @@ data class CameraCaps(
 
 enum class Flash { OFF, AUTO, ON }
 
+/** The main subject in the shown preview, as fractions of the preview (0..1, origin top-left). */
+data class Subject(val left: Float, val top: Float, val right: Float, val bottom: Float) {
+    val cx get() = (left + right) / 2f
+    val cy get() = (top + bottom) / 2f
+    val h get() = bottom - top
+}
+
 /** One finished capture: the JPEG in the app cache, and the DNG uri when RAW was saved too. */
 class Shot(val jpeg: File, val dng: android.net.Uri?)
 
@@ -69,6 +76,17 @@ class CameraController(private val context: Context) {
     private var pending: SurfaceRequest? = null
     private val main = ContextCompat.getMainExecutor(context)
     private var rawMode = false
+    private var analysis: androidx.camera.core.ImageAnalysis? = null
+    private val analysisExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private val detector by lazy {
+        com.google.mlkit.vision.objects.ObjectDetection.getClient(
+            com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions.Builder()
+                .setDetectorMode(com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions.STREAM_MODE)
+                .build())
+    }
+
+    /** Live subject updates for composition guidance (main thread); null = no subject found. */
+    @Volatile var onSubject: ((Subject?) -> Unit)? = null
 
     var facing = CameraSelector.LENS_FACING_BACK
         private set
@@ -129,7 +147,17 @@ class CameraController(private val context: Context) {
         val naturalApplied = if (natural) applyNaturalDetail(icb, info) else ""
         val ic = icb.build()
 
-        val cam = p.bindToLifecycle(owner, selector, pv, ic)
+        val an = androidx.camera.core.ImageAnalysis.Builder()
+            .setResolutionSelector(ResolutionSelector.Builder()
+                .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
+                .setResolutionStrategy(ResolutionStrategy(android.util.Size(640, 480), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER))
+                .build())
+            .setBackpressureStrategy(androidx.camera.core.ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build()
+        an.setAnalyzer(analysisExecutor) { image -> analyze(image) }
+        // live guidance needs a third stream; cameras that cannot add it still preview and shoot
+        val cam = runCatching { p.bindToLifecycle(owner, selector, pv, ic, an).also { analysis = an } }
+            .getOrElse { p.unbindAll(); analysis = null; p.bindToLifecycle(owner, selector, pv, ic) }
         camera = cam
         preview = pv
         capture = ic
@@ -224,6 +252,41 @@ class CameraController(private val context: Context) {
             done += "色差校正"
         }
         return done.joinToString("、")
+    }
+
+    private var lastAnalysis = 0L
+
+    @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
+    private fun analyze(image: androidx.camera.core.ImageProxy) {
+        val media = image.image
+        val now = System.currentTimeMillis()
+        if (media == null || onSubject == null || now - lastAnalysis < 120) { image.close(); return }
+        lastAnalysis = now
+        val rot = image.imageInfo.rotationDegrees
+        val uw = if (rot % 180 == 0) image.width else image.height
+        val uh = if (rot % 180 == 0) image.height else image.width
+        val crop = renderer?.cropAspect ?: 0.75f
+        val mirror = facing == CameraSelector.LENS_FACING_FRONT
+        detector.process(com.google.mlkit.vision.common.InputImage.fromMediaImage(media, rot))
+            .addOnSuccessListener(main) { objs ->
+                val b = objs.maxByOrNull { it.boundingBox.width() * it.boundingBox.height() }?.boundingBox
+                onSubject?.invoke(b?.let { toPreview(it, uw, uh, crop, mirror) })
+            }
+            .addOnCompleteListener { image.close() }
+    }
+
+    /** Upright analysis-frame pixels -> fractions of the centre-cropped, maybe mirrored preview. */
+    private fun toPreview(b: android.graphics.Rect, w: Int, h: Int, crop: Float, mirror: Boolean): Subject {
+        val u = w.toFloat() / h
+        var su = 1f
+        var sv = 1f
+        if (u > crop) su = crop / u else sv = u / crop
+        fun x(px: Int) = ((px.toFloat() / w - 0.5f) / su + 0.5f)
+        fun y(px: Int) = ((px.toFloat() / h - 0.5f) / sv + 0.5f)
+        var l = x(b.left)
+        var r = x(b.right)
+        if (mirror) { val t = 1f - l; l = 1f - r; r = t }
+        return Subject(l.coerceIn(0f, 1f), y(b.top).coerceIn(0f, 1f), r.coerceIn(0f, 1f), y(b.bottom).coerceIn(0f, 1f))
     }
 
     fun unbind() {
