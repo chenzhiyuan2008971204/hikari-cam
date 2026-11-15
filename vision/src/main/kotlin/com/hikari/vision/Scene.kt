@@ -116,11 +116,13 @@ object SceneAnalyzer {
         types[SceneType.PORTRAIT] = maxOf(ramp(faceArea, 0.008f, 0.05f), if (faces.isEmpty()) ramp(skinFrac, 0.22f, 0.45f) * 0.5f else 0f)
         types[SceneType.ARCHITECTURE] = ramp(structure, 0.5f, 0.75f) * ramp(neutralFrac, 0.2f, 0.5f) * (1f - ramp(greenFrac, 0.2f, 0.4f))
         // a bright light source in a mostly dark frame
-        types[SceneType.BACKLIGHT] = ramp(highlightFrac, 0.003f, 0.03f) * maxOf(ramp(shadowFrac, 0.05f, 0.2f), ramp(0.45f - p50, 0f, 0.15f))
+        types[SceneType.BACKLIGHT] = ramp(highlightFrac, 0.003f, 0.016f) * maxOf(ramp(shadowFrac, 0.05f, 0.2f), ramp(0.45f - p50, 0f, 0.15f))
         types[SceneType.HIGH_CONTRAST] = ramp(p95 - p05, 0.64f, 0.82f)
         types[SceneType.SUNSET] = ramp(warmShare, 0.3f, 0.6f) * ramp(warmth, 0.01f, 0.04f) * ramp(0.75f - p50, 0f, 0.2f) * (1f - ramp(greenFrac, 0.15f, 0.3f)) *
             ramp(skyFrac, 0.03f, 0.12f)
-        types[SceneType.NIGHT] = dark * ramp(0.3f - meanL, 0f, 0.12f) * (1f - ramp(highlightFrac, 0.003f, 0.03f) * 0.6f)
+        // dark overall, without a bright sky or a large blown area (those are backlight, not night)
+        types[SceneType.NIGHT] = dark * ramp(0.38f - meanL, 0f, 0.12f) * (1f - ramp(highlightFrac, 0.005f, 0.012f) * 0.85f) *
+            (1f - ramp(skyFrac, 0.03f, 0.12f))
         types[SceneType.INDOOR] = (1f - ramp(skyFrac, 0.02f, 0.08f)) * ramp(warmth, 0.008f, 0.03f) * (1f - ramp(greenFrac, 0.08f, 0.2f)) *
             (1f - dark) * 0.8f
         return SceneStats(meanL, p05, p50, p95, highlightFrac, shadowFrac, meanChroma, warmth, skyFrac, blueSkyFrac, greenFrac,

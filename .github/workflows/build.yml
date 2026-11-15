@@ -22,7 +22,7 @@ jobs:
         run: |
           chmod +x gradlew
           set +e
-          ./gradlew testDebugUnitTest assembleRelease > build.log 2>&1
+          ./gradlew :vision:test testDebugUnitTest assembleRelease > build.log 2>&1
           status=$?
           set -e
           tail -5 build.log
@@ -45,6 +45,32 @@ jobs:
           target_commitish: ${{ github.sha }}
           body: 用小米14 點下方的 HikariCam.apk 下載並安裝。
           files: HikariCam.apk
+
+  # Golden images and image-quality checks: every look on every standard photo, rendered by the
+  # shipped shaders in headless Chromium, compared with the recorded goldens.
+  golden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Tools
+        run: |
+          pip install numpy pillow
+          cd tools/engine && npm init -y > /dev/null && npm install playwright@1.63.0 && npx playwright install --with-deps chromium
+      - name: Golden + quality
+        run: python3 tools/golden/golden.py
+      - name: Engine shader tests
+        run: |
+          mkdir -p /tmp/et && python3 -c "from PIL import Image; Image.open('app/src/main/assets/samples/04_city.jpg').convert('RGB').save('/tmp/et/city.png')"
+          python3 tools/engine/engine_tests.py --photo /tmp/et/city.png --tmp /tmp/et
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: golden-report
+          path: reports/golden
 
   # The app on an Android 14 emulator: engine tests on the real Android GL stack, and the
   # Filter Lab driven through its UI. Screenshots and reports are uploaded as "lab-emulator".

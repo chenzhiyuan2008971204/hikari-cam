@@ -106,5 +106,23 @@
   "height": 512,
   "source": "kodim12",
   "license": "Kodak Lossless True Color Image Suite (released by Eastman Kodak for unrestricted use)"
+ },
+ {
+  "id": "night",
+  "zh": "夜景燈光",
+  "file": "13_night.jpg",
+  "width": 1024,
+  "height": 682,
+  "source": "City night lights. (Unsplash).jpg",
+  "license": "Wikimedia Commons, CC0 1.0 (public domain dedication)"
+ },
+ {
+  "id": "nightstreet",
+  "zh": "夜間街道（低光、複雜背景）",
+  "file": "14_nightstreet.jpg",
+  "width": 1024,
+  "height": 769,
+  "source": "2024 - Photo of the street Koningsstraat and square Nieuwmarkt with Christmas lights by night in Amsterdam (Fons Heijnsbroek)",
+  "license": "Wikimedia Commons, CC0 1.0 (public domain dedication)"
  }
 ]

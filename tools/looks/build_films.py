@@ -30,6 +30,10 @@ def recipe(c, fx):
     if cp:
         out.append(f"影調曲線：18% 灰處斜率 {cp['contrast']:.2f}（{'加' if cp['contrast'] > 1 else '減'}反差），"
                    f"黑位 {cp['toe']:.3f}、白位肩部 {cp['shoulder']:.3f}，曝光 {cp['exposure']:+.2f} EV（線性光、不裁切）")
+    if c.get("mono"):
+        r, g, b = c["mono"]
+        out.append(f"黑白轉換：在線性光下混合通道 R {r:.2f} / G {g:.2f} / B {b:.2f}（黃濾鏡感：藍天較深、膚色較亮）")
+        out.append("色彩管理：sRGB → 線性光 → 黑白混合 → 影調曲線 → sRGB；輸出 R=G=B，沒有色偏")
     if c.get("temp") or c.get("tint"):
         out.append(f"白平衡：色溫 {c.get('temp', 0):+.2f}、色調 {c.get('tint', 0):+.2f}")
     sat = [f"整體飽和 {c['sat']:+.2f}"] if c.get("sat") else []

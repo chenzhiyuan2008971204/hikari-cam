@@ -35,12 +35,15 @@ class RealPhotoTest {
         Truth("11_concrete.jpg", scene = setOf(SceneType.OVERCAST, SceneType.ARCHITECTURE), hasVerticals = true),
         // the sea horizon on the left runs on into the shoreline; the photo itself is tilted about 2 degrees
         Truth("12_beach.jpg", horizonY = 0.226f, partialHorizon = true, subject = Box(0.25f, 0.05f, 0.53f, 0.78f)),
+        // night: no horizon to level (the river bank is not one), lights in a dark frame
+        Truth("13_night.jpg", scene = setOf(SceneType.NIGHT)),
+        Truth("14_nightstreet.jpg", scene = setOf(SceneType.NIGHT)),
     )
 
     @Test
     fun measurementsAgreeWithTheAnnotations() {
         val looks = Synth.looks()
-        val sb = StringBuilder("real photos (12 bundled samples, hand annotated)\n")
+        val sb = StringBuilder("real photos (14 bundled samples, hand annotated)\n")
         var horizonOk = 0; var horizonCases = 0; var falseHorizon = 0; var noHorizonCases = 0
         var subjHit = 0; var subjFound = 0; var subjCases = 0; var sceneOk = 0; var sceneCases = 0; var vertOk = 0; var vertCases = 0
         val problems = ArrayList<String>()
