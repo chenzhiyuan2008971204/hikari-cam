@@ -52,7 +52,10 @@ class SmartUiTest {
     }
 
     @After
-    fun restore() { set("virtualCamera", "false"); set("composition", "") }
+    fun restore() {
+        set("virtualCamera", "false"); set("composition", "")
+        Thread.sleep(2500)   // let the source close before the activity goes away
+    }
 
     @Test
     fun virtualCameraFlow() {
@@ -114,31 +117,42 @@ class SmartUiTest {
         Thread.sleep(5000)
         shot("smart_07_third_scene.png")
 
-        // editor: recommendation cards and composition analysis on the captured photo
-        val uri = newest!!.uri
+        Report.line("smart: flip button stepped through two more scenes")
+        Report.flush(ctx, "smart_report.txt")
+    }
+
+    /** Editor: top-three recommendation cards, composition analysis with overlays, apply a look, export. */
+    @Test
+    fun editorSmartFlow() {
+        Thread.sleep(3000)
+        // a standard photo saved into the gallery, as if it had just been taken
+        val sample = com.hikari.cam.smart.Samples.list(ctx).first { it.id == "seaside" }
+        val uri = runBlocking { Media.saveJpeg(ctx, com.hikari.cam.smart.Samples.bitmap(ctx, sample), 95, "_sample") }
         rule.runOnUiThread { ViewModelProvider(rule.activity)[AppViewModel::class.java].go(Route.Editor(uri)) }
         assertTrue("editor did not open", poll(60_000) { has("智慧") })
-        Thread.sleep(8000)
+        poll(120_000) { !has("讀取照片") }
+        Thread.sleep(3000)
         shot("smart_08_editor.png")
         rule.onNodeWithText("智慧").performClick()
-        val analysed = poll(60_000) { tags("recCard") >= 3 }
+        val analysed = poll(90_000) { tags("recCard") >= 3 }
         Thread.sleep(1500)
         shot("smart_09_editor_smart.png")
-        Report.line("smart: editor recommendation cards ${tags("recCard")}, composition suggestions ${tags("compCard")}, note shown ${tags("compNote")}")
+        Report.line("editor: recommendation cards ${tags("recCard")}, composition suggestions ${tags("compCard")}, 'nothing to adjust' note ${tags("compNote")}")
         assertTrue("editor recommendation missing", analysed)
         // either real suggestions or an honest 'nothing to say' note, never neither
         assertTrue("composition panel empty", tags("compCard") + tags("compNote") > 0)
+        // the sea horizon sits in the middle of this photo: that must be found
+        assertTrue("horizon advice missing on the seaside photo", has("地平線"))
         runCatching { rule.onAllNodesWithTag("recCard").onFirst().performClick() }
         Thread.sleep(3000)
         shot("smart_10_editor_applied.png")
-        // export from the editor
         val n0 = runBlocking { Media.list(ctx) }.size
         rule.onNodeWithContentDescription("儲存").performClick()
         val exported = poll(180_000) { has("已儲存") || has("匯出失敗") }
         shot("smart_11_exported.png")
         val n1 = runBlocking { Media.list(ctx) }.size
-        Report.line("smart: editor export ${if (exported && !has("匯出失敗")) "ok" else "FAILED"}, files $n0 -> $n1")
-        Report.flush(ctx, "smart_report.txt")
+        Report.line("editor: export ${if (exported && !has("匯出失敗")) "ok" else "FAILED"}, files $n0 -> $n1")
+        Report.flush(ctx, "smart_editor_report.txt")
         assertTrue("export failed", exported && !has("匯出失敗") && n1 > n0)
     }
 
