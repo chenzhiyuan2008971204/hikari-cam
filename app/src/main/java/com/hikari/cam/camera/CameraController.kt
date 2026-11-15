@@ -179,6 +179,13 @@ class CameraController(private val context: Context) {
             return CameraCaps(false, Range(0, 0), 0f, 1f, 1f, false, hasFront = true, hasBack = true, focus = false,
                 report = "虛擬相機（測試用）：${v.current.zh} · ${v.current.source}").also { caps = it }
         }
+        // A device without any camera: say so at once. Starting CameraX there only retries for seconds and
+        // fails anyway (and on camera-less emulators the retries have taken the whole emulator down).
+        if (provider == null) {
+            val ids = runCatching { (context.getSystemService(Context.CAMERA_SERVICE) as android.hardware.camera2.CameraManager).cameraIdList }
+                .getOrDefault(emptyArray())
+            if (ids.isEmpty()) error("這台裝置沒有相機")
+        }
         val p = provider ?: suspendCancellableCoroutine<ProcessCameraProvider> { cont ->
             val f = ProcessCameraProvider.getInstance(context)
             f.addListener({ runCatching { f.get() }.onSuccess { cont.resume(it) }.onFailure { cont.resumeWithException(it) } }, main)

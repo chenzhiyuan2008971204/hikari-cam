@@ -106,7 +106,7 @@ jobs:
           script: |
             mkdir -p lab-emulator
             adb logcat -c || true
-            ./gradlew connectedDebugAndroidTest --stacktrace -Pandroid.testInstrumentationRunnerArguments.skipCapture=true -Pandroid.testInstrumentationRunnerArguments.skipEditorUi=true -Pandroid.testInstrumentationRunnerArguments.notClass=com.hikari.cam.CameraUiTest || touch lab-emulator/TESTS_FAILED
+            ./gradlew connectedDebugAndroidTest --stacktrace -Pandroid.testInstrumentationRunnerArguments.skipCapture=true -Pandroid.testInstrumentationRunnerArguments.notClass=com.hikari.cam.CameraUiTest || touch lab-emulator/TESTS_FAILED
             timeout 60 adb logcat -d -s LabReport:I AndroidRuntime:E TestRunner:* HikariCamera:W > lab-emulator/logcat.txt || true
             timeout 120 adb pull /sdcard/Download/HikariLab lab-emulator/ || true
             timeout 30 adb shell ls -l /sdcard/Pictures/Hikari > lab-emulator/exported_files.txt || true
