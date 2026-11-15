@@ -26,6 +26,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
@@ -261,22 +262,39 @@ fun LiveGuideOverlay(subject: com.hikari.cam.camera.Subject?, guidance: Guidance
                 val b = subject.bottom * h
                 val k = min(r - l, b - t) * 0.22f
                 for ((x, y, sx, sy) in listOf(Quad(l, t, 1f, 1f), Quad(r, t, -1f, 1f), Quad(l, b, 1f, -1f), Quad(r, b, -1f, -1f))) {
-                    drawLine(col, Offset(x, y), Offset(x + k * sx, y), 3f)
-                    drawLine(col, Offset(x, y), Offset(x, y + k * sy), 3f)
+                    drawLine(col, Offset(x, y), Offset(x + k * sx, y), 2.5.dp.toPx())
+                    drawLine(col, Offset(x, y), Offset(x, y + k * sy), 2.5.dp.toPx())
                 }
                 val from = Offset(subject.cx * w, subject.cy * h)
                 val to = Offset(guidance.target.x * w, guidance.target.y * h)
-                drawCircle(col, radius = 14f, center = to, style = Stroke(2.5f))
-                drawCircle(col, radius = 4f, center = to)
-                if (!guidance.aligned) {
-                    drawLine(col.copy(alpha = 0.9f), from, to, 2.5f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)))
-                    // arrow head at the target
-                    val ang = kotlin.math.atan2((to.y - from.y).toDouble(), (to.x - from.x).toDouble())
-                    for (d in listOf(2.6, -2.6)) {
-                        val a = ang + d
-                        drawLine(col, to, Offset(to.x + (cos(a) * 18).toFloat(), to.y + (sin(a) * 18).toFloat()), 3f)
+                // target in the style of a phone camera's shot suggestion: a large ring where the
+                // subject should go, and a solid dot for where it is now; move the dot into the ring
+                val ring = 34.dp.toPx()
+                val dot = 11.dp.toPx()
+                if (guidance.aligned) {
+                    drawCircle(accent.copy(alpha = 0.28f), radius = ring, center = to)
+                    drawCircle(accent, radius = ring, center = to, style = Stroke(3.5.dp.toPx()))
+                    // check mark
+                    val c = to
+                    val u = ring * 0.32f
+                    drawLine(Color.White, Offset(c.x - u, c.y), Offset(c.x - u * 0.25f, c.y + u * 0.75f), 3.5.dp.toPx(), cap = StrokeCap.Round)
+                    drawLine(Color.White, Offset(c.x - u * 0.25f, c.y + u * 0.75f), Offset(c.x + u, c.y - u * 0.7f), 3.5.dp.toPx(), cap = StrokeCap.Round)
+                } else {
+                    drawCircle(Color.Black.copy(alpha = 0.18f), radius = ring, center = to)
+                    drawCircle(Color.White, radius = ring, center = to, style = Stroke(3.dp.toPx()))
+                    // dashed path from the dot to the ring's edge
+                    val dx = to.x - from.x
+                    val dy = to.y - from.y
+                    val d = kotlin.math.hypot(dx, dy)
+                    if (d > ring + dot) {
+                        val end = Offset(to.x - dx / d * ring, to.y - dy / d * ring)
+                        val start = Offset(from.x + dx / d * dot, from.y + dy / d * dot)
+                        drawLine(Color.White.copy(alpha = 0.85f), start, end, 2.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 6.dp.toPx())))
                     }
-                    drawCircle(col, radius = 5f, center = from)
+                    drawCircle(Color.Black.copy(alpha = 0.25f), radius = dot + 2.dp.toPx(), center = from)
+                    drawCircle(yellow, radius = dot, center = from)
+                    drawCircle(Color.White, radius = dot, center = from, style = Stroke(2.dp.toPx()))
                 }
             }
         }
