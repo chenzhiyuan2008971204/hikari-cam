@@ -112,7 +112,8 @@ class DirectCamera(private val context: Context, private val id: String) {
         runCatching { session?.close() }
         runCatching { device?.close() }
         runCatching { reader?.close() }
-        session = null; device = null; reader = null
+        runCatching { previewSurface?.release() }
+        session = null; device = null; reader = null; previewSurface = null
         thread.quitSafely()
     }
 }
