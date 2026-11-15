@@ -246,9 +246,17 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     // hidden-id probing is opt-in and remembered: the user asks for it once from the lens menu
     val prefs = remember { ctx.getSharedPreferences("lens", android.content.Context.MODE_PRIVATE) }
     var probeHidden by remember { mutableStateOf(prefs.getBoolean("probeHidden", false)) }
-    val probe = remember(probeHidden) {
-        runCatching { com.hikari.cam.camera.LensProbe.discover(ctx, probeHidden) }
+    // the lenses are only looked up when the lens menu is first opened: nothing extra touches the
+    // camera service while the camera starts or shoots
+    var probeWanted by remember { mutableStateOf(false) }
+    val probe = remember(probeHidden, probeWanted) {
+        if (!probeWanted) emptyList<com.hikari.cam.camera.LensOption>() to ""
+        else runCatching { com.hikari.cam.camera.LensProbe.discover(ctx, probeHidden) }
             .getOrDefault(emptyList<com.hikari.cam.camera.LensOption>() to "")
+    }
+    LaunchedEffect(probe) {
+        if (probe.second.isNotBlank()) app.cameraReport = listOf(vm.caps?.report.orEmpty(), probe.second)
+            .filter { it.isNotBlank() }.joinToString("\n\n")
     }
     var lensOpt by remember { mutableStateOf<com.hikari.cam.camera.LensOption?>(null) }
     var lensMsg by remember { mutableStateOf<String?>(null) }
@@ -262,7 +270,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         val opt = lensOpt.takeIf { lens == CameraSelector.LENS_FACING_BACK }
         val c = try {
             vm.controller.bind(owner, r, lens, settings.saveRaw, settings.naturalDetail, opt,
-                trackPhysical = probe.first.any { it.logical })
+                trackPhysical = false)
         } catch (e: Throwable) {
             android.util.Log.w("HikariCamera", "bind failed", e)
             if (opt != null) {
@@ -279,7 +287,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         vm.onCaps(c)
         app.rawSupported = c.raw
         app.naturalApplied = c.naturalApplied
-        app.cameraReport = listOf(c.report, probe.second).filter { it.isNotBlank() }.joinToString("\n\n")
+        app.cameraReport = c.report
         zoom = c.minZoom.coerceAtLeast(1f).coerceAtMost(c.maxZoom)
         vm.controller.setZoom(zoom)
         vm.controller.setFlash(flash)
@@ -463,8 +471,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                 Text(look.name, color = Color.White, fontSize = 11.sp,
                     modifier = Modifier.align(Alignment.TopStart).padding(10.dp)
                         .background(Color(0x55000000), RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
-                if (lens == CameraSelector.LENS_FACING_BACK && probe.first.isNotEmpty()) Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
-                    LensPicker(probe.first, lensOpt, activePhysical, probeHidden,
+                if (lens == CameraSelector.LENS_FACING_BACK) Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
+                    LensPicker(probe.first, lensOpt, activePhysical, probeHidden, onOpen = { probeWanted = true },
                         onSearchHidden = {
                             prefs.edit().putBoolean("probeHidden", true).apply(); probeHidden = true
                             lensMsg = "已搜尋系統未列出的鏡頭"
@@ -632,6 +640,7 @@ private fun LensPicker(
     selected: com.hikari.cam.camera.LensOption?,
     active: String?,
     searched: Boolean,
+    onOpen: () -> Unit,
     onSearchHidden: () -> Unit,
     onSelect: (com.hikari.cam.camera.LensOption?) -> Unit,
 ) {
@@ -641,7 +650,7 @@ private fun LensPicker(
     Column(horizontalAlignment = Alignment.End) {
         Text("◎ $title", color = Color.White, fontSize = 11.sp,
             modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0x77000000))
-                .clickable { open = true }.padding(horizontal = 8.dp, vertical = 4.dp))
+                .clickable { onOpen(); open = true }.padding(horizontal = 8.dp, vertical = 4.dp))
         if (active != null) Text("實體 #$active", color = Color(0xFFFFB86B), fontSize = 9.sp,
             modifier = Modifier.padding(top = 2.dp, end = 4.dp))
         androidx.compose.material3.DropdownMenu(open, { open = false }) {
