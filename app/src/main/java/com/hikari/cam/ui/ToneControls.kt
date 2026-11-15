@@ -71,7 +71,7 @@ fun WhiteBalancePad(temp: Float, tint: Float, onChange: (Float, Float) -> Unit, 
         onChange((t * 100).roundToInt() / 100f, (g * 100).roundToInt() / 100f)
     }
     Column(modifier) {
-        Text("${kelvinLabel(temp)}  ${tintLabel(tint)}", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+        Text("${kelvinLabel(temp)}  ${tintLabel(tint)}" + if (temp != 0f || tint != 0f) "　·　點兩下回中" else "", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 4.dp))
         Canvas(
             Modifier.fillMaxWidth().height(64.dp).clip(RoundedCornerShape(10.dp))
@@ -81,7 +81,11 @@ fun WhiteBalancePad(temp: Float, tint: Float, onChange: (Float, Float) -> Unit, 
                     }
                 }
                 .pointerInput(Unit) {
-                    detectTapGestures { p -> update(p, size.width.toFloat(), size.height.toFloat()); onCommit() }
+                    detectTapGestures(
+                        // double tap: back to neutral (centre)
+                        onDoubleTap = { onChange(0f, 0f); onCommit() },
+                        onTap = { p -> update(p, size.width.toFloat(), size.height.toFloat()); onCommit() },
+                    )
                 }
         ) {
             drawRect(Brush.horizontalGradient(listOf(Color(0xFF6E8BFF), Color(0xFFB9C8FF), Color(0xFFFFF3E4), Color(0xFFFFB98A), Color(0xFFFF7A5C))))
