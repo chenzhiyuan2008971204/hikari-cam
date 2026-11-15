@@ -322,7 +322,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     }
 
     val caps = vm.caps
-    var panel by remember { mutableIntStateOf(0) } // 0 looks, 1 composition, 2 tone, 3 adjust
+    var panel by remember { mutableIntStateOf(-1) } // -1 closed, 0 looks, 1 composition, 2 tone, 3 adjust
     val guide = composition(settings.composition)
     var showHint by remember { mutableStateOf(false) }
 
@@ -395,11 +395,11 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         }
 
         // preview: as large as the space allows, rounded like a print
-        BoxWithConstraints(Modifier.fillMaxWidth().weight(1f).padding(horizontal = 6.dp).clipToBounds(), contentAlignment = Alignment.Center) {
+        BoxWithConstraints(Modifier.fillMaxWidth().weight(1f).clipToBounds(), contentAlignment = Alignment.TopCenter) {
             val fitHeight = maxWidth / maxHeight > aspect
             Box(
                 (if (fitHeight) Modifier.fillMaxHeight().aspectRatio(aspect) else Modifier.fillMaxWidth().aspectRatio(aspect))
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .pointerInput(caps) {
                         detectTransformGestures { _, _, z, _ ->
                             val c = caps ?: return@detectTransformGestures
@@ -409,6 +409,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                     }
                     .pointerInput(Unit) {
                         detectTapGestures { p ->
+                            // a tap on the preview first closes an open panel
+                            if (panel >= 0) { panel = -1; return@detectTapGestures }
                             focusAt = p
                             vm.controller.focusAt(p.x / size.width, p.y / size.height)
                         }
@@ -462,22 +464,49 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                         modifier = Modifier.align(BiasAlignment(0f, -0.7f)).padding(horizontal = 24.dp)
                             .background(Color(0xAA000000), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 6.dp))
                 }
-                if (caps != null && caps.maxZoom > caps.minZoom) Box(Modifier.align(Alignment.BottomCenter)) {
-                    ZoomStops(caps.minZoom, caps.maxZoom, caps.lensStops, caps.mainFocal35, zoom) { z ->
-                        zoom = z
-                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                        vm.controller.setZoom(z)
-                    }
-                }
                 // capture flash
                 Box(Modifier.fillMaxSize().graphicsLayer { alpha = flashAlpha.value }.background(Color.White))
+            }
+            // zoom stops, and the open panel laid over the bottom of the preview so the preview keeps its size
+            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
+                if (caps != null && caps.maxZoom > caps.minZoom) ZoomStops(caps.minZoom, caps.maxZoom, caps.lensStops, caps.mainFocal35, zoom) { z ->
+                    zoom = z
+                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    vm.controller.setZoom(z)
+                }
+                if (panel >= 0) Box(Modifier.fillMaxWidth().background(Color(0xD9101010), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                    .padding(top = 4.dp)) {
+            when (panel) {
+                0 -> LookStrip(app.looks, emptyMap(), look.id, favorites,
+                    onSelect = { s -> app.updateSettings { it.copy(lastLook = s.id) }; app.touch(s.id) },
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), size = 56)
+                1 -> CompositionStrip(guide?.id, { id -> app.updateSettings { it.copy(composition = id ?: "") } },
+                    Modifier.fillMaxWidth().padding(vertical = 6.dp))
+                2 -> TonePanel(
+                    evIndex = ev, evMin = caps?.evRange?.lower ?: 0, evMax = caps?.evRange?.upper ?: 0, evStep = caps?.evStep ?: 0f,
+                    onEv = { ev = it; vm.controller.setExposure(it) },
+                    temp = adjust.temperature, tint = adjust.tint,
+                    onTempTint = { t, g -> app.updateSettings { it.copy(cameraAdjustJson = adjust.copy(temperature = t, tint = g).toJson()) } },
+                    onCommit = {},
+                    preset = wb, onPreset = { p -> wb = p; vm.controller.setWhiteBalance(p.mode) },
+                    stamp = settings.dateStamp, note = settings.stampNote,
+                    onStamp = { v -> app.updateSettings { it.copy(dateStamp = v) } },
+                    onNote = { v -> app.updateSettings { it.copy(stampNote = v) } },
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 230.dp),
+                )
+                else -> AdjustSliders(look, adjust,
+                    onChange = { a -> app.updateSettings { it.copy(cameraAdjustJson = a.toJson()) } },
+                    onReset = { app.updateSettings { it.copy(cameraAdjustJson = "") } },
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp))
+            }
+                }
             }
         }
 
         // bottom panel: 濾鏡 / 構圖 / 調整
-        Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.Center) {
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.Center) {
             for ((i, label) in listOf("濾鏡", "構圖", "光影", "調整").withIndex()) {
-                Column(Modifier.clickable { panel = i }.padding(horizontal = 18.dp, vertical = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(Modifier.clickable { panel = if (panel == i) -1 else i }.padding(horizontal = 18.dp, vertical = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(label, color = if (panel == i) Color.White else Color(0xFF8A8A8A), fontSize = 13.sp,
                         fontWeight = if (panel == i) FontWeight.Bold else FontWeight.Normal)
                     Box(Modifier.padding(top = 3.dp).size(width = 14.dp, height = 2.dp)
@@ -485,32 +514,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                 }
             }
         }
-        when (panel) {
-            0 -> LookStrip(app.looks, emptyMap(), look.id, favorites,
-                onSelect = { s -> app.updateSettings { it.copy(lastLook = s.id) }; app.touch(s.id) },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), size = 60)
-            1 -> CompositionStrip(guide?.id, { id -> app.updateSettings { it.copy(composition = id ?: "") } },
-                Modifier.fillMaxWidth().padding(vertical = 6.dp))
-            2 -> TonePanel(
-                evIndex = ev, evMin = caps?.evRange?.lower ?: 0, evMax = caps?.evRange?.upper ?: 0, evStep = caps?.evStep ?: 0f,
-                onEv = { ev = it; vm.controller.setExposure(it) },
-                temp = adjust.temperature, tint = adjust.tint,
-                onTempTint = { t, g -> app.updateSettings { it.copy(cameraAdjustJson = adjust.copy(temperature = t, tint = g).toJson()) } },
-                onCommit = {},
-                preset = wb, onPreset = { p -> wb = p; vm.controller.setWhiteBalance(p.mode) },
-                stamp = settings.dateStamp, note = settings.stampNote,
-                onStamp = { v -> app.updateSettings { it.copy(dateStamp = v) } },
-                onNote = { v -> app.updateSettings { it.copy(stampNote = v) } },
-                modifier = Modifier.fillMaxWidth().heightIn(max = 230.dp),
-            )
-            else -> AdjustSliders(look, adjust,
-                onChange = { a -> app.updateSettings { it.copy(cameraAdjustJson = a.toJson()) } },
-                onReset = { app.updateSettings { it.copy(cameraAdjustJson = "") } },
-                modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp))
-        }
-
         // shutter row
-        Row(Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically,
+        Row(Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween) {
             Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(HikariColors.Panel)
                 .border(1.dp, Color(0xFF3A3A3A), RoundedCornerShape(12.dp))
@@ -589,7 +594,7 @@ private fun ShutterButton(enabled: Boolean, busy: Boolean, onClick: () -> Unit) 
     LaunchedEffect(pressed) { if (pressed) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP) }
     val scale by animateFloatAsState(if (pressed) 0.84f else 1f, spring(dampingRatio = 0.42f, stiffness = 700f), label = "shutter")
     Box(
-        Modifier.size(78.dp).border(2.dp, Color(0xFFE8E2D6), CircleShape).padding(5.dp)
+        Modifier.size(70.dp).border(2.dp, Color(0xFFE8E2D6), CircleShape).padding(5.dp)
             .border(1.dp, HikariColors.Accent.copy(alpha = 0.6f), CircleShape)
             .testTag("shutter").semantics { contentDescription = "快門" }
             .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick),

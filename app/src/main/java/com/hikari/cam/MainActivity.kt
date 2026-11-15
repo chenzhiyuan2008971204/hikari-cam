@@ -20,7 +20,9 @@ import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.NavigationBar
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -70,7 +72,8 @@ private fun RouteContent(app: AppViewModel, r: Route) {
                     else -> SettingsScreen(app, app.rawSupported)
                 }
             }
-            NavigationBar(containerColor = HikariColors.Panel, modifier = Modifier.navigationBarsPadding()) {
+            NavigationBar(containerColor = HikariColors.Panel, windowInsets = androidx.compose.foundation.layout.WindowInsets(0),
+                modifier = Modifier.navigationBarsPadding().height(62.dp)) {
                 for ((route, label, icon) in listOf(
                     Triple(Route.Camera, "Camera", Icons.Outlined.PhotoCamera),
                     Triple(Route.Gallery, "Gallery", Icons.Outlined.PhotoLibrary),
