@@ -89,7 +89,7 @@ object CompositionAnalyzer {
         val obj = det.filter { it.kind != Detection.Kind.FACE }.maxByOrNull { it.box.area }
         // a generic "object" box is only trusted like saliency is: a compact thing that stands clear of the frame
         // edge. Boxes that fill the frame or run off it are usually a piece of scenery, not a subject.
-        val clear = obj != null && minOf(obj.box.left, obj.box.top, 1f - obj.box.right, 1f - obj.box.bottom) >= 0.02f
+        val clear = obj != null && minOf(obj.box.left, obj.box.top, 1f - obj.box.right, 1f - obj.box.bottom) >= 0.03f
         if (obj != null && (if (obj.kind == Detection.Kind.PERSON) obj.box.area in 0.004f..0.85f else clear && obj.box.area in 0.004f..0.45f))
             return Findings.Subject(obj.box, obj.box.cx, obj.box.top + obj.box.h * 0.45f, "物件偵測", 0.7f, 0f, obj.kind == Detection.Kind.PERSON)
         // saliency: the largest region that stands out from the border background

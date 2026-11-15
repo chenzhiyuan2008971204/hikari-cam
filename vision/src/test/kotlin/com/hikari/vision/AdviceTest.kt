@@ -103,7 +103,7 @@ class AdviceTest {
     @Test
     fun sceneryBoxesAndDistantFacesAreNotSubjects() {
         val f = Synth.photo("03_foliage.jpg")
-        val scenery = listOf(Detection(Detection.Kind.OBJECT, Box(0.1f, 0f, 0.9f, 0.6f)), Detection(Detection.Kind.OBJECT, Box(0f, 0.02f, 0.5f, 0.98f)))
+        val scenery = listOf(Detection(Detection.Kind.OBJECT, Box(0.1f, 0f, 0.9f, 0.6f)), Detection(Detection.Kind.OBJECT, Box(0f, 0.02f, 0.5f, 0.98f)), Detection(Detection.Kind.OBJECT, Box(0.3f, 0.02f, 0.6f, 0.4f)))
         val r = CompositionAnalyzer.analyze(f, scenery)
         assertTrue("scenery box became a subject: ${kinds(r)}", r.findings.subject == null && kinds(r).none { it == Suggestion.Kind.EDGE_ROOM })
         val street = Synth.photo("14_nightstreet.jpg")
