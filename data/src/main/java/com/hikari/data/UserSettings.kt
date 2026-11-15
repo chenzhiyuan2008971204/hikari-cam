@@ -17,6 +17,12 @@ data class UserSettings(
     val aspect: String = "3:4",
     val lastLook: String = "mellow400",
     val cameraAdjustJson: String = "",
+    /** composition guide id over the camera preview, "" = none */
+    val composition: String = "",
+    /** print "5 月 · 12:08pm · note" on photos */
+    val dateStamp: Boolean = false,
+    /** the user's own words after the time, e.g. "晴 / Hokkaido" */
+    val stampNote: String = "",
 ) {
     fun toRows(): List<Setting> = listOf(
         Setting("jpegQuality", jpegQuality.toString()),
@@ -27,6 +33,9 @@ data class UserSettings(
         Setting("aspect", aspect),
         Setting("lastLook", lastLook),
         Setting("cameraAdjust", cameraAdjustJson),
+        Setting("composition", composition),
+        Setting("dateStamp", dateStamp.toString()),
+        Setting("stampNote", stampNote),
     )
 
     companion object {
@@ -44,6 +53,9 @@ data class UserSettings(
                 aspect = m["aspect"]?.takeIf { it in ASPECTS } ?: d.aspect,
                 lastLook = m["lastLook"] ?: d.lastLook,
                 cameraAdjustJson = m["cameraAdjust"] ?: d.cameraAdjustJson,
+                composition = m["composition"] ?: d.composition,
+                dateStamp = m["dateStamp"]?.toBooleanStrictOrNull() ?: d.dateStamp,
+                stampNote = m["stampNote"] ?: d.stampNote,
             )
         }
 

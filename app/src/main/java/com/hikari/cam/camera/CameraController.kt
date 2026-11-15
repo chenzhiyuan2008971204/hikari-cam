@@ -272,6 +272,17 @@ class CameraController(private val context: Context) {
         camera?.cameraControl?.setExposureCompensationIndex(index.coerceIn(c.evRange.lower, c.evRange.upper))
     }
 
+    /** Camera white balance: auto, daylight, cloudy or tungsten (android.hardware.camera2 CONTROL_AWB_MODE_*). */
+    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
+    fun setWhiteBalance(mode: Int) {
+        val cam = camera ?: return
+        runCatching {
+            androidx.camera.camera2.interop.Camera2CameraControl.from(cam.cameraControl).setCaptureRequestOptions(
+                androidx.camera.camera2.interop.CaptureRequestOptions.Builder()
+                    .setCaptureRequestOption(android.hardware.camera2.CaptureRequest.CONTROL_AWB_MODE, mode).build())
+        }
+    }
+
     fun setFlash(f: Flash) {
         capture?.flashMode = when (f) {
             Flash.OFF -> ImageCapture.FLASH_MODE_OFF
