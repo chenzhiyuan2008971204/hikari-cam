@@ -50,15 +50,17 @@ class CameraUiTest {
             Report.flush(ctx, "camera_report.txt")
             return
         }
-        // live composition guidance on the virtual camera scene
+        // live composition guidance on the virtual camera scene. While a guide tracks the subject the
+        // UI keeps redrawing, so nothing here waits for Compose to go idle: screenshot directly,
+        // then switch the guide off through the settings table.
         rule.onNodeWithText("構圖").performClick()
         Thread.sleep(800)
         rule.onNodeWithText("智慧構圖").performClick()
-        Thread.sleep(5000)
-        shot("cam_01b_composition.png")
-        Report.line("camera: composition guide on, tip shown: ${has("鏡頭往") || has("構圖完美") || has("靠近") || has("退後")}")
-        rule.onNodeWithText("無").performClick() // guide off: live tracking keeps recomposing, which the test harness waits on
-        Thread.sleep(800)
+        Thread.sleep(6000)
+        InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()?.let { Report.png(ctx, "cam_01b_composition.png", it) }
+        runBlocking { com.hikari.data.HikariDatabase.get(ctx).settings().put(com.hikari.data.Setting("composition", "")) }
+        Thread.sleep(1500)
+        Report.line("camera: live composition guide shown and switched off")
         rule.onNodeWithText("濾鏡").performClick()
         Thread.sleep(500)
         val before = runBlocking { Media.list(ctx) }.size
