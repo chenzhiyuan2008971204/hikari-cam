@@ -242,19 +242,37 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         glView.requestRender()
     }
     var cameraError by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(lens, settings.saveRaw, settings.naturalDetail) {
+    // every lens this phone exposes by any route (listed, physical, hidden) for the lens picker
+    val probe = remember { runCatching { com.hikari.cam.camera.LensProbe.discover(ctx) }.getOrDefault(emptyList<com.hikari.cam.camera.LensOption>() to "") }
+    var lensOpt by remember { mutableStateOf<com.hikari.cam.camera.LensOption?>(null) }
+    var lensMsg by remember { mutableStateOf<String?>(null) }
+    var activePhysical by remember { mutableStateOf<String?>(null) }
+    DisposableEffect(Unit) {
+        vm.controller.onActivePhysical = { activePhysical = it }
+        onDispose { vm.controller.onActivePhysical = null }
+    }
+    LaunchedEffect(lensMsg) { if (lensMsg != null) { delay(3500); lensMsg = null } }
+    LaunchedEffect(lens, settings.saveRaw, settings.naturalDetail, lensOpt) {
+        val opt = lensOpt.takeIf { lens == CameraSelector.LENS_FACING_BACK }
         val c = try {
-            vm.controller.bind(owner, r, lens, settings.saveRaw, settings.naturalDetail)
+            vm.controller.bind(owner, r, lens, settings.saveRaw, settings.naturalDetail, opt)
         } catch (e: Throwable) {
             android.util.Log.w("HikariCamera", "bind failed", e)
+            if (opt != null) {
+                // the phone refused this lens: say why and go back to the default camera
+                lensMsg = "這支手機不讓 App 使用這顆鏡頭：${e.message ?: e.javaClass.simpleName}"
+                lensOpt = null
+                return@LaunchedEffect
+            }
             cameraError = "無法開啟相機。\n這台裝置可能沒有可用的相機，或相機正被其他 App 使用。"
             return@LaunchedEffect
         }
+        if (opt != null) lensMsg = "已切換：${opt.label(probe.first.firstOrNull()?.focal35)}（${opt.source}）"
         cameraError = null
         vm.onCaps(c)
         app.rawSupported = c.raw
         app.naturalApplied = c.naturalApplied
-        app.cameraReport = c.report
+        app.cameraReport = listOf(c.report, probe.second).filter { it.isNotBlank() }.joinToString("\n\n")
         zoom = c.minZoom.coerceAtLeast(1f).coerceAtMost(c.maxZoom)
         vm.controller.setZoom(zoom)
         vm.controller.setFlash(flash)
@@ -436,6 +454,14 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                 Text(look.name, color = Color.White, fontSize = 11.sp,
                     modifier = Modifier.align(Alignment.TopStart).padding(10.dp)
                         .background(Color(0x55000000), RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
+                if (lens == CameraSelector.LENS_FACING_BACK && probe.first.size > 1) Box(Modifier.align(Alignment.TopEnd).padding(8.dp)) {
+                    LensPicker(probe.first, lensOpt, activePhysical) { lensOpt = it }
+                }
+                lensMsg?.let {
+                    Text(it, color = Color.White, fontSize = 12.sp,
+                        modifier = Modifier.align(BiasAlignment(0f, -0.7f)).padding(horizontal = 24.dp)
+                            .background(Color(0xAA000000), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 6.dp))
+                }
                 if (caps != null && caps.maxZoom > caps.minZoom) Box(Modifier.align(Alignment.BottomCenter)) {
                     ZoomStops(caps.minZoom, caps.maxZoom, caps.lensStops, caps.mainFocal35, zoom) { z ->
                         zoom = z
@@ -575,3 +601,41 @@ private fun ShutterButton(enabled: Boolean, busy: Boolean, onClick: () -> Unit) 
 
 /** Holds the GL renderer created inside the view factory. */
 private class CameraPreviewRendererHolder { var r: CameraPreviewRenderer? = null }
+
+
+/**
+ * Lens picker: every back lens the phone exposes by any route. The main lens's focal length is
+ * the first listed camera's; hidden lenses are marked experimental. Shows the physical lens that
+ * is actually streaming when the phone reports it.
+ */
+@Composable
+private fun LensPicker(
+    options: List<com.hikari.cam.camera.LensOption>,
+    selected: com.hikari.cam.camera.LensOption?,
+    active: String?,
+    onSelect: (com.hikari.cam.camera.LensOption?) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    val mainFocal = options.firstOrNull()?.focal35
+    val title = selected?.label(mainFocal) ?: "自動"
+    Column(horizontalAlignment = Alignment.End) {
+        Text("◎ $title", color = Color.White, fontSize = 11.sp,
+            modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0x77000000))
+                .clickable { open = true }.padding(horizontal = 8.dp, vertical = 4.dp))
+        if (active != null) Text("實體 #$active", color = Color(0xFFFFB86B), fontSize = 9.sp,
+            modifier = Modifier.padding(top = 2.dp, end = 4.dp))
+        androidx.compose.material3.DropdownMenu(open, { open = false }) {
+            androidx.compose.material3.DropdownMenuItem(
+                text = { Text("自動（系統預設＋變焦切換）") },
+                onClick = { open = false; onSelect(null) })
+            for (o in options) androidx.compose.material3.DropdownMenuItem(
+                text = {
+                    Column {
+                        Text(o.label(mainFocal) + if (o.key == selected?.key) "  ✓" else "")
+                        Text("${o.source} · #${o.cameraId}${o.physicalId?.let { " / $it" } ?: ""}", fontSize = 11.sp, color = Color.Gray)
+                    }
+                },
+                onClick = { open = false; onSelect(o) })
+        }
+    }
+}

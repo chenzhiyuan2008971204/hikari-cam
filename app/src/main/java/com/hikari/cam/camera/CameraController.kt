@@ -106,8 +106,16 @@ class CameraController(private val context: Context) {
         }
     }
 
-    suspend fun bind(owner: LifecycleOwner, r: CameraPreviewRenderer, lens: Int, wantRaw: Boolean, natural: Boolean = true): CameraCaps {
+    /** Physical lens currently streaming behind a logical camera (from capture results), for the UI. */
+    @Volatile var onActivePhysical: ((String?) -> Unit)? = null
+    private var lastActive: String? = null
+    private var direct: DirectCamera? = null
+
+    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
+    suspend fun bind(owner: LifecycleOwner, r: CameraPreviewRenderer, lens: Int, wantRaw: Boolean, natural: Boolean = true,
+                     option: LensOption? = null): CameraCaps {
         renderer = r
+        direct?.close(); direct = null
         val p = provider ?: suspendCancellableCoroutine<ProcessCameraProvider> { cont ->
             val f = ProcessCameraProvider.getInstance(context)
             f.addListener({ runCatching { f.get() }.onSuccess { cont.resume(it) }.onFailure { cont.resumeWithException(it) } }, main)
@@ -121,14 +129,47 @@ class CameraController(private val context: Context) {
         }
         r.mirror = facing == CameraSelector.LENS_FACING_FRONT
         p.unbindAll()
-        val selector = CameraSelector.Builder().requireLensFacing(facing).build()
 
-        val pv = Preview.Builder()
+        // a lens the system hides from apps: open it with plain Camera2 (experimental)
+        if (option?.kind == LensOption.Kind.HIDDEN && facing == CameraSelector.LENS_FACING_BACK) {
+            camera = null; preview = null; capture = null; analysis = null
+            var waited = 0
+            while (surfaceTexture == null && waited < 50) { kotlinx.coroutines.delay(100); waited++ }
+            val st = surfaceTexture ?: error("預覽尚未就緒")
+            val d = DirectCamera(context, option.cameraId)
+            try { d.open(st, r) } catch (e: Throwable) { d.close(); throw e }
+            direct = d
+            return CameraCaps(false, Range(0, 0), 0f, 1f, 1f, false, hasFront, hasBack, false,
+                report = "正在使用隱藏鏡頭 #${option.cameraId}（實驗功能）").also { caps = it }
+        }
+        val selector = when {
+            facing != CameraSelector.LENS_FACING_BACK || option == null -> CameraSelector.Builder().requireLensFacing(facing).build()
+            else -> CameraSelector.Builder().addCameraFilter { infos ->
+                infos.filter { androidx.camera.camera2.interop.Camera2CameraInfo.from(it).cameraId == option.cameraId }
+            }.build()
+        }
+        val physical = if (facing == CameraSelector.LENS_FACING_BACK) option?.physicalId else null
+        fun <T> withPhysical(b: T, ext: (T) -> androidx.camera.camera2.interop.Camera2Interop.Extender<*>) {
+            if (physical != null) ext(b).setPhysicalCameraId(physical)
+        }
+
+        val pvb = Preview.Builder()
             .setResolutionSelector(ResolutionSelector.Builder()
                 .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
                 .setResolutionStrategy(ResolutionStrategy(android.util.Size(1440, 1080), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER))
                 .build())
-            .build()
+        withPhysical(pvb) { androidx.camera.camera2.interop.Camera2Interop.Extender(it) }
+        // report which physical lens is streaming (phones that switch lenses while zooming)
+        androidx.camera.camera2.interop.Camera2Interop.Extender(pvb).setSessionCaptureCallback(
+            object : android.hardware.camera2.CameraCaptureSession.CaptureCallback() {
+                override fun onCaptureCompleted(s: android.hardware.camera2.CameraCaptureSession,
+                                                req: android.hardware.camera2.CaptureRequest,
+                                                res: android.hardware.camera2.TotalCaptureResult) {
+                    val id = res.get(android.hardware.camera2.CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID)
+                    if (id != lastActive) { lastActive = id; main.execute { onActivePhysical?.invoke(id) } }
+                }
+            })
+        val pv = pvb.build()
         pv.setSurfaceProvider(main) { req -> onSurfaceRequest(req) }
 
         // RAW only when this camera really offers RAW + JPEG together
@@ -145,15 +186,17 @@ class CameraController(private val context: Context) {
             .setJpegQuality(100)
         if (rawMode) icb.setOutputFormat(ImageCapture.OUTPUT_FORMAT_RAW_JPEG)
         val naturalApplied = if (natural) applyNaturalDetail(icb, info) else ""
+        withPhysical(icb) { androidx.camera.camera2.interop.Camera2Interop.Extender(it) }
         val ic = icb.build()
 
-        val an = androidx.camera.core.ImageAnalysis.Builder()
+        val anb = androidx.camera.core.ImageAnalysis.Builder()
             .setResolutionSelector(ResolutionSelector.Builder()
                 .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
                 .setResolutionStrategy(ResolutionStrategy(android.util.Size(640, 480), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER))
                 .build())
             .setBackpressureStrategy(androidx.camera.core.ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build()
+        withPhysical(anb) { androidx.camera.camera2.interop.Camera2Interop.Extender(it) }
+        val an = anb.build()
         an.setAnalyzer(analysisExecutor) { image -> analyze(image) }
         // live guidance needs a third stream; cameras that cannot add it still preview and shoot
         val cam = runCatching { p.bindToLifecycle(owner, selector, pv, ic, an).also { analysis = an } }
@@ -290,6 +333,7 @@ class CameraController(private val context: Context) {
     }
 
     fun unbind() {
+        direct?.close(); direct = null
         orientation.disable()
         provider?.unbindAll()
         camera = null
@@ -370,6 +414,7 @@ class CameraController(private val context: Context) {
 
     /** Takes the full-resolution photo into [jpeg]; with RAW enabled also writes a DNG to the gallery. */
     suspend fun takePicture(jpeg: File): Shot {
+        direct?.let { it.takePicture(jpeg); return Shot(jpeg, null) }
         val ic = capture ?: error("相機尚未就緒")
         val jpegOpts = ImageCapture.OutputFileOptions.Builder(jpeg)
             .setMetadata(ImageCapture.Metadata().apply { isReversedHorizontal = facing == CameraSelector.LENS_FACING_FRONT })
