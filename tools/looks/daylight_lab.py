@@ -133,6 +133,16 @@ def photo_checks(lk, photos):
     r["photo clouds: texture kept"] = (tex, 0.8, tex >= 0.8)
     clip = float((out[cloud].min(-1) > 0.995).mean() - (img[cloud].min(-1) > 0.995).mean())
     r["photo clouds: no new clipping"] = (clip, 0.02, clip <= 0.02)
+    p = os.path.join(photos, "05_white.png")
+    if os.path.exists(p):
+        img = np.asarray(Image.open(p).convert("RGB"), float) / 255
+        l0 = linear_to_oklab(srgb_to_linear(img))
+        m = (l0[..., 0] > 0.85) & (np.hypot(l0[..., 1], l0[..., 2]) < 0.05)
+        l1 = linear_to_oklab(srgb_to_linear(engine.apply(lk, img[m])))
+        d = float(l1[:, 2].mean() - l0[..., 2][m].mean())
+        r["photo whites: not yellower than original"] = (d, 0.003, d <= 0.003)
+        lv = float(l1[:, 0].mean() / l0[..., 0][m].mean())
+        r["photo whites: not greyer (L ratio)"] = (lv, 0.97, lv >= 0.97)
     return r
 
 
