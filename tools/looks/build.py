@@ -206,6 +206,11 @@ CLEAN_LIMITS = dict(
     shadow_detail=0.06,   # luminance a 20% grey must keep (crushed shadows lose dark detail)
     highlight_sep=0.06,   # luminance gap kept between 80% and 95% grey (highlight detail)
 )
+# the furthest a look may widen CLEAN_LIMITS with its "allow" entry (film character, still clean)
+FILM_ALLOWANCE = dict(
+    white_chroma=4.0, lightgray_chroma=5.0, white_level=0.92, black_level=0.075,
+    skin_hue=12.0, skin_chroma=(0.6, 1.7), shadow_detail=0.06, highlight_sep=0.05,
+)
 SKINS = {  # ColorChecker light / dark skin and a light East Asian skin tone
     "light": (194, 150, 130), "dark": (115, 82, 68), "asian": (226, 186, 160)}
 
@@ -219,7 +224,13 @@ def _lab(c):
 def clean_check(lk):
     """(list of failed checks, measured values) for one look against CLEAN_LIMITS."""
     import numpy as np
-    lim = CLEAN_LIMITS
+    # a look may widen individual limits on purpose (a faded film's lifted black, cream whites),
+    # within FILM_ALLOWANCE: nothing beyond those bounds is ever accepted
+    lim = dict(CLEAN_LIMITS)
+    for key, v in lk.get("allow", {}).items():
+        bound = FILM_ALLOWANCE[key]
+        lim[key] = (max(v[0], bound[0]), min(v[1], bound[1])) if isinstance(v, tuple) else \
+            (max(v, bound) if key in ("white_level", "shadow_detail", "highlight_sep") else min(v, bound))
     out = engine.apply(lk, np.array([[1, 1, 1], [.92, .92, .92], [0, 0, 0]]
                                     + [np.array(v) / 255 for v in SKINS.values()]))
     lw, lg = _lab(out[0]), _lab(out[1])

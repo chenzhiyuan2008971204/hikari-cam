@@ -24,7 +24,7 @@ FILMS = {
     # ───────────── Film ─────────────
     "mellow400": dict(
         name="Mellow 400", zh="柔光 400", series="film",
-        note="人像負片：柔和膚色、溫暖高光、自然低飽和、柔和反差、細緻顆粒。",
+        note="人像負片：明亮奶油色的膚色、收斂的橄欖綠、柔和偏青的天空，暖高光與冷暗部，柔和反差。",
         colour=dict(
             temp=0.06,
             curve=filmic(exposure=0.08, contrast=0.88, toe=0.02, shoulder=0.985),
@@ -40,7 +40,7 @@ FILMS = {
     ),
     "gold_memory": dict(
         name="Gold Memory", zh="金色記憶", series="film",
-        note="金黃高光、暖色調，飽滿但不刺眼的顏色，像夏天的消費級彩色負片。",
+        note="金色記憶：金黃溫暖的高光、飽滿的黃與紅、綠色偏向黃綠、帶棕色的暗部，像夏天的消費級負片。",
         colour=dict(
             temp=0.24,
             curve=filmic(exposure=0.04, contrast=1.04, toe=0.018, shoulder=0.99),
@@ -54,7 +54,7 @@ FILMS = {
     ),
     "cinema400": dict(
         name="Cinema 400", zh="電影 400", series="film",
-        note="電影負片：有力的反差、深邃但保有細節的暗部、自然膚色、柔和的高光過渡與紅色光暈。",
+        note="電影感：青色暗部、暖色膚色與高光（青橙對比），綠色偏青，有力的反差與紅色光暈。",
         colour=dict(
             curve=filmic(exposure=-0.04, contrast=1.24, toe=0.014, shoulder=0.975),
             sat=-0.06,
@@ -68,7 +68,7 @@ FILMS = {
     ),
     "vivid100": dict(
         name="Vivid 100", zh="鮮明 100", series="film",
-        note="細顆粒高飽和正片風格：色彩分離度高、細節清晰，紅色與藍色的飽和度受控不溢出。",
+        note="鮮明細顆粒：溫暖濃郁的紅、深邃的藍、清晰反差，白色乾淨、膚色穩定。",
         colour=dict(
             curve=filmic(contrast=1.12, toe=0.008, shoulder=0.995),
             sat=0.12, vibrance=0.06,
@@ -83,7 +83,7 @@ FILMS = {
     # ───────────── Japanese ─────────────
     "tokyo_blue": dict(
         name="Tokyo Blue", zh="東京藍", series="japanese",
-        note="藍綠色陰影、乾淨的白、自然膚色、清透的天空。",
+        note="東京藍：明亮冷調的空氣感、偏藍的淡黑、青綠色調的植物，膚色乾淨。",
         colour=dict(
             temp=-0.08,
             curve=filmic(exposure=0.06, contrast=0.98, toe=0.02, shoulder=0.99),
@@ -96,7 +96,7 @@ FILMS = {
     ),
     "kyoto_soft": dict(
         name="Kyoto Soft", zh="京都柔", series="japanese",
-        note="柔和對比、低飽和、淡雅的顏色與自然的高光。",
+        note="京都柔：非常柔和的粉彩、薄荷綠、粉霧天空，暗部帶一點淡粉，適合日常與人像。",
         colour=dict(
             temp=0.02,
             curve=filmic(exposure=0.12, contrast=0.82, toe=0.03, shoulder=0.98),
@@ -110,7 +110,7 @@ FILMS = {
     ),
     "summer_green": dict(
         name="Summer Green", zh="夏日綠", series="japanese",
-        note="綠色層次豐富而不螢光、自然的植被與柔和的陽光。",
+        note="夏日綠：清新鮮活的黃綠與草綠、青藍天空、明亮通透，暗部帶一點富士式的青綠。",
         colour=dict(
             temp=0.05,
             curve=filmic(exposure=0.05, contrast=1.0, toe=0.018, shoulder=0.99),
@@ -127,7 +127,7 @@ FILMS = {
     # ───────────── CCD / digital ─────────────
     "ccd2000": dict(
         name="CCD 2000", zh="CCD 2000", series="ccd",
-        note="早期數位相機：清晰反差、略冷的色調、較硬的高光肩部與細小的色彩雜訊。",
+        note="CCD 2000：早期數位相機的冷調與高飽和，偏洋紅的紅與藍、硬朗的高光、細小色彩雜訊。",
         colour=dict(
             temp=-0.14,
             curve=filmic(contrast=1.14, toe=0.006, shoulder=0.99),
@@ -140,7 +140,7 @@ FILMS = {
     ),
     "flash_diary": dict(
         name="Flash Diary", zh="閃光日記", series="ccd",
-        note="直打閃光的夜生活：高反差、輕微暖色、閃光的明暗落差與高光微光。",
+        note="閃光日記：直打閃光的強反差、深黑、明亮偏暖的膚色與鮮豔顏色。",
         colour=dict(
             temp=0.08,
             curve=filmic(exposure=0.02, contrast=1.28, toe=0.01, shoulder=0.99),
@@ -154,7 +154,7 @@ FILMS = {
     ),
     "compact_chrome": dict(
         name="Compact Chrome", zh="隨身機鉻", series="ccd",
-        note="數位隨身機：緊實的色彩、清晰的細節、冷暖分離。",
+        note="隨身機鉻：清脆銳利、冷暗部暖高光、深藍天空、收斂的綠。",
         colour=dict(
             curve=filmic(contrast=1.14, toe=0.01, shoulder=0.995),
             sat=0.08,
@@ -169,7 +169,7 @@ FILMS = {
     # ───────────── Special ─────────────
     "night_bloom": dict(
         name="Night Bloom", zh="夜光", series="special",
-        note="夜景電影感：紅色高光暈染與柔和光暈，暗部保留層次。",
+        note="夜光：青色暗部、橙紅色的燈光與高光暈染，綠色偏青的電影夜景感。",
         colour=dict(
             curve=filmic(exposure=0.05, contrast=1.06, toe=0.02, shoulder=0.985),
             sat=0.05,
@@ -182,7 +182,7 @@ FILMS = {
     ),
     "dream1998": dict(
         name="Dream 1998", zh="夢 1998", series="special",
-        note="柔焦與細緻顆粒、柔和高光、懷舊的顏色，帶一點點灰塵、漏光和色彩漂移。",
+        note="夢 1998：褪色的暖粉色調、抬起的淡黑、柔和反差，綠與藍收斂，帶灰塵與漏光。",
         colour=dict(
             temp=0.03,
             curve=filmic(exposure=0.06, contrast=0.9, toe=0.035, shoulder=0.975),
@@ -206,3 +206,12 @@ from daylight import DAYLIGHT, DAYLIGHT_SHIP  # noqa: E402
 
 FILMS.update(DAYLIGHT)
 SHIP = DAYLIGHT_SHIP + SHIP
+
+# Colour v2: the fine-engine recipes (film_colours.py), with each look's mood strengthened
+from amplify import amplify_mood  # noqa: E402
+from film_colours import C as _C2, STRENGTH as _S, DAYLIGHT_STRENGTH as _SD  # noqa: E402
+
+for _k, _lk in _C2.items():
+    FILMS[_k]["colour"] = amplify_mood(_lk, _S[_k])
+for _k, _kk in _SD.items():
+    FILMS[_k]["colour"] = amplify_mood(FILMS[_k]["colour"], _kk, clean=True)
