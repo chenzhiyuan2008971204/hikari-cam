@@ -215,3 +215,12 @@ for _k, _lk in _C2.items():
     FILMS[_k]["colour"] = amplify_mood(_lk, _S[_k])
 for _k, _kk in _SD.items():
     FILMS[_k]["colour"] = amplify_mood(FILMS[_k]["colour"], _kk, clean=True)
+
+# Grain: mostly luminance, like real colour negative (dye clouds add only a faint colour
+# variation). Independent per-channel noise at the original amounts read as digital colour noise
+# on skin at 100 %; CCD 2000 keeps its colour noise on purpose.
+for _k, _f in FILMS.items():
+    if _k != "ccd2000":
+        _f["fx"]["grain"]["chroma"] = round(_f["fx"]["grain"]["chroma"] * 0.4, 3)
+for _k in ("mellow400", "portrait_soft", "kyoto_soft"):
+    FILMS[_k]["fx"]["grain"]["amount"] = round(FILMS[_k]["fx"]["grain"]["amount"] * 0.8, 3)

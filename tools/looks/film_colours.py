@@ -47,7 +47,7 @@ C = {
         hsl_dark=dict(teal=(0, 0.06, -0.02), blue=(-6, 0.0, -0.02)),
         chroma_cap=dict(teal=0.11, cyan=0.12, sky=0.12, blue=0.14, green=0.09),
         hl_rolloff=(0.82, 0.4),
-        split=dict(shadows=(205, 0.03), highlights=(65, 0.016)),
+        split=dict(shadows=(205, 0.022), highlights=(65, 0.016)),
         skin_protect=0.9, clean=0.88, allow=dict(white_level=0.94, skin_chroma=(0.6, 1.7)),
     ),
     # Fine-grain saturated: deep blues, rich reds, clean whites, calm skin
