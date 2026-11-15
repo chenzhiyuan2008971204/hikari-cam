@@ -42,7 +42,7 @@ class DaylightLabTest {
             Thread.sleep(800)
             shot("daylight_${i + 1}.png")
         }
-        rule.onNodeWithText("Muted Chrome · 霧鉻").performClick()
+        rule.onNodeWithText("Muted Chrome").performClick()
         Thread.sleep(1500)
         shot("daylight_compare.png")
         Report.line("daylight lab: 7 scenes x 8 looks rendered, compare view opened")

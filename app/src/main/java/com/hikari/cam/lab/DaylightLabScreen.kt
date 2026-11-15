@@ -103,7 +103,7 @@ fun DaylightLabScreen(onBack: () -> Unit, vm: DaylightLabViewModel = viewModel()
                 Tile("原圖 Original", src, null) {}
             }
             items(vm.looks, key = { it.id }) { spec ->
-                Tile("${spec.name} · ${spec.zh}", vm.results[spec.id], spec.id) { open = spec.id }
+                Tile(spec.name, vm.results[spec.id], spec.id) { open = spec.id }
             }
         }
     }
