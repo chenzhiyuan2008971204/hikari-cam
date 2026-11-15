@@ -113,7 +113,9 @@ class CameraController(private val context: Context) {
 
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     suspend fun bind(owner: LifecycleOwner, r: CameraPreviewRenderer, lens: Int, wantRaw: Boolean, natural: Boolean = true,
-                     option: LensOption? = null): CameraCaps {
+                     option: LensOption? = null,
+                     /** report the streaming physical lens (only on phones with a multi-lens logical camera) */
+                     trackPhysical: Boolean = false): CameraCaps {
         renderer = r
         direct?.close(); direct = null
         val p = provider ?: suspendCancellableCoroutine<ProcessCameraProvider> { cont ->
@@ -160,7 +162,7 @@ class CameraController(private val context: Context) {
                 .build())
         withPhysical(pvb) { androidx.camera.camera2.interop.Camera2Interop.Extender(it) }
         // report which physical lens is streaming (phones that switch lenses while zooming)
-        androidx.camera.camera2.interop.Camera2Interop.Extender(pvb).setSessionCaptureCallback(
+        if (trackPhysical && facing == CameraSelector.LENS_FACING_BACK) androidx.camera.camera2.interop.Camera2Interop.Extender(pvb).setSessionCaptureCallback(
             object : android.hardware.camera2.CameraCaptureSession.CaptureCallback() {
                 override fun onCaptureCompleted(s: android.hardware.camera2.CameraCaptureSession,
                                                 req: android.hardware.camera2.CaptureRequest,

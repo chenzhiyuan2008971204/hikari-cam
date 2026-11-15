@@ -261,7 +261,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     LaunchedEffect(lens, settings.saveRaw, settings.naturalDetail, lensOpt) {
         val opt = lensOpt.takeIf { lens == CameraSelector.LENS_FACING_BACK }
         val c = try {
-            vm.controller.bind(owner, r, lens, settings.saveRaw, settings.naturalDetail, opt)
+            vm.controller.bind(owner, r, lens, settings.saveRaw, settings.naturalDetail, opt,
+                trackPhysical = probe.first.any { it.logical })
         } catch (e: Throwable) {
             android.util.Log.w("HikariCamera", "bind failed", e)
             if (opt != null) {
