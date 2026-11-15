@@ -45,6 +45,8 @@ data class CameraCaps(
     val mainFocal35: Float? = null,
     /** what natural-detail mode could set on this camera, for the settings page */
     val naturalApplied: String = "",
+    /** which cameras this phone shows to apps, for the settings page */
+    val report: String = "",
 )
 
 enum class Flash { OFF, AUTO, ON }
@@ -147,6 +149,7 @@ class CameraController(private val context: Context) {
             lensStops = lensStops(cam, zoom?.minZoomRatio ?: 1f, zoom?.maxZoomRatio ?: 1f),
             mainFocal35 = runCatching { focal35(cam.cameraInfo) }.getOrNull(),
             naturalApplied = naturalApplied,
+            report = runCatching { report(p, cam, zoom?.minZoomRatio ?: 1f, zoom?.maxZoomRatio ?: 1f) }.getOrDefault(""),
         ).also { caps = it }
     }
 
@@ -168,6 +171,22 @@ class CameraController(private val context: Context) {
         if (minZoom < 0.95f && stops.none { it < 0.95f }) stops.add(Math.round(minZoom * 10f) / 10f)
         stops.toList()
     }.getOrDefault(listOf(1f))
+
+    /**
+     * What the phone exposes to third-party apps: every back camera it lists (with its 35 mm
+     * focal length), the physical lenses behind the camera in use, and the zoom range.
+     */
+    private fun report(p: ProcessCameraProvider, cam: Camera, minZoom: Float, maxZoom: Float): String {
+        val backs = p.availableCameraInfos.filter { it.lensFacing == CameraSelector.LENS_FACING_BACK }
+        val backFocals = backs.map { i -> focal35(i)?.let { "${Math.round(it)}mm" } ?: "?" }
+        val phys = cam.cameraInfo.physicalCameraInfos.map { i -> focal35(i)?.let { "${Math.round(it)}mm" } ?: "?" }
+        return buildString {
+            append("App 可用的後鏡頭 ${backs.size} 顆：${backFocals.joinToString("、")}")
+            append("\n目前相機內含實體鏡頭 ${phys.size} 顆")
+            if (phys.isNotEmpty()) append("：${phys.joinToString("、")}")
+            append("\n變焦範圍 ${"%.1f".format(minZoom)}× – ${"%.1f".format(maxZoom)}×")
+        }
+    }
 
     /** 35 mm-equivalent focal length of a camera: focal length x 43.27 mm / sensor diagonal */
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)

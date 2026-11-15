@@ -240,6 +240,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         vm.onCaps(c)
         app.rawSupported = c.raw
         app.naturalApplied = c.naturalApplied
+        app.cameraReport = c.report
         zoom = c.minZoom.coerceAtLeast(1f).coerceAtMost(c.maxZoom)
         vm.controller.setZoom(zoom)
         vm.controller.setFlash(flash)
@@ -271,7 +272,9 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
 
     fun fire() {
         view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY)
-        shutterSound.play(MediaActionSound.SHUTTER_CLICK)
+        // shutter sound only when the phone is not on silent or vibrate
+        val audio = ctx.getSystemService(android.content.Context.AUDIO_SERVICE) as android.media.AudioManager
+        if (audio.ringerMode == android.media.AudioManager.RINGER_MODE_NORMAL) shutterSound.play(MediaActionSound.SHUTTER_CLICK)
         scope.launch { flashAlpha.snapTo(0.75f); flashAlpha.animateTo(0f, tween(260)) }
         vm.shoot(look, adjust, aspect, settings); vm.newSeed(); r.seed = vm.seed
     }

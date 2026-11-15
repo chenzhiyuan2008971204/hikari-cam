@@ -55,6 +55,7 @@ fun SettingsScreen(app: AppViewModel, rawSupported: Boolean?) {
             false -> Info("DNG RAW", "這支手機的相機不提供 RAW 輸出，使用高品質 JPEG。")
             null -> Info("DNG RAW", "開啟一次相機後才知道這支手機是否支援。")
         }
+        Info("相機資訊", app.cameraReport.ifEmpty { "開啟一次相機後顯示這支手機開放給 App 的鏡頭" })
         Toggle("九宮格", "相機取景格線", s.grid) { v -> app.updateSettings { it.copy(grid = v) } }
         Text("預設長寬比", color = Color.White, modifier = Modifier.padding(start = 16.dp, top = 10.dp))
         Row(Modifier.padding(horizontal = 12.dp)) {
