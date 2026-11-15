@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
@@ -57,7 +58,7 @@ class LabUiTest {
         rule.onNodeWithText("Settings").performClick()
         Thread.sleep(800)
         shot("app_04_settings.png")
-        rule.onNodeWithText("Filter Lab").performClick()
+        rule.onNodeWithText("Filter Lab").performScrollTo().performClick()
         waitText("內建測試圖卡 ·")
         waitIdleLab()
         Thread.sleep(1500)

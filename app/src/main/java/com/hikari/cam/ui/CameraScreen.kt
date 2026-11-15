@@ -553,17 +553,19 @@ private fun ZoomStops(min: Float, max: Float, lenses: List<Float>, focal35: Floa
                     Modifier.clip(RoundedCornerShape(22.dp))
                         .background(if (on) Color(0xCC2A2A2A) else Color.Transparent)
                         .clickable { onZoom(z) }
-                        .padding(horizontal = 9.dp, vertical = 4.dp),
+                        .padding(horizontal = 7.dp, vertical = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text((if (on) fmt(zoom) else fmt(z)) + "×",
                         color = if (on) HikariColors.Accent else Color.White,
-                        fontSize = 13.sp, fontWeight = if (lens) FontWeight.Bold else FontWeight.Normal)
+                        fontSize = 13.sp, fontWeight = if (lens) FontWeight.Bold else FontWeight.Normal,
+                        maxLines = 1, softWrap = false)
                     // native lenses: their 35 mm-equivalent focal length and a dot; digital stops: "數位"
                     Text(
                         if (lens) (focal35?.let { "${Math.round(it * z)}mm" } ?: "鏡頭") + " •"
                         else "數位",
                         color = if (lens) Color(0xFFDDDDDD) else Color(0xFF999999), fontSize = 9.sp,
+                        maxLines = 1, softWrap = false,
                     )
                 }
             }
