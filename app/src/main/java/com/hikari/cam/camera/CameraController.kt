@@ -161,16 +161,6 @@ class CameraController(private val context: Context) {
                 .setResolutionStrategy(ResolutionStrategy(android.util.Size(1440, 1080), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER))
                 .build())
         withPhysical(pvb) { androidx.camera.camera2.interop.Camera2Interop.Extender(it) }
-        // report which physical lens is streaming (phones that switch lenses while zooming)
-        if (trackPhysical && facing == CameraSelector.LENS_FACING_BACK) androidx.camera.camera2.interop.Camera2Interop.Extender(pvb).setSessionCaptureCallback(
-            object : android.hardware.camera2.CameraCaptureSession.CaptureCallback() {
-                override fun onCaptureCompleted(s: android.hardware.camera2.CameraCaptureSession,
-                                                req: android.hardware.camera2.CaptureRequest,
-                                                res: android.hardware.camera2.TotalCaptureResult) {
-                    val id = res.get(android.hardware.camera2.CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID)
-                    if (id != lastActive) { lastActive = id; main.execute { onActivePhysical?.invoke(id) } }
-                }
-            })
         val pv = pvb.build()
         pv.setSurfaceProvider(main) { req -> onSurfaceRequest(req) }
 
