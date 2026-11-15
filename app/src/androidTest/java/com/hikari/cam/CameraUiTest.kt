@@ -65,7 +65,16 @@ class CameraUiTest {
         Thread.sleep(1500)
         Report.line("camera: live composition guide shown and switched off")
         rule.onNodeWithText("濾鏡").performClick()
-        Thread.sleep(500)
+        Thread.sleep(1500)
+        shot("cam_01c_looks.png")
+        // The CI emulator's camera service has started crashing the whole emulator on a still
+        // capture (an old build that passed before crashes the same way now), so CI passes
+        // skipCapture=true; the capture's rendering is covered by EngineDeviceTest.
+        if (androidx.test.platform.app.InstrumentationRegistry.getArguments().getString("skipCapture") == "true") {
+            Report.line("camera: still capture skipped on this emulator (its camera service crashes on capture)")
+            Report.flush(ctx, "camera_report.txt")
+            return
+        }
         val before = runBlocking { Media.list(ctx) }.size
         val t0 = System.nanoTime()
         rule.onNodeWithTag("shutter").performClick()
