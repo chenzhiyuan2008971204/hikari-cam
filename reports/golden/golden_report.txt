@@ -1,4 +1,4 @@
-golden + quality: 27 looks x 14 photos = 378 renders, 600 s
+golden + quality: 27 looks x 14 photos = 378 renders, 623 s
 mode: compare, tolerance mean 1.2 / p99 5.0 levels; worst seen mean 0.00 / p99 0.0
 result: PASS
 
