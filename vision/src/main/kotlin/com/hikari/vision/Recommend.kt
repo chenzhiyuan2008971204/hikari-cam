@@ -47,16 +47,16 @@ object FilterRecommender {
             SceneType.PORTRAIT -> if (mono) 0.55f to "黑白人像專注在光影與表情" else best(
                 Triple(0.4f, near(k["skinSat"], 0.92f, 0.12f), "膚色飽和度自然，不會過橘"),
                 Triple(0.25f, near(k["skinHue"], 0f, 5f), "膚色色相準確"),
-                Triple(0.2f, near(k["contrast"], -0.08f, 0.15f), "柔和的反差讓皮膚更細緻"),
-                Triple(0.15f, ramp(k["hlSoft"], 0f, 0.2f), "高光過渡柔和，臉部不會死白"))
+                Triple(0.2f, near(k["contrast"], -0.12f, 0.2f), "柔和的反差讓皮膚更細緻"),
+                Triple(0.15f, ramp(k["shadowLift"], 0f, 0.05f), "暗部柔和提亮，臉上的陰影不會太硬"))
             SceneType.ARCHITECTURE -> if (mono) 0.7f to "黑白強調建築的線條與結構" else best(
                 Triple(0.45f, near(k["contrast"], 0.18f, 0.12f), "俐落的反差突顯建築線條"),
                 Triple(0.25f, near(k["sat"], -0.1f, 0.2f), "收斂的色彩讓材質更有質感"),
                 Triple(0.3f, near(k["warmth"], 0f, 0.3f), "水泥與白牆維持中性不偏色"))
             SceneType.OVERCAST -> if (mono) 0.5f to "陰天顏色平淡，黑白反而更有氣氛" else best(
-                Triple(0.4f, near(k["contrast"], 0.17f, 0.12f), "補上陰天缺少的反差"),
-                Triple(0.3f, ramp(k["warmth"], 0f, 0.5f), "加一點暖意，畫面不會灰冷"),
-                Triple(0.3f, near(k["sat"], 0.05f, 0.15f), "稍微提升色彩，避免發灰"))
+                Triple(0.45f, near(k["contrast"], 0.18f, 0.1f), "補上陰天平光缺少的反差"),
+                Triple(0.25f, near(k["warmth"], 0.1f, 0.3f), "白平衡中性略暖，不灰冷也不發黃"),
+                Triple(0.3f, near(k["sat"], -0.1f, 0.2f), "收斂的色彩在平光下更有質感"))
             SceneType.HIGH_CONTRAST, SceneType.BACKLIGHT -> best(
                 Triple(0.45f, ramp(-k["contrast"], 0f, 0.15f), "較低的反差保住亮暗兩端的細節"),
                 Triple(0.3f, ramp(k["shadowLift"], 0f, 0.05f), "把暗部提亮，陰影裡的細節看得見"),

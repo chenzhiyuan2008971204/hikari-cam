@@ -167,21 +167,44 @@ object CompositionAnalyzer {
     private fun tiltOf(l: Line) = if (l.angleDeg > 0) l.angleDeg - 90f else l.angleDeg + 90f
 
     private fun verticals(lines: List<Line>): Findings.Verticals? {
-        val v = lines.filter { abs(tiltOf(it)) <= 24f && abs(it.y1 - it.y0) >= 0.25f && it.support >= 0.3f }
+        val cand = lines.filter { abs(tiltOf(it)) <= 24f && abs(it.y1 - it.y0) >= 0.25f && it.support >= 0.3f }
+            .sortedByDescending { it.support * abs(it.y1 - it.y0) }
+        // one edge often comes back as several lines half a degree apart: keep the best of each
+        val v = ArrayList<Line>()
+        for (l in cand) {
+            val x = (l.x0 + l.x1) / 2f
+            if (v.none { abs((it.x0 + it.x1) / 2f - x) < 0.04f && abs(tiltOf(it) - tiltOf(l)) < 4f }) v += l
+        }
         if (v.size < 3) return null
         val w = v.map { it.support * abs(it.y1 - it.y0) }
-        // weighted median tilt
-        val order = v.indices.sortedBy { tiltOf(v[it]) }
-        var acc = 0f; val half = w.sum() / 2f; var med = 0f
-        for (i in order) { acc += w[i]; if (acc >= half) { med = tiltOf(v[i]); break } }
-        val spread = v.indices.sumOf { (abs(tiltOf(v[it]) - med) * w[it]).toDouble() }.toFloat() / w.sum()
-        // convergence: tilt changes with x when the camera looks up or down
-        val xs = v.map { (it.x0 + it.x1) / 2f }; val mx = xs.average().toFloat()
-        var num = 0f; var den = 0f
-        for (i in v.indices) { num += (xs[i] - mx) * (tiltOf(v[i]) - med) * w[i]; den += (xs[i] - mx) * (xs[i] - mx) * w[i] }
-        val slope = if (den > 1e-4f) num / den else 0f   // deg per frame width; looking up: left lines lean right (+), right lean left (-)
-        val conf = ((v.size - 2) / 5f).coerceIn(0f, 1f) * (1f - (spread / 8f).coerceIn(0f, 0.6f))
-        return Findings.Verticals(med, -slope, v.size, conf, v)
+        val xs = v.map { (it.x0 + it.x1) / 2f }; val ts = v.map { tiltOf(it) }
+        // tilt = a + b * (x - 0.5). b = 0 is a level camera or a rolled one; b != 0 is looking up or down
+        // (the verticals converge). Roof edges, gables and leaning poles are steep too but fit neither,
+        // so the model is chosen by agreement (RANSAC), and the simpler one wins unless the other is clearly better.
+        fun score(a: Float, b: Float): Float { var sc = 0f; for (k in v.indices) if (abs(ts[k] - a - b * (xs[k] - 0.5f)) <= 2.5f) sc += w[k]; return sc }
+        var fa = 0f; var fs = -1f
+        for (k in v.indices) { val sc = score(ts[k], 0f); if (sc > fs) { fs = sc; fa = ts[k] } }
+        var sa = 0f; var sb = 0f; var ss = -1f
+        for (p in v.indices) for (q in p + 1 until v.size) {
+            if (abs(xs[p] - xs[q]) < 0.2f) continue
+            val b = (ts[p] - ts[q]) / (xs[p] - xs[q]); if (abs(b) > 45f) continue
+            val a = ts[p] - b * (xs[p] - 0.5f)
+            val sc = score(a, b); if (sc > ss) { ss = sc; sa = a; sb = b }
+        }
+        val sloped = ss >= fs * 1.25f && abs(sb) >= 3f
+        val a = if (sloped) sa else fa; val b = if (sloped) sb else 0f
+        val inl = v.indices.filter { abs(ts[it] - a - b * (xs[it] - 0.5f)) <= 3f }
+        if (inl.size < 3) return null
+        // more than a few degrees off at the centre is not a tilted camera, it is something that is not a vertical
+        if (abs(a) > 8f) return null
+        // a claim about the whole frame needs lines spread over it
+        val span = inl.maxOf { xs[it] } - inl.minOf { xs[it] }
+        if (span < 0.25f) return null
+        val wi = inl.sumOf { w[it].toDouble() }.toFloat()
+        val spread = inl.sumOf { (abs(ts[it] - a - b * (xs[it] - 0.5f)) * w[it]).toDouble() }.toFloat() / wi
+        val agree = wi / w.sum()
+        val conf = ((inl.size - 2) / 4f).coerceIn(0f, 1f) * (1f - (spread / 6f).coerceIn(0f, 0.5f)) * (0.5f + 0.5f * agree)
+        return Findings.Verticals(a, -b, inl.size, conf, inl.map { v[it] })
     }
 
     private fun leading(lines: List<Line>): Findings.Leading? {
@@ -285,7 +308,7 @@ object CompositionAnalyzer {
                 listOf(Overlay.Seg(0f, hz.y, 1f, hz.y, "horizon"), Overlay.Seg(0f, ty, 1f, ty, "target")))
         }
         // 3. leaning verticals
-        if (vt != null && vt.confidence >= 0.4f && abs(vt.tiltDeg) >= 1.5f && abs(vt.converge) < 6f) {
+        if (vt != null && vt.confidence >= 0.4f && abs(vt.tiltDeg) >= 2f && abs(vt.converge) < 6f) {
             out += Suggestion(Suggestion.Kind.STRAIGHTEN_VERTICALS, "校正建築垂直線",
                 "找到 ${vt.count} 條接近垂直的長直線，整體向${if (vt.tiltDeg > 0) "右" else "左"}傾斜 ${deg(vt.tiltDeg)}。",
                 "垂直線平均傾斜 ${deg(vt.tiltDeg)}。",

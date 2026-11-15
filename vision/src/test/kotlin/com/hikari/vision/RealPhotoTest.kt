@@ -77,6 +77,8 @@ class RealPhotoTest {
                 if (top.any { it in t.scene }) sceneOk++ else problems += "${t.file}: scene $top, expected one of ${t.scene}" }
             val kinds = r.suggestions.map { it.kind }
             when (t.file) {
+                // the houses stand straight; only the roof edges slant
+                "04_city.jpg" -> if (Suggestion.Kind.STRAIGHTEN_VERTICALS in kinds) problems += "${t.file}: straight houses reported as leaning or converging"
                 "09_seaside.jpg" -> if (Suggestion.Kind.HORIZON_PLACEMENT !in kinds) problems += "${t.file}: horizon in the middle not mentioned"
                 "12_beach.jpg" -> if (Suggestion.Kind.LEVEL_HORIZON !in kinds) problems += "${t.file}: 2 degree tilt not mentioned"
                 "05_portrait.jpg", "10_child.jpg" -> if (kinds.any { it == Suggestion.Kind.LEADING_LINES || it == Suggestion.Kind.RULE_OF_THIRDS || it == Suggestion.Kind.LEVEL_HORIZON })
