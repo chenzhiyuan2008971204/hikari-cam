@@ -52,10 +52,25 @@ data class CameraCaps(
 enum class Flash { OFF, AUTO, ON }
 
 /** The main subject in the shown preview, as fractions of the preview (0..1, origin top-left). */
-data class Subject(val left: Float, val top: Float, val right: Float, val bottom: Float) {
+data class Subject(
+    val left: Float, val top: Float, val right: Float, val bottom: Float,
+    /** the main face when the subject is a person (preview fractions), else null */
+    val face: Face? = null,
+) {
     val cx get() = (left + right) / 2f
     val cy get() = (top + bottom) / 2f
     val h get() = bottom - top
+    val w get() = right - left
+
+    /**
+     * @param yaw head turn in degrees as seen in the preview: + = looking toward the right edge
+     */
+    data class Face(val left: Float, val top: Float, val right: Float, val bottom: Float, val yaw: Float) {
+        val cx get() = (left + right) / 2f
+        val h get() = bottom - top
+        /** eye line: about 42 % down a detected face box */
+        val eyeY get() = top + h * 0.42f
+    }
 }
 
 /** One finished capture: the JPEG in the app cache, and the DNG uri when RAW was saved too. */
@@ -82,6 +97,14 @@ class CameraController(private val context: Context) {
         com.google.mlkit.vision.objects.ObjectDetection.getClient(
             com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions.Builder()
                 .setDetectorMode(com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions.STREAM_MODE)
+                .build())
+    }
+
+    private val faceDetector by lazy {
+        com.google.mlkit.vision.face.FaceDetection.getClient(
+            com.google.mlkit.vision.face.FaceDetectorOptions.Builder()
+                .setPerformanceMode(com.google.mlkit.vision.face.FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+                .setMinFaceSize(0.08f)
                 .build())
     }
 
@@ -305,10 +328,25 @@ class CameraController(private val context: Context) {
         val uh = if (rot % 180 == 0) image.height else image.width
         val crop = renderer?.cropAspect ?: 0.75f
         val mirror = facing == CameraSelector.LENS_FACING_FRONT
-        detector.process(com.google.mlkit.vision.common.InputImage.fromMediaImage(media, rot))
-            .addOnSuccessListener(main) { objs ->
-                val b = objs.maxByOrNull { it.boundingBox.width() * it.boundingBox.height() }?.boundingBox
-                onSubject?.invoke(b?.let { toPreview(it, uw, uh, crop, mirror) })
+        val input = com.google.mlkit.vision.common.InputImage.fromMediaImage(media, rot)
+        val objTask = detector.process(input)
+        val faceTask = faceDetector.process(input)
+        com.google.android.gms.tasks.Tasks.whenAllComplete(objTask, faceTask)
+            .addOnSuccessListener(main) {
+                val objs = if (objTask.isSuccessful) objTask.result else emptyList()
+                val faces = if (faceTask.isSuccessful) faceTask.result else emptyList()
+                val face = faces.maxByOrNull { it.boundingBox.width() * it.boundingBox.height() }?.let { f ->
+                    val r = toPreview(f.boundingBox, uw, uh, crop, mirror)
+                    Subject.Face(r.left, r.top, r.right, r.bottom, if (mirror) -f.headEulerAngleY else f.headEulerAngleY)
+                }
+                // a person: the object box that holds the face (their body), else the face itself
+                val boxes = objs.map { toPreview(it.boundingBox, uw, uh, crop, mirror) }
+                val subject = if (face != null) {
+                    val body = boxes.filter { b -> face.cx in b.left..b.right && face.eyeY in b.top..b.bottom }
+                        .maxByOrNull { it.w * it.h }
+                    (body ?: Subject(face.left, face.top, face.right, face.bottom)).copy(face = face)
+                } else boxes.maxByOrNull { it.w * it.h }
+                onSubject?.invoke(subject)
             }
             .addOnCompleteListener { image.close() }
     }

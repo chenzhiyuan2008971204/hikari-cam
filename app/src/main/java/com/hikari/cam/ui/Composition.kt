@@ -30,6 +30,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.hikari.cam.camera.Subject
+import kotlin.math.abs
 import androidx.compose.ui.unit.sp
 import kotlin.math.cos
 import kotlin.math.min
@@ -186,48 +188,123 @@ private fun Tile(label: String, on: Boolean, onClick: () -> Unit, content: @Comp
 
 
 /**
- * Where the subject's centre should go for a guide, given where it is now (fractions of the
- * preview), and the subject height that fits it (null = any size).
+ * The point of a subject that composition places: a person's eye line (where the viewer looks
+ * first), otherwise the subject's visual centre, slightly above its geometric centre.
  */
-fun guideTarget(id: String, cx: Float, cy: Float): Pair<Offset, Float?> {
-    fun nearestThird(): Offset {
-        val xs = listOf(1f / 3, 2f / 3)
-        val ys = listOf(1f / 3, 2f / 3)
-        return Offset(xs.minBy { kotlin.math.abs(it - cx) }, ys.minBy { kotlin.math.abs(it - cy) })
-    }
+fun anchorOf(s: Subject): Offset = s.face?.let { Offset(it.cx, it.eyeY) } ?: Offset(s.cx, s.top + s.h * 0.45f)
+
+/**
+ * Where the subject's anchor should go for a fixed guide (fractions of the preview), and the
+ * subject height that fits it (null = any size). The smart guide is [smartTarget].
+ */
+fun guideTarget(id: String, a: Offset): Pair<Offset, Float?> {
+    fun nearestThird() = Offset(listOf(1f / 3, 2f / 3).minBy { abs(it - a.x) }, listOf(1f / 3, 2f / 3).minBy { abs(it - a.y) })
     return when (id) {
         "portrait_full" -> Offset(0.67f, 0.58f) to 0.66f
         "portrait_half" -> Offset(0.5f, 0.62f) to 0.8f
         "small_subject" -> Offset(0.5f, 0.73f) to 0.24f
         "center", "triangle", "one_point" -> Offset(0.5f, 0.5f) to null
-        "symmetry", "two_point" -> Offset(0.5f, cy.coerceIn(0.3f, 0.7f)) to null
+        "symmetry", "two_point" -> Offset(0.5f, a.y.coerceIn(0.3f, 0.7f)) to null
         "spiral" -> Offset(0.62f, 0.62f) to null
         "frame" -> Offset(0.5f, 0.6f) to null
-        "horizon_low" -> Offset(cx.coerceIn(0.25f, 0.75f), 0.55f) to null
-        "horizon_high" -> Offset(cx.coerceIn(0.25f, 0.75f), 0.62f) to null
+        "horizon_low" -> Offset(a.x.coerceIn(0.25f, 0.75f), 0.55f) to null
+        "horizon_high" -> Offset(a.x.coerceIn(0.25f, 0.75f), 0.62f) to null
         else -> nearestThird() to null
     }
 }
 
+/** Candidate positions for the smart guide: thirds, centre lines and golden-ratio points. */
+private val SMART_POINTS: List<Offset> = buildList {
+    for (x in listOf(1f / 3, 0.5f, 2f / 3)) for (y in listOf(1f / 3, 0.5f, 2f / 3)) add(Offset(x, y))
+    for (x in listOf(0.382f, 0.618f)) for (y in listOf(0.382f, 0.618f)) add(Offset(x, y))
+}
+
+/**
+ * How good it would look to move the frame so the subject's anchor lands on [c] (lower is better).
+ * The rules photographers use, each as a cost:
+ *  - move as little as possible (the shot you are already taking matters)
+ *  - never cut more of the subject than is already cut; keep breathing room from the edges
+ *  - people: eyes on the upper third, air above the head, space in the direction they look;
+ *    a large face sits well centred
+ *  - things: off-centre on a strong point, unless they fill the frame (then centred and balanced)
+ */
+internal fun smartCost(s: Subject, c: Offset): Float {
+    val a = anchorOf(s)
+    val dx = c.x - a.x
+    val dy = c.y - a.y
+    var cost = kotlin.math.hypot(dx, dy) * 0.6f
+    fun over(v: Float) = kotlin.math.max(0f, v)
+    // newly cut parts of the subject (what is already outside the frame does not count again)
+    val cut = over(-(s.left + dx)) - over(-s.left) + over(s.right + dx - 1) - over(s.right - 1) +
+        over(-(s.top + dy)) - over(-s.top) + over(s.bottom + dy - 1) - over(s.bottom - 1)
+    cost += over(cut) * 3f
+    val margin = minOf(s.left + dx, 1 - s.right - dx, s.top + dy, 1 - s.bottom - dy)
+    if (margin in 0f..0.04f) cost += (0.04f - margin) * 2f
+    val f = s.face
+    if (f != null) {
+        cost += when {
+            c.y < 0.3f -> 0.15f
+            c.y < 0.36f -> 0f
+            c.y < 0.42f -> 0.08f
+            c.y < 0.55f -> 0.14f
+            else -> 0.4f
+        }
+        val headTop = f.top - f.h * 0.25f + dy
+        if (headTop < 0.03f) cost += (0.03f - headTop) * 4f
+        when {
+            // looking toward the right edge: space on the right, so the person sits left
+            abs(f.yaw) > 12f -> cost += abs(c.x - (if (f.yaw > 0) 1f / 3 else 2f / 3)) * 0.6f
+            f.h > 0.25f -> cost += abs(c.x - 0.5f) * 0.35f
+            else -> cost += if (abs(c.x - 0.5f) < 0.01f) 0.04f else 0f
+        }
+    } else {
+        val big = s.w > 0.55f || s.h > 0.65f
+        cost += if (big) kotlin.math.hypot(c.x - 0.5f, c.y - 0.5f) * 0.5f
+        else if (abs(c.x - 0.5f) < 0.01f && abs(c.y - 0.5f) < 0.01f) 0.15f else 0f
+    }
+    return cost
+}
+
+/**
+ * The smart guide's target for the anchor. [previous] (the last target shown) is kept unless
+ * another point is clearly better, so the ring does not hop between points while framing.
+ */
+fun smartTarget(s: Subject, previous: Offset? = null): Offset {
+    val best = SMART_POINTS.minBy { smartCost(s, it) }
+    if (previous != null) {
+        val keep = SMART_POINTS.minBy { (it - previous).getDistance() }
+        if (smartCost(s, keep) <= smartCost(s, best) + 0.05f) return keep
+    }
+    return best
+}
+
 /** Live guidance state for the UI: what to tell the photographer, and whether it is lined up. */
-data class Guidance(val target: Offset, val tip: String, val aligned: Boolean)
+data class Guidance(val anchor: Offset, val target: Offset, val tip: String, val aligned: Boolean)
 
 /**
  * Turns the tracked subject into an instruction. Directions are for the camera (the way people
  * think when framing): the subject left of its target means "pan left".
  */
-fun guidance(guideId: String, s: com.hikari.cam.camera.Subject): Guidance {
-    val (t, wantH) = guideTarget(guideId, s.cx, s.cy)
-    val dx = s.cx - t.x
-    val dy = s.cy - t.y
+fun guidance(guideId: String, s: Subject, previous: Offset? = null): Guidance {
+    val smart = guideId == "smart"
+    val anchor = if (smart || guideId == "thirds" || guideId == "spiral") anchorOf(s) else Offset(s.cx, s.cy)
+    val (t, wantH) = if (smart) smartTarget(s, previous) to null else guideTarget(guideId, anchor)
+    val dx = anchor.x - t.x
+    val dy = anchor.y - t.y
     val tips = mutableListOf<String>()
-    if (kotlin.math.abs(dx) > 0.04f) tips += if (dx < 0) "鏡頭往左" else "鏡頭往右"
-    if (kotlin.math.abs(dy) > 0.04f) tips += if (dy < 0) "鏡頭往上" else "鏡頭往下"
+    val near = kotlin.math.hypot(dx, dy) < 0.045f
+    if (!near && abs(dx) > 0.03f) tips += if (dx < 0) "鏡頭往左" else "鏡頭往右"
+    if (!near && abs(dy) > 0.03f) tips += if (dy < 0) "鏡頭往上" else "鏡頭往下"
     if (wantH != null && s.h > 0.05f) {
         if (s.h < wantH * 0.8f) tips += "靠近一點" else if (s.h > wantH * 1.2f) tips += "退後一點"
     }
+    val f = s.face
+    if (smart && f != null) {
+        if (f.h > 0.5f) tips += "退後一點"
+        else if (f.h < 0.12f && s.top < 0.08f && s.bottom > 0.97f) tips += "退後一點，讓腳完整入鏡"
+    } else if (smart && s.w > 0.95f && s.h > 0.9f) tips += "退後一點"
     val aligned = tips.isEmpty()
-    return Guidance(t, if (aligned) "構圖完美，按下快門" else tips.joinToString(" · "), aligned)
+    return Guidance(anchor, t, if (aligned) "構圖完美，按下快門" else tips.joinToString(" · "), aligned)
 }
 
 /**
@@ -256,16 +333,17 @@ fun LiveGuideOverlay(subject: com.hikari.cam.camera.Subject?, guidance: Guidance
             }
             if (subject != null && guidance != null) {
                 val col = if (guidance.aligned) accent else yellow
-                val l = subject.left * w
-                val t = subject.top * h
-                val r = subject.right * w
-                val b = subject.bottom * h
+                val fb = subject.face
+                val l = (fb?.left ?: subject.left) * w
+                val t = (fb?.top ?: subject.top) * h
+                val r = (fb?.right ?: subject.right) * w
+                val b = (fb?.bottom ?: subject.bottom) * h
                 val k = min(r - l, b - t) * 0.22f
                 for ((x, y, sx, sy) in listOf(Quad(l, t, 1f, 1f), Quad(r, t, -1f, 1f), Quad(l, b, 1f, -1f), Quad(r, b, -1f, -1f))) {
                     drawLine(col, Offset(x, y), Offset(x + k * sx, y), 2.5.dp.toPx())
                     drawLine(col, Offset(x, y), Offset(x, y + k * sy), 2.5.dp.toPx())
                 }
-                val from = Offset(subject.cx * w, subject.cy * h)
+                val from = Offset(guidance.anchor.x * w, guidance.anchor.y * h)
                 val to = Offset(guidance.target.x * w, guidance.target.y * h)
                 // target in the style of a phone camera's shot suggestion: a large ring where the
                 // subject should go, and a solid dot for where it is now; move the dot into the ring

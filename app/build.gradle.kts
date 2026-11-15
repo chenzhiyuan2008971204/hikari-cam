@@ -45,6 +45,8 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$cameraX")
     // on-device subject detection for live composition guidance (model bundled, works offline)
     implementation("com.google.mlkit:object-detection:17.0.2")
+    // faces for people: eye line and head direction (bundled model, offline)
+    implementation("com.google.mlkit:face-detection:16.1.7")
 
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.ui:ui")

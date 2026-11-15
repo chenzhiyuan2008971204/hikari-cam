@@ -356,9 +356,13 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             val now = System.currentTimeMillis()
             if (n != null) {
                 val o = subject
+                fun mix(a: Float, b: Float) = a + (b - a) * 0.5f
+                val f = n.face
+                val of = o?.face
+                val face = if (f != null && of != null) com.hikari.cam.camera.Subject.Face(
+                    mix(of.left, f.left), mix(of.top, f.top), mix(of.right, f.right), mix(of.bottom, f.bottom), mix(of.yaw, f.yaw)) else f
                 val next = if (o == null) n else com.hikari.cam.camera.Subject(
-                    o.left + (n.left - o.left) * 0.5f, o.top + (n.top - o.top) * 0.5f,
-                    o.right + (n.right - o.right) * 0.5f, o.bottom + (n.bottom - o.bottom) * 0.5f)
+                    mix(o.left, n.left), mix(o.top, n.top), mix(o.right, n.right), mix(o.bottom, n.bottom), face)
                 // redraw only for visible movement (saves battery, keeps the UI calm)
                 if (o == null || kotlin.math.abs(next.cx - o.cx) > 0.005f || kotlin.math.abs(next.cy - o.cy) > 0.005f ||
                     kotlin.math.abs(next.h - o.h) > 0.005f) subject = next
@@ -381,7 +385,9 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         // clear only our own callback: a newer screen may already have set its own
         onDispose { if (vm.controller.onSubject === onSubject) vm.controller.onSubject = null; sm.unregisterListener(listener) }
     }
-    val guidance = if (guide != null) subject?.let { guidance(guide.id, it) } else null
+    // the last target shown: the smart guide keeps it unless another point is clearly better
+    val lastTarget = remember { arrayOfNulls<androidx.compose.ui.geometry.Offset>(1) }
+    val guidance = if (guide != null) subject?.let { guidance(guide.id, it, lastTarget[0]) }?.also { lastTarget[0] = it.target } else null
     var wasAligned by remember { mutableStateOf(false) }
     LaunchedEffect(guidance?.aligned) {
         val a = guidance?.aligned == true
