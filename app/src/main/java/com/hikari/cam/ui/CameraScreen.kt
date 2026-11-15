@@ -228,9 +228,9 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         glView.requestRender()
     }
     var cameraError by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(lens, settings.saveRaw) {
+    LaunchedEffect(lens, settings.saveRaw, settings.naturalDetail) {
         val c = try {
-            vm.controller.bind(owner, r, lens, settings.saveRaw)
+            vm.controller.bind(owner, r, lens, settings.saveRaw, settings.naturalDetail)
         } catch (e: Throwable) {
             android.util.Log.w("HikariCamera", "bind failed", e)
             cameraError = "無法開啟相機。\n這台裝置可能沒有可用的相機，或相機正被其他 App 使用。"
@@ -239,6 +239,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         cameraError = null
         vm.onCaps(c)
         app.rawSupported = c.raw
+        app.naturalApplied = c.naturalApplied
         zoom = c.minZoom.coerceAtLeast(1f).coerceAtMost(c.maxZoom)
         vm.controller.setZoom(zoom)
         vm.controller.setFlash(flash)
@@ -362,7 +363,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             // bottom overlay: zoom stops, look name, look strip or adjustments
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xB0000000))))) {
-                if (caps != null && caps.maxZoom > caps.minZoom) ZoomStops(caps.minZoom, caps.maxZoom, caps.lensStops, zoom) { z ->
+                if (caps != null && caps.maxZoom > caps.minZoom) ZoomStops(caps.minZoom, caps.maxZoom, caps.lensStops, caps.mainFocal35, zoom) { z ->
                     zoom = z
                     view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                     vm.controller.setZoom(z)
@@ -413,27 +414,35 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
  * The active stop shows the exact current zoom; pinch still zooms freely.
  */
 @Composable
-private fun ZoomStops(min: Float, max: Float, lenses: List<Float>, zoom: Float, onZoom: (Float) -> Unit) {
+private fun ZoomStops(min: Float, max: Float, lenses: List<Float>, focal35: Float?, zoom: Float, onZoom: (Float) -> Unit) {
     val native = lenses.ifEmpty { listOf(1f) }
     val stops = (native + listOf(2f, 5f, 10f).filter { d -> d in min..max && native.none { kotlin.math.abs(kotlin.math.ln(it / d)) < 0.2f } })
         .distinct().sorted()
     if (stops.size < 2) return
     val active = stops.minBy { kotlin.math.abs(kotlin.math.ln(it / zoom)) }
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.Center) {
-        Row(Modifier.background(Color(0x66000000), CircleShape).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.background(Color(0x77000000), RoundedCornerShape(30.dp)).padding(horizontal = 6.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             for (z in stops) {
                 val on = z == active
                 val lens = z in native
-                Box(
-                    Modifier.size(if (on) 42.dp else 36.dp).clip(CircleShape)
+                fun fmt(v: Float) = if (v == Math.round(v).toFloat() && v >= 1f) "%.0f".format(v) else "%.1f".format(v)
+                Column(
+                    Modifier.clip(RoundedCornerShape(22.dp))
                         .background(if (on) Color(0xCC2A2A2A) else Color.Transparent)
-                        .clickable { onZoom(z) },
-                    contentAlignment = Alignment.Center,
+                        .clickable { onZoom(z) }
+                        .padding(horizontal = 9.dp, vertical = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    fun fmt(v: Float) = if (v == Math.round(v).toFloat() && v >= 1f) "%.0f".format(v) else "%.1f".format(v)
-                    val label = if (on) fmt(zoom) + "×" else fmt(z)
-                    Text(label, color = if (on) HikariColors.Accent else if (lens) Color.White else Color(0xFFBBBBBB),
-                        fontSize = if (on) 12.sp else 11.sp, fontWeight = if (lens) FontWeight.Bold else FontWeight.Normal)
+                    Text((if (on) fmt(zoom) else fmt(z)) + "×",
+                        color = if (on) HikariColors.Accent else Color.White,
+                        fontSize = 13.sp, fontWeight = if (lens) FontWeight.Bold else FontWeight.Normal)
+                    // native lenses: their 35 mm-equivalent focal length and a dot; digital stops: "數位"
+                    Text(
+                        if (lens) (focal35?.let { "${Math.round(it * z)}mm" } ?: "鏡頭") + " •"
+                        else "數位",
+                        color = if (lens) Color(0xFFDDDDDD) else Color(0xFF999999), fontSize = 9.sp,
+                    )
                 }
             }
         }

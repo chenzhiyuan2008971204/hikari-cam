@@ -52,6 +52,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     /** null until a camera has been opened once */
     var rawSupported by mutableStateOf<Boolean?>(null)
 
+    /** what natural-detail mode could set on the last opened camera ("" = not known yet / nothing) */
+    var naturalApplied by mutableStateOf<String?>(null)
+
     fun look(id: String?): FilterSpec = hikari.looks.look(id)
 
     fun go(r: Route) {

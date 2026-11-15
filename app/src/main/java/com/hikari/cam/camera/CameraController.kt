@@ -41,6 +41,10 @@ data class CameraCaps(
     val focus: Boolean,
     /** zoom ratios of this phone's real lenses relative to the main one (e.g. 0.6, 1, 2.6), empty if unknown */
     val lensStops: List<Float> = emptyList(),
+    /** 35 mm-equivalent focal length of 1x (the main lens), null if the camera does not say */
+    val mainFocal35: Float? = null,
+    /** what natural-detail mode could set on this camera, for the settings page */
+    val naturalApplied: String = "",
 )
 
 enum class Flash { OFF, AUTO, ON }
@@ -82,7 +86,7 @@ class CameraController(private val context: Context) {
         }
     }
 
-    suspend fun bind(owner: LifecycleOwner, r: CameraPreviewRenderer, lens: Int, wantRaw: Boolean): CameraCaps {
+    suspend fun bind(owner: LifecycleOwner, r: CameraPreviewRenderer, lens: Int, wantRaw: Boolean, natural: Boolean = true): CameraCaps {
         renderer = r
         val p = provider ?: suspendCancellableCoroutine<ProcessCameraProvider> { cont ->
             val f = ProcessCameraProvider.getInstance(context)
@@ -117,8 +121,10 @@ class CameraController(private val context: Context) {
                 .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
                 .setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
                 .build())
-            .setJpegQuality(97)
+            // the camera JPEG is only an intermediate (the engine renders the final file from it): keep it at 100
+            .setJpegQuality(100)
         if (rawMode) icb.setOutputFormat(ImageCapture.OUTPUT_FORMAT_RAW_JPEG)
+        val naturalApplied = if (natural) applyNaturalDetail(icb, info) else ""
         val ic = icb.build()
 
         val cam = p.bindToLifecycle(owner, selector, pv, ic)
@@ -139,6 +145,8 @@ class CameraController(private val context: Context) {
             hasBack = hasBack,
             focus = true,
             lensStops = lensStops(cam, zoom?.minZoomRatio ?: 1f, zoom?.maxZoomRatio ?: 1f),
+            mainFocal35 = runCatching { focal35(cam.cameraInfo) }.getOrNull(),
+            naturalApplied = naturalApplied,
         ).also { caps = it }
     }
 
@@ -149,12 +157,7 @@ class CameraController(private val context: Context) {
      */
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
     private fun lensStops(cam: Camera, minZoom: Float, maxZoom: Float): List<Float> = runCatching {
-        fun eq(info: androidx.camera.core.CameraInfo): Float? {
-            val c2 = androidx.camera.camera2.interop.Camera2CameraInfo.from(info)
-            val f = c2.getCameraCharacteristic(android.hardware.camera2.CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.firstOrNull() ?: return null
-            val s = c2.getCameraCharacteristic(android.hardware.camera2.CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE) ?: return null
-            return f * 43.27f / kotlin.math.sqrt(s.width * s.width + s.height * s.height)
-        }
+        fun eq(info: androidx.camera.core.CameraInfo): Float? = focal35(info)
         val main = eq(cam.cameraInfo) ?: return@runCatching listOf(1f)
         val stops = sortedSetOf(1f)
         for (p in cam.cameraInfo.physicalCameraInfos) {
@@ -165,6 +168,44 @@ class CameraController(private val context: Context) {
         if (minZoom < 0.95f && stops.none { it < 0.95f }) stops.add(Math.round(minZoom * 10f) / 10f)
         stops.toList()
     }.getOrDefault(listOf(1f))
+
+    /** 35 mm-equivalent focal length of a camera: focal length x 43.27 mm / sensor diagonal */
+    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
+    private fun focal35(info: androidx.camera.core.CameraInfo): Float? {
+        val c2 = androidx.camera.camera2.interop.Camera2CameraInfo.from(info)
+        val f = c2.getCameraCharacteristic(android.hardware.camera2.CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.firstOrNull() ?: return null
+        val s = c2.getCameraCharacteristic(android.hardware.camera2.CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE) ?: return null
+        return f * 43.27f / kotlin.math.sqrt(s.width * s.width + s.height * s.height)
+    }
+
+    /**
+     * Natural detail for the still capture: edge enhancement (sharpening) off, the best noise
+     * reduction, hot-pixel and aberration correction - each only when this camera lists the mode.
+     * Returns a short description of what was set.
+     */
+    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
+    private fun applyNaturalDetail(b: ImageCapture.Builder, info: androidx.camera.core.CameraInfo): String {
+        val c2 = androidx.camera.camera2.interop.Camera2CameraInfo.from(info)
+        val ext = androidx.camera.camera2.interop.Camera2Interop.Extender(b)
+        val done = mutableListOf<String>()
+        fun modes(key: android.hardware.camera2.CameraCharacteristics.Key<IntArray>) = c2.getCameraCharacteristic(key)?.toList().orEmpty()
+        if (android.hardware.camera2.CameraMetadata.EDGE_MODE_OFF in modes(android.hardware.camera2.CameraCharacteristics.EDGE_AVAILABLE_EDGE_MODES)) {
+            ext.setCaptureRequestOption(android.hardware.camera2.CaptureRequest.EDGE_MODE, android.hardware.camera2.CameraMetadata.EDGE_MODE_OFF)
+            done += "銳化關閉"
+        }
+        if (android.hardware.camera2.CameraMetadata.NOISE_REDUCTION_MODE_HIGH_QUALITY in modes(android.hardware.camera2.CameraCharacteristics.NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES)) {
+            ext.setCaptureRequestOption(android.hardware.camera2.CaptureRequest.NOISE_REDUCTION_MODE, android.hardware.camera2.CameraMetadata.NOISE_REDUCTION_MODE_HIGH_QUALITY)
+            done += "高品質降噪"
+        }
+        if (android.hardware.camera2.CameraMetadata.HOT_PIXEL_MODE_HIGH_QUALITY in modes(android.hardware.camera2.CameraCharacteristics.HOT_PIXEL_AVAILABLE_HOT_PIXEL_MODES)) {
+            ext.setCaptureRequestOption(android.hardware.camera2.CaptureRequest.HOT_PIXEL_MODE, android.hardware.camera2.CameraMetadata.HOT_PIXEL_MODE_HIGH_QUALITY)
+        }
+        if (android.hardware.camera2.CameraMetadata.COLOR_CORRECTION_ABERRATION_MODE_HIGH_QUALITY in modes(android.hardware.camera2.CameraCharacteristics.COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES)) {
+            ext.setCaptureRequestOption(android.hardware.camera2.CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE, android.hardware.camera2.CameraMetadata.COLOR_CORRECTION_ABERRATION_MODE_HIGH_QUALITY)
+            done += "色差校正"
+        }
+        return done.joinToString("、")
+    }
 
     fun unbind() {
         orientation.disable()

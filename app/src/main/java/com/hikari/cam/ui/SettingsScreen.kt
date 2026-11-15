@@ -42,6 +42,13 @@ fun SettingsScreen(app: AppViewModel, rawSupported: Boolean?) {
                 onValueChangeFinished = { app.updateSettings { it.copy(jpegQuality = q.roundToInt()) } },
                 modifier = Modifier.weight(1.4f))
         }
+        Toggle("自然畫質（不銳化）",
+            when {
+                !s.naturalDetail -> "使用手機相機原本的處理（含銳化）"
+                app.naturalApplied == null -> "關閉相機銳化、使用最高品質降噪；開啟一次相機後顯示這支手機支援哪些"
+                app.naturalApplied!!.isEmpty() -> "這支手機的相機沒有提供可調整的銳化／降噪模式"
+                else -> "已套用：${app.naturalApplied}"
+            }, s.naturalDetail) { v -> app.updateSettings { it.copy(naturalDetail = v) } }
         Toggle("同時保存未套濾鏡的原圖", "Pictures/Hikari/Originals", s.saveOriginal) { v -> app.updateSettings { it.copy(saveOriginal = v) } }
         when (rawSupported) {
             true -> Toggle("同時保存 DNG RAW", "Pictures/Hikari/RAW", s.saveRaw) { v -> app.updateSettings { it.copy(saveRaw = v) } }
