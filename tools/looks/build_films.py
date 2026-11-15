@@ -86,6 +86,8 @@ def spec(key, f):
         out["inspired"] = f["inspired"]
     out.update(f["fx"])
     out["recipe"] = recipe(f["colour"], f["fx"])
+    from traits import traits
+    out["traits"] = traits(f)
     return out
 
 

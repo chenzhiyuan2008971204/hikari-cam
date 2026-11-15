@@ -69,5 +69,25 @@
   "Halation：0.08，門檻 0.86，半徑 1.2% 短邊，紅橙色",
   "Bloom：0.07，門檻 0.78，半徑 4.5% 短邊",
   "柔焦 0.00、霧化 0.04"
- ]
+ ],
+ "traits": {
+  "contrast": -0.2091,
+  "sat": -0.2313,
+  "warmth": 0.1481,
+  "shadowLift": 0.0489,
+  "hlSoft": 0.0115,
+  "fade": 0.0409,
+  "mono": 0.0,
+  "glow": 0.19,
+  "grain": 0.256,
+  "skySat": 0.6401,
+  "skyL": 0.0083,
+  "skyShift": -14.2409,
+  "greenSat": 0.5343,
+  "greenL": 0.0235,
+  "greenShift": -15.8396,
+  "skinSat": 0.9738,
+  "skinL": 0.0045,
+  "skinHue": 2.8815
+ }
 }

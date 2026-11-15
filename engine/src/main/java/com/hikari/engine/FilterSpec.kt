@@ -27,6 +27,8 @@ data class FilterSpec(
     val recipe: List<String> = emptyList(),
     /** the classic film character this original look is inspired by (shown as a hint), or "" */
     val inspired: String = "",
+    /** measured traits of the look (tools/looks/traits.py), for the recommender */
+    val traits: Map<String, Float> = emptyMap(),
 ) {
     data class Grain(val amount: Float, val size: Float, val chroma: Float, val rough: Float)
     data class Halation(val amount: Float, val threshold: Float, val radius: Float, val tint: FloatArray)
@@ -63,6 +65,7 @@ data class FilterSpec(
                     x.f("uneven"), x.f("drift")),
                 recipe = j.optJSONArray("recipe")?.let { a -> (0 until a.length()).map { a.getString(it) } } ?: emptyList(),
                 inspired = j.optString("inspired", ""),
+                traits = j.optJSONObject("traits")?.let { t -> t.keys().asSequence().associateWith { t.getDouble(it).toFloat() } } ?: emptyMap(),
             )
         }
     }

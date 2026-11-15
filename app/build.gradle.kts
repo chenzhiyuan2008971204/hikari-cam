@@ -38,6 +38,7 @@ android {
 dependencies {
     implementation(project(":engine"))
     implementation(project(":data"))
+    implementation(project(":vision"))
 
     val cameraX = "1.5.0"
     implementation("androidx.camera:camera-core:$cameraX")

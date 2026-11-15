@@ -1,0 +1,110 @@
+[
+ {
+  "id": "sunny",
+  "zh": "晴天藍天",
+  "file": "01_sunny.jpg",
+  "width": 768,
+  "height": 512,
+  "source": "kodim21",
+  "license": "Kodak Lossless True Color Image Suite (released by Eastman Kodak for unrestricted use)"
+ },
+ {
+  "id": "overcast",
+  "zh": "陰天街景",
+  "file": "02_overcast.jpg",
+  "width": 1024,
+  "height": 771,
+  "source": "Walk in Aoyama small residential streets.jpg",
+  "license": "Wikimedia Commons, CC0 1.0 (public domain dedication)"
+ },
+ {
+  "id": "foliage",
+  "zh": "綠色植物",
+  "file": "03_foliage.jpg",
+  "width": 768,
+  "height": 512,
+  "source": "kodim13",
+  "license": "Kodak Lossless True Color Image Suite (released by Eastman Kodak for unrestricted use)"
+ },
+ {
+  "id": "city",
+  "zh": "城市建築",
+  "file": "04_city.jpg",
+  "width": 768,
+  "height": 512,
+  "source": "kodim08",
+  "license": "Kodak Lossless True Color Image Suite (released by Eastman Kodak for unrestricted use)"
+ },
+ {
+  "id": "portrait",
+  "zh": "人像膚色",
+  "file": "05_portrait.jpg",
+  "width": 512,
+  "height": 768,
+  "source": "kodim04",
+  "license": "Kodak Lossless True Color Image Suite (released by Eastman Kodak for unrestricted use)"
+ },
+ {
+  "id": "backlight",
+  "zh": "逆光",
+  "file": "06_backlight.jpg",
+  "width": 1024,
+  "height": 682,
+  "source": "Driving in the sun (Unsplash).jpg",
+  "license": "Wikimedia Commons, CC0 1.0 (public domain dedication)"
+ },
+ {
+  "id": "contrast",
+  "zh": "高反差",
+  "file": "07_contrast.jpg",
+  "width": 768,
+  "height": 512,
+  "source": "kodim03",
+  "license": "Kodak Lossless True Color Image Suite (released by Eastman Kodak for unrestricted use)"
+ },
+ {
+  "id": "white",
+  "zh": "白色建築",
+  "file": "08_white.jpg",
+  "width": 512,
+  "height": 768,
+  "source": "kodim19",
+  "license": "Kodak Lossless True Color Image Suite (released by Eastman Kodak for unrestricted use)"
+ },
+ {
+  "id": "seaside",
+  "zh": "海與雲",
+  "file": "09_seaside.jpg",
+  "width": 768,
+  "height": 512,
+  "source": "kodim16",
+  "license": "Kodak Lossless True Color Image Suite (released by Eastman Kodak for unrestricted use)"
+ },
+ {
+  "id": "child",
+  "zh": "人像（深膚色）",
+  "file": "10_child.jpg",
+  "width": 768,
+  "height": 512,
+  "source": "kodim15",
+  "license": "Kodak Lossless True Color Image Suite (released by Eastman Kodak for unrestricted use)"
+ },
+ {
+  "id": "concrete",
+  "zh": "水泥建築（陰天）",
+  "file": "11_concrete.jpg",
+  "width": 1024,
+  "height": 771,
+  "source": "Walk in Aoyama small residential streets (16274).jpg",
+  "license": "Wikimedia Commons, CC0 1.0 (public domain dedication)"
+ },
+ {
+  "id": "beach",
+  "zh": "海灘人物",
+  "file": "12_beach.jpg",
+  "width": 768,
+  "height": 512,
+  "source": "kodim12",
+  "license": "Kodak Lossless True Color Image Suite (released by Eastman Kodak for unrestricted use)"
+ }
+]
