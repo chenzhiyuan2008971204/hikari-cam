@@ -57,6 +57,8 @@ class CameraUiTest {
         Thread.sleep(5000)
         shot("cam_01b_composition.png")
         Report.line("camera: composition guide on, tip shown: ${has("鏡頭往") || has("構圖完美") || has("靠近") || has("退後")}")
+        rule.onNodeWithText("無").performClick() // guide off: live tracking keeps recomposing, which the test harness waits on
+        Thread.sleep(800)
         rule.onNodeWithText("濾鏡").performClick()
         Thread.sleep(500)
         val before = runBlocking { Media.list(ctx) }.size

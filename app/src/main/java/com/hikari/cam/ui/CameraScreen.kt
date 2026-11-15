@@ -318,9 +318,12 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             val now = System.currentTimeMillis()
             if (n != null) {
                 val o = subject
-                subject = if (o == null) n else com.hikari.cam.camera.Subject(
+                val next = if (o == null) n else com.hikari.cam.camera.Subject(
                     o.left + (n.left - o.left) * 0.5f, o.top + (n.top - o.top) * 0.5f,
                     o.right + (n.right - o.right) * 0.5f, o.bottom + (n.bottom - o.bottom) * 0.5f)
+                // redraw only for visible movement (saves battery, keeps the UI calm)
+                if (o == null || kotlin.math.abs(next.cx - o.cx) > 0.005f || kotlin.math.abs(next.cy - o.cy) > 0.005f ||
+                    kotlin.math.abs(next.h - o.h) > 0.005f) subject = next
                 lastSeen = now
             } else if (now - lastSeen > 700) subject = null
         }
@@ -330,7 +333,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             override fun onSensorChanged(e: android.hardware.SensorEvent) {
                 val roll = Math.toDegrees(kotlin.math.atan2(e.values[0].toDouble(), e.values[1].toDouble())).toFloat()
                 // relative to the nearest upright or landscape orientation
-                tilt = roll - Math.round(roll / 90f) * 90f
+                val t = roll - Math.round(roll / 90f) * 90f
+                if (tilt.let { it == null || kotlin.math.abs(it - t) > 0.3f }) tilt = t
             }
             override fun onAccuracyChanged(s: android.hardware.Sensor?, a: Int) {}
         }
