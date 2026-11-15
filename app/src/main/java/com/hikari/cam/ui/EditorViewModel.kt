@@ -113,14 +113,17 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
                 adjust = Adjustments.fromJson(saved?.adjustJson)
                 undo.clear(); redo.clear(); syncHistory()
                 refresh()
-                recs = emptyList(); report = null
-                analyse(orig)
+                recs = emptyList(); report = null; analysing = true
                 for (spec in looks) {
                     val req = withContext(Dispatchers.IO) { OffscreenRenderer.Request(spec, hikari.looks.lut(spec), Adjustments.DEFAULT, seed = SEED) }
                     thumbs[spec.id] = renderer.render(thumb, req, thumb.width, thumb.height, cacheKey = "$cacheKey-t")
                 }
                 renderer.forget("$cacheKey-t")
+                // analysis starts once the preview and the look thumbnails are on screen: the picture comes
+                // first, and the detectors do not compete with the renderer for the CPU
+                analyse(orig)
             } catch (e: Throwable) {
+                analysing = false
                 message = "無法開啟：${e.message}"
             } finally {
                 busy = null
