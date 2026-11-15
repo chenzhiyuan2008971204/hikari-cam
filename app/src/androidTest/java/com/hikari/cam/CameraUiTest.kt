@@ -50,6 +50,15 @@ class CameraUiTest {
             Report.flush(ctx, "camera_report.txt")
             return
         }
+        // live composition guidance on the virtual camera scene
+        rule.onNodeWithText("構圖").performClick()
+        Thread.sleep(800)
+        rule.onNodeWithText("智慧構圖").performClick()
+        Thread.sleep(5000)
+        shot("cam_01b_composition.png")
+        Report.line("camera: composition guide on, tip shown: ${has("鏡頭往") || has("構圖完美") || has("靠近") || has("退後")}")
+        rule.onNodeWithText("濾鏡").performClick()
+        Thread.sleep(500)
         val before = runBlocking { Media.list(ctx) }.size
         val t0 = System.nanoTime()
         rule.onNodeWithTag("shutter").performClick()
