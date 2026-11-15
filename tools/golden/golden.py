@@ -43,14 +43,9 @@ from colorlib import linear_to_oklab, srgb_to_linear  # noqa: E402
 WIDTH = 512
 SMALL = 96
 MEAN_TOL, P99_TOL = 1.2, 5.0
-# limits; a look that is meant to break one says so here, with the reason
+# limits for every look; ALLOW is where a look that is meant to break one would say so, with the reason
 LIMITS = dict(cast=0.050, clip=0.030, crush=0.030, highlight=0.30, skinHue=12.0, skinLo=0.55, skinHi=1.40, band=3.0)
-ALLOW = {
-    # special-effect looks: glow lifts and tints bright areas on purpose, fade lifts the blacks
-    "night_bloom": dict(clip=0.08, cast=0.07), "dream1998": dict(clip=0.08, cast=0.07, highlight=0.2),
-    "flash_diary": dict(clip=0.06), "ccd2000": dict(clip=0.05),
-    "silver_bypass": dict(skinLo=0.3), "gold_memory": dict(cast=0.065), "tokyo_blue": dict(cast=0.065),
-}
+ALLOW = {}   # none needed: every shipped look passes the common limits
 OFF = dict(grain=0, halation=0, bloom=0, vignette=0, aberration=0, softFocus=0, mist=0, edgeSoft=0, dust=0, scratches=0, leak=0, uneven=0, drift=0)
 
 
