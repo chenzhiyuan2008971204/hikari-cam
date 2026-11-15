@@ -1,0 +1,7 @@
+golden + quality: 2 looks x 14 photos = 28 renders, 49 s
+mode: UPDATE (goldens re-recorded)
+result: PASS
+
+look                 clip  crush   cast    hl  skinHue  skinC  band
+standard_chrome     0.009  0.000  0.001  0.88     -0.0   1.03   3.4
+mono_fine           0.009  0.000      -  0.85        -      -   3.3
