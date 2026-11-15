@@ -115,7 +115,10 @@ class CameraController(private val context: Context) {
     suspend fun bind(owner: LifecycleOwner, r: CameraPreviewRenderer, lens: Int, wantRaw: Boolean, natural: Boolean = true,
                      option: LensOption? = null,
                      /** report the streaming physical lens (only on phones with a multi-lens logical camera) */
-                     trackPhysical: Boolean = false): CameraCaps {
+                     trackPhysical: Boolean = false,
+                     /** which camera screen asked; only that screen's [unbind] releases the camera */
+                     owner2: Any? = null): CameraCaps {
+        bindOwner = owner2
         renderer = r
         direct?.close(); direct = null
         val p = provider ?: suspendCancellableCoroutine<ProcessCameraProvider> { cont ->
@@ -324,7 +327,12 @@ class CameraController(private val context: Context) {
         return Subject(l.coerceIn(0f, 1f), y(b.top).coerceIn(0f, 1f), r.coerceIn(0f, 1f), y(b.bottom).coerceIn(0f, 1f))
     }
 
-    fun unbind() {
+    /** The screen that bound last. While screens cross-fade, the old one is disposed after the new one bound. */
+    @Volatile private var bindOwner: Any? = null
+
+    /** Releases the camera, unless a newer screen has bound it since [owner] did. */
+    fun unbind(owner: Any? = null) {
+        if (owner != null && bindOwner !== owner) return
         direct?.close(); direct = null
         orientation.disable()
         provider?.unbindAll()

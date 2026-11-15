@@ -242,6 +242,9 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         r.seed = vm.seed
         glView.requestRender()
     }
+    // identifies this camera screen: while screens cross-fade the old one is disposed after the
+    // new one started, and must not take the camera or the live guide away from it
+    val screenToken = remember { Any() }
     var cameraError by remember { mutableStateOf<String?>(null) }
     // every lens this phone exposes by any route (listed, physical, hidden) for the lens picker
     // hidden-id probing is opt-in and remembered: the user asks for it once from the lens menu
@@ -263,15 +266,16 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     var lensMsg by remember { mutableStateOf<String?>(null) }
     var activePhysical by remember { mutableStateOf<String?>(null) }
     DisposableEffect(Unit) {
-        vm.controller.onActivePhysical = { activePhysical = it }
-        onDispose { vm.controller.onActivePhysical = null }
+        val cb: (String?) -> Unit = { activePhysical = it }
+        vm.controller.onActivePhysical = cb
+        onDispose { if (vm.controller.onActivePhysical === cb) vm.controller.onActivePhysical = null }
     }
     LaunchedEffect(lensMsg) { if (lensMsg != null) { delay(3500); lensMsg = null } }
     LaunchedEffect(lens, settings.saveRaw, settings.naturalDetail, lensOpt) {
         val opt = lensOpt.takeIf { lens == CameraSelector.LENS_FACING_BACK }
         val c = try {
             vm.controller.bind(owner, r, lens, settings.saveRaw, settings.naturalDetail, opt,
-                trackPhysical = false)
+                trackPhysical = false, owner2 = screenToken)
         } catch (e: Throwable) {
             android.util.Log.w("HikariCamera", "bind failed", e)
             if (opt != null) {
@@ -308,7 +312,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         onDispose {
             owner.lifecycle.removeObserver(obs)
             glView.onPause()
-            vm.controller.unbind()
+            vm.controller.unbind(screenToken)
         }
     }
 
@@ -348,7 +352,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     var tilt by remember { mutableStateOf<Float?>(null) }
     DisposableEffect(guide?.id) {
         if (guide == null) { vm.controller.onSubject = null; subject = null; tilt = null; return@DisposableEffect onDispose {} }
-        vm.controller.onSubject = { n ->
+        val onSubject: (com.hikari.cam.camera.Subject?) -> Unit = { n ->
             val now = System.currentTimeMillis()
             if (n != null) {
                 val o = subject
@@ -361,6 +365,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                 lastSeen = now
             } else if (now - lastSeen > 700) subject = null
         }
+        vm.controller.onSubject = onSubject
         val sm = ctx.getSystemService(android.content.Context.SENSOR_SERVICE) as android.hardware.SensorManager
         val sensor = sm.getDefaultSensor(android.hardware.Sensor.TYPE_GRAVITY) ?: sm.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)
         val listener = object : android.hardware.SensorEventListener {
@@ -373,7 +378,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             override fun onAccuracyChanged(s: android.hardware.Sensor?, a: Int) {}
         }
         sensor?.let { sm.registerListener(listener, it, android.hardware.SensorManager.SENSOR_DELAY_UI) }
-        onDispose { vm.controller.onSubject = null; sm.unregisterListener(listener) }
+        // clear only our own callback: a newer screen may already have set its own
+        onDispose { if (vm.controller.onSubject === onSubject) vm.controller.onSubject = null; sm.unregisterListener(listener) }
     }
     val guidance = if (guide != null) subject?.let { guidance(guide.id, it) } else null
     var wasAligned by remember { mutableStateOf(false) }
