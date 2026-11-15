@@ -2,3 +2,8 @@ Hikari automated tests  2026-11-15T16:01Z  commit 86b3af4
 PASS     look checks (daylight collection)  (4 s)
 PASS     vision unit tests  (11 s)
 PASS     engine shader tests  (16 s)
+PASS     golden images + quality  (600 s)
+SKIPPED  android unit tests + release build  - no Android SDK on this machine (runs on CI: .github/workflows/build.yml)
+SKIPPED  instrumented UI tests  - --device not given (they run on the CI emulator)
+
+RESULT: all stages that ran passed

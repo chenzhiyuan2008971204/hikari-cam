@@ -284,7 +284,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                 lensOpt = null
                 return@LaunchedEffect
             }
-            cameraError = "無法開啟相機。\n這台裝置可能沒有可用的相機，或相機正被其他 App 使用。"
+            cameraError = if (settings.virtualCamera) "虛擬相機啟動失敗：${e.message ?: e.javaClass.simpleName}"
+                else "無法開啟相機。\n這台裝置可能沒有可用的相機，或相機正被其他 App 使用。"
             return@LaunchedEffect
         }
         if (settings.virtualCamera) lensMsg = "虛擬相機：正在播放內建測試照片（設定可關閉）"

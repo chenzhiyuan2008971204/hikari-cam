@@ -1,7 +1,8 @@
-golden + quality: 27 looks x 14 photos = 378 renders, 624 s
-mode: UPDATE (goldens re-recorded)
+golden + quality: 27 looks x 14 photos = 378 renders, 600 s
+mode: compare, tolerance mean 1.2 / p99 5.0 levels; worst seen mean 0.00 / p99 0.0
 result: PASS
 
+self-test (render of soft_chrome against golden of standard_chrome must fail): caught (mean 5.14)
 look                 clip  crush   cast    hl  skinHue  skinC  band
 standard_chrome     0.009  0.000  0.001  0.88     -0.0   1.03   3.4
 soft_chrome         0.004  0.000  0.003  0.94     +0.5   1.08   4.3

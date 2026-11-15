@@ -57,12 +57,15 @@ class SmartUiTest {
     @Test
     fun virtualCameraFlow() {
         val t0 = System.currentTimeMillis()
-        set("virtualCamera", "true")
-        assertTrue("virtual camera did not start", poll(30_000) { has("虛擬相機") })
-        Thread.sleep(5000)
+        // the app writes its own settings at start; keep asking until the virtual source is really playing
+        val up = poll(40_000) { set("virtualCamera", "true"); has("正在播放") }
+        Thread.sleep(4000)
         shot("smart_01_virtual_preview.png")
+        if (!up) Report.line("smart: virtual camera did not start; start failure shown: ${has("啟動失敗")}, no-camera message shown: ${has("無法開啟相機")}")
+        Report.flush(ctx, "smart_start_report.txt")
+        assertTrue("virtual camera did not start", up)
         Report.line("smart: virtual camera preview up after ${System.currentTimeMillis() - t0} ms (includes app start)")
-        assertTrue("camera error shown in virtual mode", !has("無法開啟相機"))
+        assertTrue("camera error shown in virtual mode", !has("無法開啟相機") && !has("啟動失敗"))
 
         // live recommendation chips come from measuring the frames
         rule.onNodeWithText("濾鏡").performClick()
@@ -143,8 +146,7 @@ class SmartUiTest {
     @Test
     fun switchingSourcesIsStable() {
         repeat(3) {
-            set("virtualCamera", "true")
-            assertTrue("virtual camera did not start (round $it)", poll(30_000) { has("虛擬相機") })
+            assertTrue("virtual camera did not start (round $it)", poll(40_000) { set("virtualCamera", "true"); has("正在播放") })
             Thread.sleep(1500)
             set("virtualCamera", "false")
             Thread.sleep(2500)
