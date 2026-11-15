@@ -282,7 +282,8 @@ fun LiveGuideOverlay(subject: com.hikari.cam.camera.Subject?, guidance: Guidance
         }
         guidance?.let { g ->
             Text(g.tip, color = if (g.aligned) Color.Black else Color.White, fontSize = 13.sp,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 74.dp)
+                // top of the preview, under the guide name: the bottom belongs to the zoom stops
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 92.dp)
                     .background(if (g.aligned) accent else Color(0x88000000), RoundedCornerShape(14.dp))
                     .padding(horizontal = 12.dp, vertical = 4.dp))
         }

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.outlined.Exposure
 import androidx.compose.material.icons.outlined.FlashAuto
 import androidx.compose.material.icons.outlined.FlashOff
@@ -654,6 +655,17 @@ private fun LensPicker(
         if (active != null) Text("實體 #$active", color = Color(0xFFFFB86B), fontSize = 9.sp,
             modifier = Modifier.padding(top = 2.dp, end = 4.dp))
         androidx.compose.material3.DropdownMenu(open, { open = false }) {
+            // say plainly whether a telephoto was found, and by which routes
+            val tele = options.any { o -> o.focal35 != null && mainFocal != null && o.focal35 > mainFocal * 1.6f }
+            Text(
+                when {
+                    options.isEmpty() -> "正在讀取鏡頭…"
+                    tele -> "找到長焦鏡頭，選它就能直接用"
+                    searched -> "已試過：系統開放的鏡頭、多鏡頭裡的實體鏡頭、系統未列出的鏡頭。這支手機沒有把長焦開放給第三方 App。"
+                    else -> "系統只開放了這些鏡頭。按最下面的「搜尋隱藏鏡頭」再試一次。"
+                },
+                fontSize = 12.sp, color = Color.Gray,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).widthIn(max = 280.dp))
             androidx.compose.material3.DropdownMenuItem(
                 text = { Text("自動（系統預設＋變焦切換）") },
                 onClick = { open = false; onSelect(null) })
