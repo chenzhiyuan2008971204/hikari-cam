@@ -1,6 +1,6 @@
 # 光 Hikari — Analog Film Camera
 
-Android 原生底片相機 App：12 款原創濾鏡、自己的 GPU 底片引擎、完整解析度輸出。
+Android 原生底片相機 App：27 款原創濾鏡、自己的 GPU 底片引擎、完整解析度輸出、有量測依據的構圖分析與濾鏡推薦。
 
 ## 功能
 
@@ -18,6 +18,26 @@ Android 原生底片相機 App：12 款原創濾鏡、自己的 GPU 底片引擎
 - **Settings**：JPEG 品質、保存原圖、DNG、格線、預設長寬比，以及 **Filter Lab**。
   - Filter Lab 是品質工具：匯入任意照片、即時切換、比較、完整解析度匯出、預覽與匯出一致性檢查、效能數據。
 
+## 智慧功能（v5）
+
+- **濾鏡推薦**：相機即時顯示最適合目前畫面的三款；編輯器的「智慧」分頁列出前三名（真實預覽、理由、適合度、與原圖差異）。
+- **構圖分析**：編輯器「智慧」分頁最多三個建議，每個都有依據、目前位置、調整方向、預期改善與信心值，並把量到的線、框、點畫在照片上。量不到依據時會直接說明，不硬湊。
+- **真實濾鏡縮圖**：Filters 頁的縮圖由引擎在內建標準照片上即時算出，可切換預覽照片；濾鏡詳情顯示六個場景。
+- **虛擬相機**：設定 → 智慧功能。用內建標準照片當相機畫面，預覽、濾鏡、構圖、推薦、拍照走同一條流程（測試用，也可在沒有相機的裝置上體驗）。
+
+## 測試
+
+```
+scripts/run_all_tests.sh            # 本機可跑的全部測試（約 11 分鐘）
+scripts/run_all_tests.sh --quick    # 略過 Golden Image（約 30 秒）
+scripts/run_all_tests.sh --device   # 另外在已連接的模擬器／手機上跑 UI 自動化
+```
+
+需要：Python 3（numpy、Pillow）、Node.js + Playwright（Chromium）、Gradle + JDK 17 以上。結果寫在 `reports/test_summary.txt`。
+CI（`.github/workflows/build.yml`）另外會建置 APK、跑 Android 單元測試，並在 Android 14 模擬器上跑 UI 自動化。
+
+報告：`PROJECT_AUDIT.md`、`DEVELOPMENT_PLAN.md`、`TESTING_REPORT.md`、`IMAGE_QUALITY_REPORT.md`、`AI_COMPOSITION_REPORT.md`、`PERFORMANCE_REPORT.md`、`KNOWN_ISSUES.md`；每款濾鏡的預覽圖在 `reports/previews/`。
+
 ## 架構
 
 ```
@@ -25,7 +45,8 @@ Android 原生底片相機 App：12 款原創濾鏡、自己的 GPU 底片引擎
           GLES 3.0 shaders、FilmPipeline、OffscreenRenderer（分塊匯出）、
           CameraPreviewRenderer、FilterSpec / FilmParams、LUT
 :data     Room：收藏、最近使用、自訂參數、非破壞性編輯、設定
-:app      Compose UI、CameraX、MediaStore
+:vision   場景分析、構圖幾何、濾鏡推薦（純 Kotlin，可在 JVM 測試）
+:app      Compose UI、CameraX、MediaStore、ML Kit
 tools/    濾鏡配方與 LUT 烘焙（Python）、WebGL 測試工具（與 App 用同一份 shader）、QA
 ```
 
