@@ -7,7 +7,6 @@ import android.graphics.Rect
 import android.graphics.SurfaceTexture
 import android.os.Handler
 import android.os.HandlerThread
-import android.view.Surface
 import com.hikari.cam.smart.Samples
 import com.hikari.engine.gl.CameraPreviewRenderer
 import java.io.File
@@ -23,7 +22,7 @@ class VirtualCamera(private val context: Context) {
     private val thread = HandlerThread("VirtualCamera").also { it.start() }
     private val handler = Handler(thread.looper)
     private val samples = Samples.list(context)
-    private var surface: Surface? = null
+    private var renderer: CameraPreviewRenderer? = null
     private var source: Bitmap? = null
     private var crop = Rect()
     private var frameNo = 0
@@ -38,9 +37,9 @@ class VirtualCamera(private val context: Context) {
 
     fun start(st: SurfaceTexture, r: CameraPreviewRenderer, sampleIndex: Int) {
         index = ((sampleIndex % samples.size) + samples.size) % samples.size
-        st.setDefaultBufferSize(W, H)
-        r.bufferWidth = W; r.bufferHeight = H; r.rotationDegrees = 0; r.mirror = false
-        surface = Surface(st)
+        // frames go to the renderer as ordinary textures (no camera buffer queue is involved)
+        r.mirror = false
+        renderer = r
         running = true
         handler.post {
             val b = Samples.bitmap(context, current)
@@ -65,14 +64,12 @@ class VirtualCamera(private val context: Context) {
 
     private fun tick() {
         if (!running) return
-        val s = surface; val b = source
-        if (s != null && b != null && s.isValid) {
+        val r = renderer; val b = source
+        if (r != null && b != null) {
             val src = framing()
-            runCatching {
-                val c = s.lockCanvas(null)
-                c.drawBitmap(b, src, Rect(0, 0, c.width, c.height), paint)
-                s.unlockCanvasAndPost(c)
-            }
+            val out = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888)
+            android.graphics.Canvas(out).drawBitmap(b, src, Rect(0, 0, W, H), paint)
+            if (running) r.showStill(out) else out.recycle()
             if (frameNo % 3 == 0) onFrame?.let { cb ->
                 val f = Bitmap.createBitmap(W / 2, H / 2, Bitmap.Config.ARGB_8888)
                 android.graphics.Canvas(f).drawBitmap(b, src, Rect(0, 0, f.width, f.height), paint)
@@ -96,9 +93,10 @@ class VirtualCamera(private val context: Context) {
     fun close() {
         running = false
         handler.removeCallbacksAndMessages(null)
-        runCatching { surface?.release() }
-        surface = null
         thread.quitSafely()
+        runCatching { thread.join(500) }   // a frame in flight finishes before the renderer goes back to the camera
+        renderer?.clearStill()
+        renderer = null
     }
 
     companion object {
