@@ -82,6 +82,8 @@ def recipe(c, fx):
 def spec(key, f):
     out = dict(id=key, name=f["name"], zh=f["zh"], series=f["series"], note=f["note"],
                lut=f"luts/{key}.cube", color=dict(lutAmount=1.0, exposure=0.0))
+    if f.get("inspired"):
+        out["inspired"] = f["inspired"]
     out.update(f["fx"])
     out["recipe"] = recipe(f["colour"], f["fx"])
     return out
@@ -99,6 +101,8 @@ def main():
         lk = f["colour"]
         fails, m = clean_check(lk)
         status = "ok" if not fails else "FAIL " + ",".join(fails)
+        if m["skinHue"] is None:  # black and white
+            m = dict(m, skinHue=0.0, skinC=(0.0, 0.0))
         print(f"{key:<15} skinHue {m['skinHue']:5.1f}  skinC {m['skinC'][0]:.2f}-{m['skinC'][1]:.2f}  "
               f"black {m['blackLv']:.3f}  white {m['whiteLv']:.2f}  shadow {m['shadow']:.3f}  {status}")
         if fails:

@@ -62,7 +62,7 @@ fun HikariTheme(content: @Composable () -> Unit) {
     )
 }
 
-val SERIES_ZH = mapOf("daylight" to "Daylight 日光系列", "film" to "Film 底片", "japanese" to "Japanese 日系", "ccd" to "CCD 數位", "special" to "Special 特殊")
+val SERIES_ZH = mapOf("sim" to "Film Simulation 底片模擬", "daylight" to "Daylight 日光系列", "film" to "Film 底片", "japanese" to "Japanese 日系", "ccd" to "CCD 數位", "special" to "Special 特殊")
 
 /** One adjustable parameter: [get] shows the look's own value when the user has not changed it. */
 class Param(
@@ -88,6 +88,11 @@ val ADJUST_PARAMS = listOf(
     Param("色調", -1f..1f, ::signed, { a, _ -> a.tint }, { a, v -> a.copy(tint = v) }),
     Param("對比", -1f..1f, ::signed, { a, _ -> a.contrast }, { a, v -> a.copy(contrast = v) }),
     Param("飽和", -1f..1f, ::signed, { a, _ -> a.saturation }, { a, v -> a.copy(saturation = v) }),
+    Param("高光", -1f..1f, ::signed, { a, _ -> a.highlights }, { a, v -> a.copy(highlights = v) }),
+    Param("陰影", -1f..1f, ::signed, { a, _ -> a.shadows }, { a, v -> a.copy(shadows = v) }),
+    Param("白色", -1f..1f, ::signed, { a, _ -> a.whites }, { a, v -> a.copy(whites = v) }),
+    Param("黑色", -1f..1f, ::signed, { a, _ -> a.blacks }, { a, v -> a.copy(blacks = v) }),
+    Param("銳利度", 0f..1f, { "%.2f".format(it) }, { a, _ -> a.sharpness }, { a, v -> a.copy(sharpness = v) }),
 )
 
 /** Lens character and film defects: each one can be switched off (0) or set; null = the look's own amount. */

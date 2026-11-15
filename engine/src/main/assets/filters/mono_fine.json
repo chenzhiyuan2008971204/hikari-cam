@@ -1,0 +1,62 @@
+{
+ "id": "mono_fine",
+ "name": "Mono Fine",
+ "zh": "細緻黑白",
+ "series": "sim",
+ "note": "細緻黑白：豐富的中間調層次、深邃的黑、細緻銳利的顆粒；天空略深、膚色明亮（黃濾鏡感）。",
+ "lut": "luts/mono_fine.cube",
+ "color": {
+  "lutAmount": 1.0,
+  "exposure": 0.0
+ },
+ "inspired": "Acros",
+ "grain": {
+  "amount": 0.3,
+  "size": 0.00096,
+  "chroma": 0.0,
+  "rough": 0.35
+ },
+ "halation": {
+  "amount": 0.0,
+  "threshold": 0.82,
+  "radius": 0.012,
+  "tint": [
+   1.0,
+   0.32,
+   0.12
+  ]
+ },
+ "bloom": {
+  "amount": 0.0,
+  "threshold": 0.78,
+  "radius": 0.045
+ },
+ "diffusion": {
+  "softFocus": 0.0,
+  "mist": 0.0,
+  "radius": 0.006
+ },
+ "lens": {
+  "vignette": 0.12,
+  "vignetteSoft": 0.6,
+  "aberration": 0.0,
+  "edgeSoft": 0.0
+ },
+ "defects": {
+  "dust": 0.0,
+  "scratches": 0.0,
+  "leak": 0.0,
+  "leakColor": [
+   1.0,
+   0.45,
+   0.18
+  ],
+  "uneven": 0.0,
+  "drift": 0.0
+ },
+ "recipe": [
+  "影調曲線：18% 灰處斜率 1.22（加反差），黑位 0.008、白位肩部 0.990，曝光 +0.02 EV（線性光、不裁切）",
+  "保護：中性白／灰、膚色色相、色域內壓縮（不爆色）",
+  "顆粒：強度 0.30、粒徑 0.96‰ 短邊、彩色 0.00、粗糙 0.35，中間調最強"
+ ]
+}

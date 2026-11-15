@@ -23,6 +23,8 @@
           uExposure: or(a.exposure, 0) + or(spec.color.exposure, 0),
           uTemp: or(a.temperature, 0), uTint: or(a.tint, 0),
           uContrast: or(a.contrast, 0), uSaturation: or(a.saturation, 0), uFade: or(a.fade, 0),
+          uHighlights: or(a.highlights, 0), uShadows: or(a.shadows, 0), uBlacks: or(a.blacks, 0), uWhites: or(a.whites, 0),
+          uSharpness: or(a.sharpness, 0),
           uBloom: or(a.bloom, b.amount), uHalation: or(a.halation, h.amount), uHalationTint: h.tint,
           uSoftFocus: or(a.softFocus, d.softFocus), uMist: or(a.mist, d.mist),
           uVignette: or(a.vignette, l.vignette), uVignetteSoft: l.vignetteSoft,

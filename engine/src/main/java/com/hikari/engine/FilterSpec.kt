@@ -25,6 +25,8 @@ data class FilterSpec(
     val defects: Defects,
     /** what this look's colour, grain and glow actually do, generated from its recipe */
     val recipe: List<String> = emptyList(),
+    /** the classic film character this original look is inspired by (shown as a hint), or "" */
+    val inspired: String = "",
 ) {
     data class Grain(val amount: Float, val size: Float, val chroma: Float, val rough: Float)
     data class Halation(val amount: Float, val threshold: Float, val radius: Float, val tint: FloatArray)
@@ -60,6 +62,7 @@ data class FilterSpec(
                 defects = Defects(x.f("dust"), x.f("scratches"), x.f("leak"), x.getJSONArray("leakColor").v3(),
                     x.f("uneven"), x.f("drift")),
                 recipe = j.optJSONArray("recipe")?.let { a -> (0 until a.length()).map { a.getString(it) } } ?: emptyList(),
+                inspired = j.optString("inspired", ""),
             )
         }
     }
@@ -83,6 +86,12 @@ data class Adjustments(
     val tint: Float = 0f,
     val contrast: Float = 0f,
     val saturation: Float = 0f,
+    // tone regions (-1..1) and capture sharpening (0..1); 0 = unchanged
+    val highlights: Float = 0f,
+    val shadows: Float = 0f,
+    val blacks: Float = 0f,
+    val whites: Float = 0f,
+    val sharpness: Float = 0f,
     // lens character and film defects: null = the look's own amount, 0 = off
     val aberration: Float? = null,
     val softFocus: Float? = null,
@@ -104,6 +113,8 @@ data class Adjustments(
         put("fade", fade.toDouble()); put("exposure", exposure.toDouble())
         put("temperature", temperature.toDouble()); put("tint", tint.toDouble())
         put("contrast", contrast.toDouble()); put("saturation", saturation.toDouble())
+        put("highlights", highlights.toDouble()); put("shadows", shadows.toDouble())
+        put("blacks", blacks.toDouble()); put("whites", whites.toDouble()); put("sharpness", sharpness.toDouble())
         for ((k, v) in optional()) v?.let { put(k, it.toDouble()) }
     }.toString()
 
@@ -125,6 +136,8 @@ data class Adjustments(
                 fade = opt("fade") ?: 0f, exposure = opt("exposure") ?: 0f,
                 temperature = opt("temperature") ?: 0f, tint = opt("tint") ?: 0f,
                 contrast = opt("contrast") ?: 0f, saturation = opt("saturation") ?: 0f,
+                highlights = opt("highlights") ?: 0f, shadows = opt("shadows") ?: 0f,
+                blacks = opt("blacks") ?: 0f, whites = opt("whites") ?: 0f, sharpness = opt("sharpness") ?: 0f,
                 aberration = opt("aberration"), softFocus = opt("softFocus"), mist = opt("mist"),
                 edgeSoft = opt("edgeSoft"), dust = opt("dust"), scratches = opt("scratches"),
                 leak = opt("leak"), uneven = opt("uneven"), drift = opt("drift"),

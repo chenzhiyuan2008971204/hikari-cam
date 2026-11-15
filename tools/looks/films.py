@@ -207,13 +207,19 @@ from daylight import DAYLIGHT, DAYLIGHT_SHIP  # noqa: E402
 FILMS.update(DAYLIGHT)
 SHIP = DAYLIGHT_SHIP + SHIP
 
+# Film Simulation series (sims.py)
+from sims import SIMS, SIM_SHIP, SIM_STRENGTH  # noqa: E402
+
+FILMS.update(SIMS)
+SHIP = SIM_SHIP + SHIP
+
 # Colour v2: the fine-engine recipes (film_colours.py), with each look's mood strengthened
 from amplify import amplify_mood  # noqa: E402
 from film_colours import C as _C2, STRENGTH as _S, DAYLIGHT_STRENGTH as _SD  # noqa: E402
 
 for _k, _lk in _C2.items():
     FILMS[_k]["colour"] = amplify_mood(_lk, _S[_k])
-for _k, _kk in _SD.items():
+for _k, _kk in {**_SD, **SIM_STRENGTH}.items():
     FILMS[_k]["colour"] = amplify_mood(FILMS[_k]["colour"], _kk, clean=True)
 
 # Grain: mostly luminance, like real colour negative (dye clouds add only a faint colour

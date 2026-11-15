@@ -32,6 +32,14 @@ private data class IconStyle(
 )
 
 private val STYLES = mapOf(
+    // Film Simulation series
+    "standard_chrome" to IconStyle(Color(0xFF2F6FB8), Color(0xFFF2F2EE), Color(0xFFE0B040), "STANDARD", "CHROME", textColor = Color(0xFF1A3A66)),
+    "soft_chrome" to IconStyle(Color(0xFFF2D9DE), Color(0xFFD98C9C), Color(0xFF8FB5C9), "SOFT", "CHROME", textColor = Color(0xFF5C2E3A)),
+    "true_negative" to IconStyle(Color(0xFFEDEDE6), Color(0xFF3F8F6B), Color(0xFFCC4B3C), "TRUE", "NEG", textColor = Color(0xFF1F4A38)),
+    "silver_bypass" to IconStyle(Color(0xFF9A9FA3), Color(0xFF2B2E31), Color(0xFFD9DADB), "SILVER", "BYPASS"),
+    "studio_hi" to IconStyle(Color(0xFF30343A), Color(0xFFD9B08C), Color(0xFFFFFFFF), "STUDIO", "HI"),
+    "studio_std" to IconStyle(Color(0xFFE6DDD2), Color(0xFFB8937A), Color(0xFF7D8A94), "STUDIO", "STD", textColor = Color(0xFF4A3628)),
+    "mono_fine" to IconStyle(Color(0xFF1A1A1A), Color(0xFFEDEDED), Color(0xFF777777), "MONO", "FINE", textColor = Color(0xFF111111)),
     // Daylight Collection: pale canisters with a sky stripe, each with its own colour
     "muted_chrome" to IconStyle(Color(0xFF8E959B), Color(0xFF3F4A54), Color(0xFFC9B48A), "MUTED", "CHROME"),
     "street_negative" to IconStyle(Color(0xFF2E4A4F), Color(0xFFC4473A), Color(0xFFE6D6B8), "STREET", "NEG"),

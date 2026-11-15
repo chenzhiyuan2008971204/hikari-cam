@@ -1,5 +1,2112 @@
 [
  {
+  "id": "standard_chrome",
+  "adjust": {},
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.92,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0.02,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.06,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.1,
+    "uGrainSize": 0.00096,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.2,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "standard_chrome",
+  "adjust": {
+   "aberration": 0,
+   "softFocus": 0.3,
+   "mist": 0,
+   "edgeSoft": 0.2,
+   "dust": 0.5,
+   "scratches": 0,
+   "leak": 0.4,
+   "uneven": 0,
+   "drift": 0.1
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.92,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0.02,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0.3,
+    "uMist": 0,
+    "uVignette": 0.06,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0.2,
+    "uGrain": 0.1,
+    "uGrainSize": 0.00096,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.2,
+    "uDust": 0.5,
+    "uScratches": 0,
+    "uLeak": 0.4,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0.1
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "standard_chrome",
+  "adjust": {
+   "strength": 0.5,
+   "grain": 0.1,
+   "grainSize": 0.002,
+   "halation": 0.3,
+   "bloom": 0.2,
+   "vignette": 0.4,
+   "fade": 0.2,
+   "exposure": 0.3,
+   "temperature": -0.4,
+   "tint": 0.2,
+   "contrast": 0.25,
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.92,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 0.5,
+    "uLutAmount": 1,
+    "uExposure": 0.3,
+    "uTemp": -0.4,
+    "uTint": 0.2,
+    "uContrast": 0.25,
+    "uSaturation": -0.3,
+    "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
+    "uBloom": 0.2,
+    "uHalation": 0.3,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.4,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.1,
+    "uGrainSize": 0.002,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.2,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "soft_chrome",
+  "adjust": {},
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.84,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0.03,
+    "uHalation": 0,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.06,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.1,
+    "uGrainSize": 0.00096,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.2,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "soft_chrome",
+  "adjust": {
+   "aberration": 0,
+   "softFocus": 0.3,
+   "mist": 0,
+   "edgeSoft": 0.2,
+   "dust": 0.5,
+   "scratches": 0,
+   "leak": 0.4,
+   "uneven": 0,
+   "drift": 0.1
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.84,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0.03,
+    "uHalation": 0,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0.3,
+    "uMist": 0,
+    "uVignette": 0.06,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0.2,
+    "uGrain": 0.1,
+    "uGrainSize": 0.00096,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.2,
+    "uDust": 0.5,
+    "uScratches": 0,
+    "uLeak": 0.4,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0.1
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "soft_chrome",
+  "adjust": {
+   "strength": 0.5,
+   "grain": 0.1,
+   "grainSize": 0.002,
+   "halation": 0.3,
+   "bloom": 0.2,
+   "vignette": 0.4,
+   "fade": 0.2,
+   "exposure": 0.3,
+   "temperature": -0.4,
+   "tint": 0.2,
+   "contrast": 0.25,
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.84,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 0.5,
+    "uLutAmount": 1,
+    "uExposure": 0.3,
+    "uTemp": -0.4,
+    "uTint": 0.2,
+    "uContrast": 0.25,
+    "uSaturation": -0.3,
+    "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
+    "uBloom": 0.2,
+    "uHalation": 0.3,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.4,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.1,
+    "uGrainSize": 0.002,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.2,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "true_negative",
+  "adjust": {},
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.9,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0.03,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.08,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.18,
+    "uGrainSize": 0.00104,
+    "uGrainChroma": 0.024,
+    "uGrainRough": 0.3,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "true_negative",
+  "adjust": {
+   "aberration": 0,
+   "softFocus": 0.3,
+   "mist": 0,
+   "edgeSoft": 0.2,
+   "dust": 0.5,
+   "scratches": 0,
+   "leak": 0.4,
+   "uneven": 0,
+   "drift": 0.1
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.9,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0.03,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0.3,
+    "uMist": 0,
+    "uVignette": 0.08,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0.2,
+    "uGrain": 0.18,
+    "uGrainSize": 0.00104,
+    "uGrainChroma": 0.024,
+    "uGrainRough": 0.3,
+    "uDust": 0.5,
+    "uScratches": 0,
+    "uLeak": 0.4,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0.1
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "true_negative",
+  "adjust": {
+   "strength": 0.5,
+   "grain": 0.1,
+   "grainSize": 0.002,
+   "halation": 0.3,
+   "bloom": 0.2,
+   "vignette": 0.4,
+   "fade": 0.2,
+   "exposure": 0.3,
+   "temperature": -0.4,
+   "tint": 0.2,
+   "contrast": 0.25,
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.9,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 0.5,
+    "uLutAmount": 1,
+    "uExposure": 0.3,
+    "uTemp": -0.4,
+    "uTint": 0.2,
+    "uContrast": 0.25,
+    "uSaturation": -0.3,
+    "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
+    "uBloom": 0.2,
+    "uHalation": 0.3,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.4,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.1,
+    "uGrainSize": 0.002,
+    "uGrainChroma": 0.024,
+    "uGrainRough": 0.3,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "silver_bypass",
+  "adjust": {},
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.86,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0.05,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.18,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.36,
+    "uGrainSize": 0.00136,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.5,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "silver_bypass",
+  "adjust": {
+   "aberration": 0,
+   "softFocus": 0.3,
+   "mist": 0,
+   "edgeSoft": 0.2,
+   "dust": 0.5,
+   "scratches": 0,
+   "leak": 0.4,
+   "uneven": 0,
+   "drift": 0.1
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.86,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0.05,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0.3,
+    "uMist": 0,
+    "uVignette": 0.18,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0.2,
+    "uGrain": 0.36,
+    "uGrainSize": 0.00136,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.5,
+    "uDust": 0.5,
+    "uScratches": 0,
+    "uLeak": 0.4,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0.1
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "silver_bypass",
+  "adjust": {
+   "strength": 0.5,
+   "grain": 0.1,
+   "grainSize": 0.002,
+   "halation": 0.3,
+   "bloom": 0.2,
+   "vignette": 0.4,
+   "fade": 0.2,
+   "exposure": 0.3,
+   "temperature": -0.4,
+   "tint": 0.2,
+   "contrast": 0.25,
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.86,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 0.5,
+    "uLutAmount": 1,
+    "uExposure": 0.3,
+    "uTemp": -0.4,
+    "uTint": 0.2,
+    "uContrast": 0.25,
+    "uSaturation": -0.3,
+    "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
+    "uBloom": 0.2,
+    "uHalation": 0.3,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.4,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.1,
+    "uGrainSize": 0.002,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.5,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "studio_hi",
+  "adjust": {},
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.08,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.14,
+    "uGrainSize": 0.00096,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.25,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "studio_hi",
+  "adjust": {
+   "aberration": 0,
+   "softFocus": 0.3,
+   "mist": 0,
+   "edgeSoft": 0.2,
+   "dust": 0.5,
+   "scratches": 0,
+   "leak": 0.4,
+   "uneven": 0,
+   "drift": 0.1
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0.3,
+    "uMist": 0,
+    "uVignette": 0.08,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0.2,
+    "uGrain": 0.14,
+    "uGrainSize": 0.00096,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.25,
+    "uDust": 0.5,
+    "uScratches": 0,
+    "uLeak": 0.4,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0.1
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "studio_hi",
+  "adjust": {
+   "strength": 0.5,
+   "grain": 0.1,
+   "grainSize": 0.002,
+   "halation": 0.3,
+   "bloom": 0.2,
+   "vignette": 0.4,
+   "fade": 0.2,
+   "exposure": 0.3,
+   "temperature": -0.4,
+   "tint": 0.2,
+   "contrast": 0.25,
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 0.5,
+    "uLutAmount": 1,
+    "uExposure": 0.3,
+    "uTemp": -0.4,
+    "uTint": 0.2,
+    "uContrast": 0.25,
+    "uSaturation": -0.3,
+    "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
+    "uBloom": 0.2,
+    "uHalation": 0.3,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.4,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.1,
+    "uGrainSize": 0.002,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.25,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "studio_std",
+  "adjust": {},
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.06,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.12,
+    "uGrainSize": 0.00096,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.25,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "studio_std",
+  "adjust": {
+   "aberration": 0,
+   "softFocus": 0.3,
+   "mist": 0,
+   "edgeSoft": 0.2,
+   "dust": 0.5,
+   "scratches": 0,
+   "leak": 0.4,
+   "uneven": 0,
+   "drift": 0.1
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0.3,
+    "uMist": 0,
+    "uVignette": 0.06,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0.2,
+    "uGrain": 0.12,
+    "uGrainSize": 0.00096,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.25,
+    "uDust": 0.5,
+    "uScratches": 0,
+    "uLeak": 0.4,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0.1
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "studio_std",
+  "adjust": {
+   "strength": 0.5,
+   "grain": 0.1,
+   "grainSize": 0.002,
+   "halation": 0.3,
+   "bloom": 0.2,
+   "vignette": 0.4,
+   "fade": 0.2,
+   "exposure": 0.3,
+   "temperature": -0.4,
+   "tint": 0.2,
+   "contrast": 0.25,
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 0.5,
+    "uLutAmount": 1,
+    "uExposure": 0.3,
+    "uTemp": -0.4,
+    "uTint": 0.2,
+    "uContrast": 0.25,
+    "uSaturation": -0.3,
+    "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
+    "uBloom": 0.2,
+    "uHalation": 0.3,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.4,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.1,
+    "uGrainSize": 0.002,
+    "uGrainChroma": 0.016,
+    "uGrainRough": 0.25,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "mono_fine",
+  "adjust": {},
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.12,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.3,
+    "uGrainSize": 0.00096,
+    "uGrainChroma": 0,
+    "uGrainRough": 0.35,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "mono_fine",
+  "adjust": {
+   "aberration": 0,
+   "softFocus": 0.3,
+   "mist": 0,
+   "edgeSoft": 0.2,
+   "dust": 0.5,
+   "scratches": 0,
+   "leak": 0.4,
+   "uneven": 0,
+   "drift": 0.1
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 1,
+    "uLutAmount": 1,
+    "uExposure": 0,
+    "uTemp": 0,
+    "uTint": 0,
+    "uContrast": 0,
+    "uSaturation": 0,
+    "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
+    "uBloom": 0,
+    "uHalation": 0,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0.3,
+    "uMist": 0,
+    "uVignette": 0.12,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0.2,
+    "uGrain": 0.3,
+    "uGrainSize": 0.00096,
+    "uGrainChroma": 0,
+    "uGrainRough": 0.35,
+    "uDust": 0.5,
+    "uScratches": 0,
+    "uLeak": 0.4,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0.1
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
+  "id": "mono_fine",
+  "adjust": {
+   "strength": 0.5,
+   "grain": 0.1,
+   "grainSize": 0.002,
+   "halation": 0.3,
+   "bloom": 0.2,
+   "vignette": 0.4,
+   "fade": 0.2,
+   "exposure": 0.3,
+   "temperature": -0.4,
+   "tint": 0.2,
+   "contrast": 0.25,
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
+  },
+  "effective": {
+   "bloomRadius": 0.045,
+   "bloomThreshold": 0.78,
+   "halationRadius": 0.012,
+   "halationThreshold": 0.82,
+   "diffusionRadius": 0.006,
+   "uniforms": {
+    "uStrength": 0.5,
+    "uLutAmount": 1,
+    "uExposure": 0.3,
+    "uTemp": -0.4,
+    "uTint": 0.2,
+    "uContrast": 0.25,
+    "uSaturation": -0.3,
+    "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
+    "uBloom": 0.2,
+    "uHalation": 0.3,
+    "uHalationTint": [
+     1,
+     0.32,
+     0.12
+    ],
+    "uSoftFocus": 0,
+    "uMist": 0,
+    "uVignette": 0.4,
+    "uVignetteSoft": 0.6,
+    "uAberration": 0,
+    "uEdgeSoft": 0,
+    "uGrain": 0.1,
+    "uGrainSize": 0.002,
+    "uGrainChroma": 0,
+    "uGrainRough": 0.35,
+    "uDust": 0,
+    "uScratches": 0,
+    "uLeak": 0,
+    "uLeakColor": [
+     1,
+     0.45,
+     0.18
+    ],
+    "uUneven": 0,
+    "uDrift": 0
+   }
+  },
+  "chains": [
+   {
+    "aspect": 1.6,
+    "bloom": {
+     "w": 142,
+     "h": 89,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 533,
+     "h": 333,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 819,
+     "h": 512,
+     "sigma": 3.072
+    }
+   },
+   {
+    "aspect": 0.75,
+    "bloom": {
+     "w": 89,
+     "h": 119,
+     "sigma": 4.005
+    },
+    "halation": {
+     "w": 333,
+     "h": 444,
+     "sigma": 3.996
+    },
+    "diffusion": {
+     "w": 512,
+     "h": 683,
+     "sigma": 3.072
+    }
+   }
+  ]
+ },
+ {
   "id": "muted_chrome",
   "adjust": {},
   "effective": {
@@ -17,6 +2124,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0.03,
     "uHalationTint": [
@@ -113,6 +2225,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0.03,
     "uHalationTint": [
@@ -195,7 +2312,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -212,6 +2334,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -298,6 +2425,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0.06,
     "uHalationTint": [
@@ -394,6 +2526,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0.06,
     "uHalationTint": [
@@ -476,7 +2613,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -493,6 +2635,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -579,6 +2726,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.04,
     "uHalation": 0.04,
     "uHalationTint": [
@@ -675,6 +2827,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.04,
     "uHalation": 0.04,
     "uHalationTint": [
@@ -757,7 +2914,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -774,6 +2936,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -860,6 +3027,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0.03,
     "uHalationTint": [
@@ -956,6 +3128,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0.03,
     "uHalationTint": [
@@ -1038,7 +3215,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -1055,6 +3237,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -1141,6 +3328,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.03,
     "uHalation": 0.05,
     "uHalationTint": [
@@ -1237,6 +3429,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.03,
     "uHalation": 0.05,
     "uHalationTint": [
@@ -1319,7 +3516,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -1336,6 +3538,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -1422,6 +3629,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.06,
     "uHalation": 0.08,
     "uHalationTint": [
@@ -1518,6 +3730,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.06,
     "uHalation": 0.08,
     "uHalationTint": [
@@ -1600,7 +3817,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -1617,6 +3839,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -1703,6 +3930,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0.02,
     "uHalationTint": [
@@ -1799,6 +4031,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0.02,
     "uHalationTint": [
@@ -1881,7 +4118,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -1898,6 +4140,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -1984,6 +4231,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.05,
     "uHalation": 0.08,
     "uHalationTint": [
@@ -2080,6 +4332,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.05,
     "uHalation": 0.08,
     "uHalationTint": [
@@ -2162,7 +4419,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -2179,6 +4441,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -2265,6 +4532,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.07,
     "uHalation": 0.08,
     "uHalationTint": [
@@ -2361,6 +4633,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.07,
     "uHalation": 0.08,
     "uHalationTint": [
@@ -2443,7 +4720,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -2460,6 +4742,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -2546,6 +4833,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.1,
     "uHalation": 0.12,
     "uHalationTint": [
@@ -2642,6 +4934,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.1,
     "uHalation": 0.12,
     "uHalationTint": [
@@ -2724,7 +5021,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -2741,6 +5043,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -2827,6 +5134,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.12,
     "uHalation": 0.25,
     "uHalationTint": [
@@ -2923,6 +5235,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.12,
     "uHalation": 0.25,
     "uHalationTint": [
@@ -3005,7 +5322,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -3022,6 +5344,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -3108,6 +5435,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.04,
     "uHalation": 0.05,
     "uHalationTint": [
@@ -3204,6 +5536,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.04,
     "uHalation": 0.05,
     "uHalationTint": [
@@ -3286,7 +5623,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -3303,6 +5645,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -3389,6 +5736,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.06,
     "uHalation": 0.06,
     "uHalationTint": [
@@ -3485,6 +5837,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.06,
     "uHalation": 0.06,
     "uHalationTint": [
@@ -3567,7 +5924,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -3584,6 +5946,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -3670,6 +6037,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0,
     "uHalationTint": [
@@ -3766,6 +6138,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0,
     "uHalationTint": [
@@ -3848,7 +6225,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -3865,6 +6247,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -3951,6 +6338,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.1,
     "uHalation": 0,
     "uHalationTint": [
@@ -4047,6 +6439,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.1,
     "uHalation": 0,
     "uHalationTint": [
@@ -4129,7 +6526,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -4146,6 +6548,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -4232,6 +6639,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.03,
     "uHalation": 0,
     "uHalationTint": [
@@ -4328,6 +6740,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.03,
     "uHalation": 0,
     "uHalationTint": [
@@ -4410,7 +6827,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -4427,6 +6849,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -4513,6 +6940,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.12,
     "uHalation": 0.05,
     "uHalationTint": [
@@ -4609,6 +7041,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.12,
     "uHalation": 0.05,
     "uHalationTint": [
@@ -4691,7 +7128,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -4708,6 +7150,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -4794,6 +7241,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0,
     "uHalationTint": [
@@ -4890,6 +7342,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0,
     "uHalationTint": [
@@ -4972,7 +7429,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -4989,6 +7451,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -5075,6 +7542,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.42,
     "uHalation": 0.85,
     "uHalationTint": [
@@ -5171,6 +7643,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0.42,
     "uHalation": 0.85,
     "uHalationTint": [
@@ -5253,7 +7730,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.06,
@@ -5270,6 +7752,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [
@@ -5356,6 +7843,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0,
     "uHalationTint": [
@@ -5452,6 +7944,11 @@
     "uContrast": 0,
     "uSaturation": 0,
     "uFade": 0,
+    "uHighlights": 0,
+    "uShadows": 0,
+    "uBlacks": 0,
+    "uWhites": 0,
+    "uSharpness": 0,
     "uBloom": 0,
     "uHalation": 0,
     "uHalationTint": [
@@ -5534,7 +8031,12 @@
    "temperature": -0.4,
    "tint": 0.2,
    "contrast": 0.25,
-   "saturation": -0.3
+   "saturation": -0.3,
+   "highlights": -0.5,
+   "shadows": 0.4,
+   "blacks": 0.1,
+   "whites": -0.2,
+   "sharpness": 0.35
   },
   "effective": {
    "bloomRadius": 0.045,
@@ -5551,6 +8053,11 @@
     "uContrast": 0.25,
     "uSaturation": -0.3,
     "uFade": 0.2,
+    "uHighlights": -0.5,
+    "uShadows": 0.4,
+    "uBlacks": 0.1,
+    "uWhites": -0.2,
+    "uSharpness": 0.35,
     "uBloom": 0.2,
     "uHalation": 0.3,
     "uHalationTint": [

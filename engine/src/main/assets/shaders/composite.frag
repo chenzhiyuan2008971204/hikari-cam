@@ -30,6 +30,11 @@ uniform float uTint;
 uniform float uContrast;
 uniform float uSaturation;
 uniform float uFade;
+uniform float uHighlights;  // -1..1 tone regions, applied before development
+uniform float uShadows;
+uniform float uBlacks;
+uniform float uWhites;
+uniform float uSharpness;   // 0..1 capture sharpening (luminance only, halo-limited)
 // glow
 uniform float uBloom;
 uniform float uHalation;
@@ -170,6 +175,20 @@ void main() {
     float rr = radial(uv);
     vec3 lin = sampleLens(uv, uAberration * sLens * 0.004 * rr * rr);
 
+    // capture sharpening: luminance detail against the 4 neighbours at a radius fixed in image
+    // units (so preview and export agree), soft-limited so edges never grow halos
+    if (uSharpness > 0.0) {
+        float rad = 0.00075;
+        vec2 o = uAspect >= 1.0 ? vec2(rad / uAspect, rad) : vec2(rad, rad * uAspect);
+        float yc = dot(toDisplay(lin), LUMA);
+        float yn = (dot(toDisplay(srcLinear(uv + vec2(o.x, 0.0))), LUMA) + dot(toDisplay(srcLinear(uv - vec2(o.x, 0.0))), LUMA)
+                  + dot(toDisplay(srcLinear(uv + vec2(0.0, o.y))), LUMA) + dot(toDisplay(srcLinear(uv - vec2(0.0, o.y))), LUMA)) * 0.25;
+        float d = yc - yn;
+        d = 0.08 * d / (0.08 + abs(d));           // soft limit: big edges get less
+        float y2 = clamp(yc + d * uSharpness * 1.6, 0.0, 1.0);
+        lin *= clamp(pow(max(y2, 1e-4) / max(yc, 1e-4), 2.2), 0.6, 1.6);
+    }
+
     // white balance and exposure in linear light (user controls, not scaled by strength)
     vec3 wb = vec3(1.0 + 0.10 * uTemp + 0.03 * uTint, 1.0 - 0.06 * uTint, 1.0 - 0.10 * uTemp + 0.03 * uTint);
     wb /= dot(wb, LUMA);
@@ -202,6 +221,20 @@ void main() {
 
     // development: the filter's colour science
     vec3 disp = toDisplay(lin);
+
+    // tone regions (user): shadows / highlights / black point / white point on luminance, before
+    // the look's curve so the film character stays on top. Amplitudes keep the mapping monotone.
+    if (uHighlights != 0.0 || uShadows != 0.0 || uBlacks != 0.0 || uWhites != 0.0) {
+        float y = clamp(dot(disp, LUMA), 0.0, 1.0);
+        float y2 = y + uShadows * 0.11 * 6.75 * y * (1.0 - y) * (1.0 - y)
+                     + uHighlights * 0.11 * 6.75 * y * y * (1.0 - y)
+                     + uBlacks * 0.08 * (1.0 - y) * (1.0 - y) * (1.0 - y)
+                     + uWhites * 0.08 * y * y * y;
+        y2 = clamp(y2, 0.0, 1.0);
+        vec3 add = disp + (y2 - y);
+        vec3 gain = disp * (y2 / max(y, 1e-3));
+        disp = clamp(mix(add, gain, smoothstep(0.02, 0.12, y)), 0.0, 1.0);
+    }
     vec3 graded = sampleLut(disp);
     disp = mix(disp, graded, uLutAmount * sColour);
 

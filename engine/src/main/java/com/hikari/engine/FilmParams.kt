@@ -39,6 +39,8 @@ class FilmParams private constructor(
                 "uExposure" to a.exposure + spec.exposure,
                 "uTemp" to a.temperature, "uTint" to a.tint,
                 "uContrast" to a.contrast, "uSaturation" to a.saturation, "uFade" to a.fade,
+                "uHighlights" to a.highlights, "uShadows" to a.shadows, "uBlacks" to a.blacks, "uWhites" to a.whites,
+                "uSharpness" to a.sharpness,
                 "uBloom" to (a.bloom ?: spec.bloom.amount),
                 "uHalation" to (a.halation ?: spec.halation.amount),
                 "uSoftFocus" to (a.softFocus ?: spec.diffusion.softFocus), "uMist" to (a.mist ?: spec.diffusion.mist),
