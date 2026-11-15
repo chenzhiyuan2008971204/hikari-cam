@@ -87,7 +87,7 @@ class CameraController(private val context: Context) {
     private var preview: Preview? = null
     private var capture: ImageCapture? = null
     private var renderer: CameraPreviewRenderer? = null
-    private var surfaceTexture: SurfaceTexture? = null
+    @Volatile private var surfaceTexture: SurfaceTexture? = null
     private var pending: SurfaceRequest? = null
     private val main = ContextCompat.getMainExecutor(context)
     private var rawMode = false
@@ -106,6 +106,12 @@ class CameraController(private val context: Context) {
                 .setPerformanceMode(com.google.mlkit.vision.face.FaceDetectorOptions.PERFORMANCE_MODE_FAST)
                 .setMinFaceSize(0.08f)
                 .build())
+    }
+
+    /** Waits for the GL preview texture on a real clock (a coroutine delay follows the UI test clock, which may stand still). */
+    private suspend fun awaitSurface(tenths: Int) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        var waited = 0
+        while (surfaceTexture == null && waited < tenths) { Thread.sleep(100); waited++ }
     }
 
     /** Test source that plays the bundled photos through the normal preview / analysis / capture path. */
@@ -160,8 +166,7 @@ class CameraController(private val context: Context) {
         if (virtual) {
             runCatching { provider?.unbindAll() }
             camera = null; preview = null; capture = null; analysis = null
-            var waited = 0
-            while (surfaceTexture == null && waited < 80) { kotlinx.coroutines.delay(100); waited++ }
+            awaitSurface(80)
             val st = surfaceTexture ?: error("預覽尚未就緒")
             // the flip button steps to the next test photo
             if (virtualLens != -1 && lens != virtualLens) virtualIndex++
@@ -191,8 +196,7 @@ class CameraController(private val context: Context) {
         // a lens the system hides from apps: open it with plain Camera2 (experimental)
         if (option?.kind == LensOption.Kind.HIDDEN && facing == CameraSelector.LENS_FACING_BACK) {
             camera = null; preview = null; capture = null; analysis = null
-            var waited = 0
-            while (surfaceTexture == null && waited < 50) { kotlinx.coroutines.delay(100); waited++ }
+            awaitSurface(50)
             val st = surfaceTexture ?: error("預覽尚未就緒")
             val d = DirectCamera(context, option.cameraId)
             try { d.open(st, r) } catch (e: Throwable) { d.close(); throw e }

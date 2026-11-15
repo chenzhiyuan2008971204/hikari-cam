@@ -276,6 +276,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         val c = try {
             vm.controller.bind(owner, r, lens, settings.saveRaw, settings.naturalDetail, opt,
                 trackPhysical = false, owner2 = screenToken, virtual = settings.virtualCamera)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e   // the screen or the source changed while opening: not an error, the next bind is already on its way
         } catch (e: Throwable) {
             android.util.Log.w("HikariCamera", "bind failed", e)
             if (opt != null) {

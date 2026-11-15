@@ -98,4 +98,20 @@ class AdviceTest {
         assertEquals(1f / 3, (0.5f - c.top) / c.h, 0.01f)
         assertTrue(c.left >= 0f && c.right <= 1.001f && c.top >= 0f && c.bottom <= 1.001f)
     }
+
+    /** What a phone's object detector really returns on scenery: boxes that fill the frame or run off its edge. */
+    @Test
+    fun sceneryBoxesAndDistantFacesAreNotSubjects() {
+        val f = Synth.photo("03_foliage.jpg")
+        val scenery = listOf(Detection(Detection.Kind.OBJECT, Box(0.1f, 0f, 0.9f, 0.6f)), Detection(Detection.Kind.OBJECT, Box(0f, 0.02f, 0.5f, 0.98f)))
+        val r = CompositionAnalyzer.analyze(f, scenery)
+        assertTrue("scenery box became a subject: ${kinds(r)}", r.findings.subject == null && kinds(r).none { it == Suggestion.Kind.EDGE_ROOM })
+        val street = Synth.photo("14_nightstreet.jpg")
+        val far = listOf(Detection(Detection.Kind.FACE, Box(0.30f, 0.60f, 0.33f, 0.64f)))
+        val r2 = CompositionAnalyzer.analyze(street, far)
+        assertTrue("a distant face drove portrait advice: ${kinds(r2)}", kinds(r2).none { it == Suggestion.Kind.HEADROOM || it == Suggestion.Kind.LEAD_ROOM })
+        // a compact object clear of the edges is still a subject
+        val r3 = CompositionAnalyzer.analyze(f, listOf(Detection(Detection.Kind.OBJECT, Box(0.4f, 0.4f, 0.6f, 0.6f))))
+        assertTrue(r3.findings.subject != null)
+    }
 }

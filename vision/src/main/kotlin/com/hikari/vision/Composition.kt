@@ -79,14 +79,18 @@ object CompositionAnalyzer {
     // ------------------------------------------------------------------ measurements
 
     private fun subject(f: Frame, sal: FloatArray, det: List<Detection>): Findings.Subject? {
-        val face = det.filter { it.kind == Detection.Kind.FACE }.maxByOrNull { it.box.area }
+        // a face far away (a passer-by a few pixels tall) is not the subject of the picture
+        val face = det.filter { it.kind == Detection.Kind.FACE && it.box.area >= 0.004f }.maxByOrNull { it.box.area }
         if (face != null) {
             val body = det.filter { it.kind != Detection.Kind.FACE && face.box.cx in it.box.left..it.box.right && face.box.cy in it.box.top..it.box.bottom }
                 .maxByOrNull { it.box.area }
             return Findings.Subject(body?.box ?: face.box, face.box.cx, face.box.top + face.box.h * 0.42f, "人臉偵測", 0.9f, face.yawDeg, true)
         }
         val obj = det.filter { it.kind != Detection.Kind.FACE }.maxByOrNull { it.box.area }
-        if (obj != null && obj.box.area in 0.004f..0.85f)
+        // a generic "object" box is only trusted like saliency is: a compact thing that stands clear of the frame
+        // edge. Boxes that fill the frame or run off it are usually a piece of scenery, not a subject.
+        val clear = obj != null && minOf(obj.box.left, obj.box.top, 1f - obj.box.right, 1f - obj.box.bottom) >= 0.02f
+        if (obj != null && (if (obj.kind == Detection.Kind.PERSON) obj.box.area in 0.004f..0.85f else clear && obj.box.area in 0.004f..0.45f))
             return Findings.Subject(obj.box, obj.box.cx, obj.box.top + obj.box.h * 0.45f, "物件偵測", 0.7f, 0f, obj.kind == Detection.Kind.PERSON)
         // saliency: the largest region that stands out from the border background
         val n = sal.size; var mean = 0.0; for (v in sal) mean += v; mean /= n
@@ -386,7 +390,8 @@ object CompositionAnalyzer {
         // 5. leading lines
         // (not for close portraits: hat brims and collars are not leading lines)
         val closePortrait = s != null && s.isPerson && s.box.area > 0.06f
-        if (ld != null && !closePortrait && ld.confidence >= 0.45f && ld.vx in 0f..1f && ld.vy in 0f..1f) {
+        if (ld != null && !closePortrait && ld.confidence >= 0.45f && ld.vx in 0.1f..0.9f && ld.vy in 0.2f..0.85f) {
+            // (lines that meet at the very top are a building seen from below, not lines leading into the picture)
             val near = s != null && hypot(s.anchorX - ld.vx, s.anchorY - ld.vy) < 0.15f
             out += Suggestion(Suggestion.Kind.LEADING_LINES, "引導線",
                 "找到 ${ld.lines.size} 條斜向長直線，往畫面內 ${describe(ld.vx, ld.vy)} 匯聚。",

@@ -36,12 +36,16 @@ object Samples {
 
 /** Bridges Android bitmaps and ML Kit to the pure-Kotlin vision module. */
 object Smart {
+    /**
+     * The analysis frame. Photos up to 1280 px are box-averaged directly from their own pixels, exactly
+     * as the JVM tests do; larger ones are first scaled to 1280 px.
+     */
     fun frame(b: Bitmap, maxSide: Int = 256): Frame {
-        val s = maxSide.toFloat() / maxOf(b.width, b.height)
-        val small = if (s < 1f) Bitmap.createScaledBitmap(b, maxOf(1, (b.width * s).toInt()), maxOf(1, (b.height * s).toInt()), true) else b
-        val px = IntArray(small.width * small.height)
-        small.getPixels(px, 0, small.width, 0, 0, small.width, small.height)
-        return Frame.fromArgb(px, small.width, small.height, maxSide).also { if (small !== b) small.recycle() }
+        val s = 1280f / maxOf(b.width, b.height)
+        val work = if (s < 1f) Bitmap.createScaledBitmap(b, maxOf(1, (b.width * s).toInt()), maxOf(1, (b.height * s).toInt()), true) else b
+        val px = IntArray(work.width * work.height)
+        work.getPixels(px, 0, work.width, 0, 0, work.width, work.height)
+        return Frame.fromArgb(px, work.width, work.height, maxSide).also { if (work !== b) work.recycle() }
     }
 
     fun traits(specs: List<FilterSpec>) = specs.map { LookTraits(it.id, it.name, it.series, it.traits) }

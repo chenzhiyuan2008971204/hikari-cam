@@ -56,6 +56,12 @@ class SmartDeviceTest {
                 if (faces == 0) problems += "${s.id}: the face detector found no face"
                 else if (rep.findings.scene.top.firstOrNull() != SceneType.PORTRAIT) problems += "${s.id}: a face is there but the scene is not PORTRAIT"
             }
+            val kinds = rep.suggestions.map { it.kind }
+            // answers known from the annotated photos: the sea horizon is level, scenery has no "subject near the edge"
+            if (s.id == "seaside" && com.hikari.vision.Suggestion.Kind.LEVEL_HORIZON in kinds) problems += "seaside: a level horizon reported as tilted"
+            if (s.id in setOf("foliage", "sunny", "seaside", "concrete", "overcast") && com.hikari.vision.Suggestion.Kind.EDGE_ROOM in kinds) problems += "${s.id}: scenery treated as a subject at the edge"
+            if (s.id == "nightstreet" && com.hikari.vision.Suggestion.Kind.HEADROOM in kinds) problems += "nightstreet: a distant face drove portrait advice"
+            if (s.id == "beach" && com.hikari.vision.Suggestion.Kind.LEVEL_HORIZON !in kinds) problems += "beach: the 2 degree tilt was not reported"
             if (s.id in setOf("city", "foliage", "night") && faces > 0) problems += "${s.id}: a face was detected where there is none"
             b.recycle()
         }
