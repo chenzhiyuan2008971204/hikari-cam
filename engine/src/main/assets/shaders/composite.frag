@@ -202,7 +202,8 @@ void main() {
 
     // film: halation (red), bloom (colour), light leak and uneven exposure
     float halo = glowDecode(texture(uHaloTex, uv)).r;
-    vec3 glow = uHalationTint * halo * uHalation * sGlow * 1.6
+    // the gain grows with the setting (1.6 at the low end, 4.0 at full), so the upper half of the slider is clearly visible
+    vec3 glow = uHalationTint * halo * uHalation * sGlow * (1.6 + 2.4 * uHalation)
               + glowDecode(texture(uBloomTex, uv)) * uBloom * sGlow * 1.2;
     // Add the glow without ever passing white and without bleaching colour: the added light is
     // scaled as a whole by the room left under the pixel's brightest channel, so a saturated

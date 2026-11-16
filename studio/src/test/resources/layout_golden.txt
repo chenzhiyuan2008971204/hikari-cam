@@ -1,18 +1,12 @@
-film35 798x624 photo 15.0,56.0,768.0,512.0 prims 93 texts HIKARI 400|▸ 12A|2026 11 16
-film35_vertical 880x542 photo 56.0,15.0,768.0,512.0 prims 72 texts HIKARI 200  ▸ 12|2026.11.16
 film120 808x604 photo 20.0,46.0,768.0,512.0 prims 32 texts HIKARI PRO 160|12|120|16 NOV 2026|f/1.8 · 1/120s · ISO 100 · 23mm
-film135_strip 922x614 photo 77.0,51.0,768.0,512.0 prims 106 texts 11|12|13|SAFETY FILM
-contact_sheet 860x635 photo 46.0,46.0,768.0,512.0 prims 102 texts ✓ select|ROLL 012|2026.11.16
 analog_info 798x588 photo 15.0,15.0,768.0,512.0 prims 52 texts f/1.8 · 1/120s · ISO 100 · 23mm|Hikari
 slide_mount 922x706 photo 77.0,97.0,768.0,512.0 prims 32 texts HIKARI CHROME|NOV 16 2026|No. 12
-negative_sleeve 830x619 photo 31.0,61.0,768.0,512.0 prims 97 texts No. 0012   2026.11.16
 film_leader 850x574 photo 67.0,31.0,768.0,512.0 prims 29 texts START ▸|2026/11/16
 super8 855x552 photo 67.0,20.0,768.0,512.0 prims 28 texts S8
 retro_print 830x574 photo 31.0,31.0,768.0,512.0 prims 32 texts NOV 16 2026
 print_round 820x579 photo 26.0,26.0,768.0,512.0 prims 28 texts ·  NOV 16 2026  ·
 darkroom_proof 840x635 photo 36.0,36.0,768.0,512.0 prims 37 texts proof #12|2026.11.16|f/1.8 · 1/120s · ISO 100 · 23mm
 edge_code 798x584 photo 15.0,36.0,768.0,512.0 prims 43 texts HIKARI  5063|HIKARI  5063|HIKARI  5063|HIKARI  5063|12  ▸  12A
-pano_film 786x340 photo 9.0,28.0,768.0,284.0 prims 144 texts PANORAMA|2026 11 16
 min_white 820x564 photo 26.0,26.0,768.0,512.0 prims 26 texts 
 min_black 820x584 photo 26.0,26.0,768.0,512.0 prims 27 texts 2026.11.16
 hairline 860x604 photo 46.0,46.0,768.0,512.0 prims 27 texts 
@@ -39,6 +33,16 @@ jp_note 850x666 photo 41.0,41.0,768.0,512.0 prims 30 texts today, soft light.|20
 jp_diary 840x681 photo 36.0,36.0,768.0,512.0 prims 28 texts 16|NOV  2026
 jp_blush 880x635 photo 56.0,56.0,768.0,512.0 prims 27 texts 
 jp_postcard 1029x584 photo 36.0,36.0,768.0,512.0 prims 34 texts POST CARD|2026.11.16
+jp_washi 896x604 photo 46.0,46.0,768.0,512.0 prims 29 texts 2026.11.16
+jp_calendar 850x686 photo 41.0,133.0,768.0,512.0 prims 30 texts 11|NOV|16 · 2026
+jp_cheki 446x665 photo 31.0,38.0,384.0,512.0 prims 29 texts きょうのこと|2026.11.16
+jp_haiku 958x584 photo 36.0,36.0,768.0,512.0 prims 39 texts 夏|の|海|白|い|雲|ゆ|く|午|後|三|時|2026.11.16
+jp_genko 917x584 photo 36.0,36.0,768.0,512.0 prims 69 texts 日|々|是|好|日
+jp_kippu 840x671 photo 36.0,36.0,768.0,512.0 prims 66 texts 東京|▸|京都|2026.11.16|No. 0012
+jp_album 890x696 photo 61.0,61.0,768.0,512.0 prims 33 texts なつやすみ|2026.11.16
+jp_date_seal 850x666 photo 41.0,41.0,768.0,512.0 prims 31 texts 26.11.16|光
+jp_mint 870x645 photo 51.0,51.0,768.0,512.0 prims 32 texts 
+jp_red_dot 870x665 photo 51.0,51.0,768.0,512.0 prims 28 texts 2026.11.16
 cine_bars 768x399 photo 0.0,39.0,768.0,321.0 prims 26 texts 
 cine_subtitle 768x405 photo 0.0,42.0,768.0,321.0 prims 27 texts — and then the light changed.
 cine_still 768x473 photo 0.0,35.0,768.0,384.0 prims 29 texts UNTITLED|STILL 012|16 NOV 2026

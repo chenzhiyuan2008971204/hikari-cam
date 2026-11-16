@@ -24,6 +24,13 @@ class FilmParams private constructor(
         (floats["uEdgeSoft"] ?: 0f) > 0f
 
     companion object {
+        /**
+         * Above a quarter strength the red glow also starts from less bright light (the threshold drops
+         * by up to 0.3), so turning halation up spreads it to lamps and bright edges instead of only
+         * making the few clipped pixels redder. Up to 0.25 the look's own threshold is used unchanged.
+         */
+        fun halationThreshold(threshold: Float, amount: Float): Float = threshold - 0.3f * ((amount - 0.25f) / 0.75f).coerceIn(0f, 1f)
+
         fun chainSize(radius: Float, aspect: Float): ChainSize {
             val r = max(radius, 1e-4f)
             val short = min(512, max(48, (4f / r).roundToInt()))
@@ -53,7 +60,7 @@ class FilmParams private constructor(
             )
             val v = linkedMapOf("uHalationTint" to spec.halation.tint, "uLeakColor" to spec.defects.leakColor)
             return FilmParams(
-                spec.bloom.radius, spec.bloom.threshold, spec.halation.radius, spec.halation.threshold,
+                spec.bloom.radius, spec.bloom.threshold, spec.halation.radius, halationThreshold(spec.halation.threshold, a.halation ?: spec.halation.amount),
                 spec.diffusion.radius, f, v,
             )
         }

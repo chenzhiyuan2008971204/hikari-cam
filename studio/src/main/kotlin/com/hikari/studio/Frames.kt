@@ -11,19 +11,6 @@ object Frames {
 
     val all: List<FrameDef> = listOf(
         // ------------------------------------------------------------------ Film & Analog
-        FrameDef("film35", "35mm Negative", "35mm 底片框", FILM, "city", "35mm 底片 齒孔 negative film") {
-            margins(3f, 11f, 3f, 11f); paper(FILMK)
-            sprockets(2.2f * u, 3.4f * u, c(0xFFEDEDED)); sprockets(ch - 5.6f * u, 3.4f * u, c(0xFFEDEDED))
-            text("HIKARI 400", px + 2 * u, py - 1.6f * u, 2.2f * u, "mono", 700, ORANGE, -1, 0.2f)
-            text("▸ ${m.number.toString().padStart(2, '0')}A", px + pw - 2 * u, py - 1.6f * u, 2.2f * u, "mono", 700, ORANGE, 1, 0.1f)
-            text(date("y_m_d_space"), px + pw - 2 * u, ch - 7.4f * u, 2f * u, "mono", 700, ORANGE, 1, 0.2f)
-        },
-        FrameDef("film35_vertical", "35mm Vertical Strip", "直式 35mm 片條", FILM, "portrait", "35mm 直式 齒孔") {
-            margins(11f, 3f, 11f, 3f); paper(FILMK)
-            sprocketsV(2.2f * u, 3.4f * u, c(0xFFEDEDED)); sprocketsV(cw - 5.6f * u, 3.4f * u, c(0xFFEDEDED))
-            text("HIKARI 200  ▸ ${m.number}", px - 1.4f * u, py + ph - 2 * u, 2.1f * u, "mono", 700, ORANGE, -1, 0.2f, -90f)
-            text(date("ymd_dot"), px + pw + 3.2f * u, py + 2 * u, 2f * u, "mono", 700, ORANGE, -1, 0.2f, 90f)
-        },
         FrameDef("film120", "120 Medium Format", "120 中片幅", FILM, "seaside", "120 中片幅 medium format") {
             margins(4f, 9f, 4f, 9f); paper(c(0xFF151312))
             text("HIKARI PRO 160", px, py - 3 * u, 2.4f * u, "sans", 700, AMBER, -1, 0.3f)
@@ -32,23 +19,6 @@ object Frames {
             text("120", px + pw, py - 3 * u, 2.4f * u, "sans", 700, AMBER, 1, 0.3f)
             text(date("d_mon_y"), px, ch - 3.4f * u, 2f * u, "sans", 400, AMBER, -1, 0.25f)
             text(info(), px + pw, ch - 3.4f * u, 2f * u, "sans", 400, AMBER, 1, 0.1f)
-        },
-        FrameDef("film135_strip", "135 Film Strip", "135 膠卷片條", FILM, "sunny", "135 膠卷 片條 相鄰") {
-            margins(15f, 10f, 15f, 10f); paper(FILMK)
-            behind { fill(0f, py, px - 2.5f * u, ph, c(0xFF2A2623)); fill(px + pw + 2.5f * u, py, cw, ph, c(0xFF2A2623)) }
-            sprockets(2f * u, 3.2f * u, c(0xFFE8E8E8)); sprockets(ch - 5.2f * u, 3.2f * u, c(0xFFE8E8E8))
-            for ((i, x) in listOf(px - 9 * u, px + pw / 2, px + pw + 9 * u).withIndex())
-                text("${m.number - 1 + i}", x, ch - 6.6f * u, 2f * u, "mono", 700, ORANGE, 0)
-            text("SAFETY FILM", px + 3 * u, py - 1.4f * u, 1.8f * u, "mono", 400, ORANGE, -1, 0.35f)
-        },
-        FrameDef("contact_sheet", "Contact Sheet", "接觸印樣", FILM, "portrait", "接觸印樣 contact 紅筆 選片") {
-            margins(9f, 9f, 9f, 15f); paper(c(0xFFF4F2EC)); noise(0.02f)
-            behind { fill(0f, py - 5.5f * u, cw, ph + 11 * u, FILMK) }
-            sprockets(py - 4.4f * u, 2.4f * u, c(0xFFF4F2EC)); sprockets(py + ph + 2f * u, 2.4f * u, c(0xFFF4F2EC))
-            stroke(px - 1.6f * u, py - 1.6f * u, pw + 3.2f * u, ph + 3.2f * u, RED, 0.7f * u, 3 * u)
-            text(caption("✓ select"), px + pw, ch - 5 * u, 4.2f * u, "hand", 700, RED, 1)
-            text("ROLL ${m.number.toString().padStart(3, '0')}", px, ch - 5 * u, 2f * u, "mono", 400, c(0xFF555555), -1, 0.2f)
-            text(date("ymd_dot"), px, ch - 2.2f * u, 1.8f * u, "mono", 400, c(0xFF777777), -1, 0.2f)
         },
         FrameDef("analog_info", "Analog Data Back", "類比相機資訊框", FILM, "nightstreet", "資料機背 data back 資訊") {
             margins(3f, 3f, 3f, 12f); paper(FILMK)
@@ -63,14 +33,6 @@ object Frames {
             oval(px + pw - 3 * u, py - 8.4f * u, 3 * u, 3 * u, RED)
             text(date("mon_d_y"), px, ch - 7 * u, 2.2f * u, "mono", 400, c(0xFF6E695F), -1, 0.2f)
             text("No. ${m.number.toString().padStart(2, '0')}", px + pw, ch - 7 * u, 2.2f * u, "mono", 400, c(0xFF6E695F), 1, 0.2f)
-        },
-        FrameDef("negative_sleeve", "Negative Sleeve", "底片保存頁", FILM, "overcast", "底片袋 保存頁 sleeve") {
-            margins(6f, 12f, 6f, 9f); paper(c(0xFFE9E6DC))
-            behind { fill(1.5f * u, py - 4 * u, cw - 3 * u, ph + 8 * u, FILMK) }
-            sprockets(py - 3.2f * u, 2f * u, c(0xFFE9E6DC), 2 * u, cw - 2 * u); sprockets(py + ph + 1.2f * u, 2f * u, c(0xFFE9E6DC), 2 * u, cw - 2 * u)
-            line(0f, py - 5.2f * u, cw, py - 5.2f * u, c(0x55FFFFFF), 0.3f * u); line(0f, py + ph + 5.2f * u, cw, py + ph + 5.2f * u, c(0x55FFFFFF), 0.3f * u)
-            fill(3 * u, 1.6f * u, 30 * u, 4.6f * u, WHITE, 0.4f * u)
-            text("No. ${m.number.toString().padStart(4, '0')}   ${date("ymd_dot") ?: ""}", 4.2f * u, 4.9f * u, 2.1f * u, "mono", 400, c(0xFF333333), -1, 0.1f)
         },
         FrameDef("film_leader", "Film Leader", "片頭漏光", FILM, "backlight", "片頭 漏光 leader light leak") {
             margins(13f, 6f, 3f, 6f); paper(FILMK)
@@ -104,12 +66,6 @@ object Frames {
             var x = px; while (x < px + pw - 20 * u) { text("HIKARI  5063", x, py - 2.4f * u, 1.7f * u, "mono", 700, AMBER, -1, 0.3f); x += 34 * u }
             barcode(px, ch - 5 * u, 22 * u, 3 * u, AMBER)
             text("${m.number}  ▸  ${m.number}A", px + pw, ch - 2.6f * u, 1.9f * u, "mono", 700, AMBER, 1, 0.2f)
-        },
-        FrameDef("pano_film", "Panorama Film", "寬景底片", FILM, "sunny", "寬景 panorama 全景", 65f / 24f) {
-            margins(3f, 10f, 3f, 10f); paper(FILMK)
-            sprockets(2f * u, 3f * u, c(0xFFEDEDED)); sprockets(ch - 5f * u, 3f * u, c(0xFFEDEDED))
-            text("PANORAMA", px, py - 1.4f * u, 1.9f * u, "mono", 700, ORANGE, -1, 0.5f)
-            text(date("y_m_d_space"), px + pw, py - 1.4f * u, 1.9f * u, "mono", 700, ORANGE, 1, 0.2f)
         },
         // ------------------------------------------------------------------ Minimal
         FrameDef("min_white", "Clean White", "極簡白框", MINIMAL, "sunny", "白框 極簡 white") { margins(5f, 5f, 5f, 5f); paper(WHITE) },
@@ -235,6 +191,77 @@ object Frames {
             for (i in 0 until 4) line(x0, py + ph * 0.45f + i * 6.5f * u, cw - 7 * u, py + ph * 0.45f + i * 6.5f * u, c(0xFFB9B09E), 0.14f * u)
             text(caption(""), x0, py + ph * 0.45f - 1.2f * u, 2.6f * u, "casual", 400, c(0xFF4A453D))
             text(date("ymd_dot"), x0, py + ph - 1 * u, 1.6f * u, "sans", 400, c(0xFF9A9284), -1, 0.3f)
+        },
+        FrameDef("jp_washi", "Washi Paper", "和紙", JAPANESE, "foliage", "和紙 紙張 朱線 直排日期") {
+            margins(9f, 9f, 16f, 9f); paper(c(0xFFF4EEE0)); noise(0.06f)
+            line(px + pw + 5 * u, py, px + pw + 5 * u, py + ph * 0.35f, c(0xFFC8372D), 0.3f * u)
+            text(date("ymd_dot"), px + pw + 9.5f * u, py, 1.7f * u, "serif", 400, c(0xFF5A5247), -1, 0.5f, 90f)
+        },
+        FrameDef("jp_calendar", "Koyomi Calendar", "日曆", JAPANESE, "sunny", "日曆 月份 大數字") {
+            margins(8f, 26f, 8f, 8f); paper(c(0xFFFDFCF9))
+            val d = m.date.takeIf { o.showDate }
+            text(d?.monthValue?.toString(), px, py - 7 * u, 14 * u, "serif", 400, c(0xFF2B2926))
+            text(d?.let { DateFormats.format("mon_d_y", it).take(3) }, px + 15 * u, py - 14 * u, 2.2f * u, "sans", 700, c(0xFFC8372D), -1, 0.4f)
+            text(d?.let { "${it.dayOfMonth} · ${it.year}" }, px + 15 * u, py - 9.5f * u, 2.2f * u, "sans", 400, c(0xFF6E685F), -1, 0.3f)
+            line(px, py - 4 * u, px + pw, py - 4 * u, c(0xFFD8D2C6), 0.14f * u)
+            text(title(""), px + pw, py - 9.5f * u, 2.4f * u, "serif", 400, c(0xFF2B2926), 1, 0.2f)
+        },
+        FrameDef("jp_cheki", "Cheki Card", "迷你相紙卡", JAPANESE, "child", "相紙卡 圓角 手寫 日系", 0.75f) {
+            margins(8f, 10f, 8f, 30f); paper(c(0xFFFFFDF8)); radius = 1.2f * u
+            stroke(1.2f * u, 1.2f * u, cw - 2.4f * u, ch - 2.4f * u, c(0xFFEDE7DA), 0.4f * u, 4.5f * u)
+            text(caption("きょうのこと"), cw / 2, ch - 15 * u, 5 * u, "casual", 400, c(0xFF4A453D), 0)
+            text(date("ymd_dot"), cw / 2, ch - 8 * u, 1.8f * u, "sans", 400, c(0xFFA39C92), 0, 0.4f)
+        },
+        FrameDef("jp_haiku", "Haiku Lines", "俳句三行", JAPANESE, "seaside", "俳句 直書 三行") {
+            margins(7f, 7f, 30f, 7f); paper(c(0xFFFBF9F3))
+            val linesT = caption("夏の海 白い雲ゆく 午後三時").split(" ", "　").filter { it.isNotEmpty() }.take(3)
+            for ((k, ln) in linesT.withIndex()) { var y = py + 4 * u + k * 5 * u
+                for (chr in ln) { text(chr.toString(), cw - 8 * u - k * 7 * u, y, 3.2f * u, "serif", 400, c(0xFF2B2926), 0); y += 4.4f * u } }
+            text(date("ymd_dot"), px + pw + 4.5f * u, py + ph, 1.4f * u, "sans", 400, c(0xFF8E877C), -1, 0.3f, -90f)
+        },
+        FrameDef("jp_genko", "Genkō Manuscript", "原稿用紙", JAPANESE, "overcast", "原稿用紙 方格 直書") {
+            margins(7f, 7f, 22f, 7f); paper(c(0xFFFBF7EC))
+            val gx = px + pw + 5 * u; val cell = 5 * u; val lineC = c(0xFFC98F7A)
+            val s = title("日々是好日"); var k = 0; var y = py
+            while (y + cell <= py + ph) { stroke(gx, y, cell, cell, lineC, 0.12f * u); stroke(gx + cell + 1.2f * u, y, cell, cell, lineC, 0.12f * u)
+                if (k < s.length) text(s[k].toString(), gx + cell / 2, y + cell * 0.8f, 3.6f * u, "serif", 400, c(0xFF2B2926), 0); k++; y += cell }
+        },
+        FrameDef("jp_kippu", "Kippu Ticket", "車票", JAPANESE, "city", "車票 切符 車站 日系") {
+            margins(7f, 7f, 7f, 24f); paper(c(0xFFE8F0E4)); noise(0.03f)
+            var x = 0f; while (x < cw) { line(x, py + ph + 4 * u, x + 3 * u, py + ph + 4 * u, c(0x5578A088), 0.5f * u); x += 5 * u }
+            text(title("東京"), px, ch - 9 * u, 5.2f * u, "serif", 700, c(0xFF24382C))
+            text("▸", px + 15 * u, ch - 9.6f * u, 3.4f * u, "sans", 400, c(0xFF24382C))
+            text(caption("京都"), px + 21 * u, ch - 9 * u, 5.2f * u, "serif", 700, c(0xFF24382C))
+            text(date("ymd_dot"), px + pw, ch - 11 * u, 2f * u, "mono", 700, c(0xFF24382C), 1, 0.15f)
+            text("No. ${m.number.toString().padStart(4, '0')}", px + pw, ch - 6.5f * u, 1.7f * u, "mono", 400, c(0xFF557060), 1, 0.2f)
+            oval(cw - 5 * u, py + ph + 14 * u, 2.6f * u, 2.6f * u, c(0xFFBFD0C2))
+        },
+        FrameDef("jp_album", "Album Corners", "相簿角貼", JAPANESE, "portrait", "相簿 角貼 手寫 日系") {
+            margins(12f, 12f, 12f, 24f); paper(c(0xFFEFE6D2)); noise(0.04f)
+            val k = 5 * u; val cc = c(0xFF2A2622)
+            poly(cc, px - u, py - u, px - u + k, py - u, px - u, py - u + k); poly(cc, px + pw + u, py - u, px + pw + u - k, py - u, px + pw + u, py - u + k)
+            poly(cc, px - u, py + ph + u, px - u + k, py + ph + u, px - u, py + ph + u - k); poly(cc, px + pw + u, py + ph + u, px + pw + u - k, py + ph + u, px + pw + u, py + ph + u - k)
+            text(caption("なつやすみ"), cw / 2, ch - 12 * u, 4.6f * u, "casual", 400, c(0xFF4A3F33), 0)
+            text(date("ymd_dot"), cw / 2, ch - 6 * u, 1.7f * u, "serif", 400, c(0xFF7A6E5E), 0, 0.3f)
+        },
+        FrameDef("jp_date_seal", "Date Seal", "日期印", JAPANESE, "white", "日期印 圓章 朱色") {
+            margins(8f, 8f, 8f, 22f); paper(c(0xFFFDFCF9))
+            val cx0 = px + pw - 8 * u; val cy0 = ch - 11.5f * u; val red = c(0xFFC8372D)
+            oval(cx0 - 7.5f * u, cy0 - 7.5f * u, 15 * u, 15 * u, red, 0.35f * u)
+            line(cx0 - 7 * u, cy0 - 2.2f * u, cx0 + 7 * u, cy0 - 2.2f * u, red, 0.25f * u); line(cx0 - 7 * u, cy0 + 2.2f * u, cx0 + 7 * u, cy0 + 2.2f * u, red, 0.25f * u)
+            text(date("yymd_dot"), cx0, cy0 + 1.1f * u, 2.6f * u, "mono", 700, red, 0, 0.05f, -8f)
+            text(title("光").take(2), cx0, cy0 - 3.6f * u, 2.2f * u, "serif", 700, red, 0, 0f, -8f)
+            text(caption(""), px, ch - 10 * u, 2.4f * u, "serif", 400, c(0xFF3A3632), -1, 0.2f)
+        },
+        FrameDef("jp_mint", "Soda Mint", "汽水薄荷", JAPANESE, "beach", "薄荷 汽水 夏天 清新 圓角") {
+            margins(10f, 10f, 10f, 16f); paper(c(0xFFDCEFE9)); radius = 2.6f * u
+            behind { fill(px - 2.4f * u, py - 2.4f * u, pw + 4.8f * u, ph + 4.8f * u, WHITE, 4 * u) }
+            for (i in 0 until 5) oval(cw / 2 - 6 * u + i * 3 * u - 0.6f * u, ch - 7 * u, 1.2f * u, 1.2f * u, if (i == 2) c(0xFFF2A69A) else WHITE)
+        },
+        FrameDef("jp_red_dot", "Red Dot", "一點紅", JAPANESE, "concrete", "極簡 紅點 日系") {
+            margins(10f, 10f, 10f, 20f); paper(WHITE)
+            oval(cw / 2 - 1.1f * u, ch - 12.5f * u, 2.2f * u, 2.2f * u, c(0xFFD5382C))
+            text(date("ymd_dot"), cw / 2, ch - 6 * u, 1.5f * u, "sans", 400, c(0xFF8E877C), 0, 0.5f)
         },
         // ------------------------------------------------------------------ Cinematic
         FrameDef("cine_bars", "Scope Letterbox", "電影寬黑框", CINEMATIC, "nightstreet", "電影 黑邊 2.39 letterbox", 2.39f) { margins(0f, 12f, 0f, 12f); paper(BLACK) },
@@ -555,6 +582,6 @@ object Frames {
     fun search(q: String, within: List<FrameDef> = all): List<FrameDef> {
         val words = q.trim().lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
         if (words.isEmpty()) return within
-        return within.filter { f -> val hay = "${f.name} ${f.zh} ${f.keywords} ${f.id}".lowercase(); words.all { it in hay } }
+        return within.filter { f -> val hay = "${f.name} ${f.zh} ${f.keywords} ${f.id} ${f.cat.zh}".lowercase(); words.all { it in hay } }
     }
 }

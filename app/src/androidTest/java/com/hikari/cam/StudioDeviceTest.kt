@@ -92,7 +92,7 @@ class StudioDeviceTest {
                 }
                 exact++
             }
-            if (def.id in setOf("film35", "instant_classic", "jp_magazine", "cine_slate", "mag_cover", "journal", "blur_bg", "postage")) Report.jpeg(ctx, "frame_${def.id}.jpg", out)
+            if (def.id in setOf("film120", "instant_classic", "jp_magazine", "cine_slate", "mag_cover", "journal", "blur_bg", "postage")) Report.jpeg(ctx, "frame_${def.id}.jpg", out)
             out.recycle()
         }
         Report.line("studio: ${Frames.all.size} frames rendered with a stamp at full sample size, ${"%.0f".format(ms / Frames.all.size)} ms each on average; photo copied pixel-exact in $exact frames")
@@ -110,7 +110,7 @@ class StudioDeviceTest {
             out.recycle()
         }
         // every ratio on a few frames
-        for (id in listOf("film35", "instant_classic", "cine_bars")) for (ratio in listOf(1f, 0.8f, 1.5f, 16f / 9f, 9f / 16f)) for (mode in com.hikari.studio.FitMode.values()) {
+        for (id in listOf("film120", "instant_classic", "cine_bars")) for (ratio in listOf(1f, 0.8f, 1.5f, 16f / 9f, 9f / 16f)) for (mode in com.hikari.studio.FitMode.values()) {
             val sc = FrameEngine.scene(Frames.get(id), FrameOptions(id, ratio = ratio, mode = mode), b.width, b.height, Meta(t))
             val out = StudioRenderer.render(sc, b)
             if (abs(out.width.toFloat() / out.height - ratio) > ratio * 0.01f) problems += "$id ratio $ratio $mode: got ${out.width}x${out.height}"

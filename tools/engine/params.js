@@ -16,7 +16,7 @@
       const g = spec.grain, b = spec.bloom, h = spec.halation, d = spec.diffusion, l = spec.lens, x = spec.defects;
       return {
         bloomRadius: b.radius, bloomThreshold: b.threshold,
-        halationRadius: h.radius, halationThreshold: h.threshold,
+        halationRadius: h.radius, halationThreshold: Math.fround(h.threshold - Math.fround(0.3) * Math.min(1, Math.max(0, (or(a.halation, h.amount) - 0.25) / 0.75))),
         diffusionRadius: d.radius,
         uniforms: {
           uStrength: or(a.strength, 1), uLutAmount: or(spec.color.lutAmount, 1),

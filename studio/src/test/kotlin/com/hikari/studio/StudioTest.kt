@@ -94,7 +94,10 @@ class StudioTest {
         assertTrue("only ${Frames.all.size} frames", Frames.all.size >= 80)
         assertEquals(Frames.all.size, Frames.all.map { it.id }.toSet().size)
         assertEquals(Frames.all.size, Frames.all.map { it.name }.toSet().size)
-        for (c in FrameCat.values()) assertTrue("$c has ${Frames.inCategory(c).size}", Frames.inCategory(c).size >= 10)
+        for (c in FrameCat.values()) assertTrue("$c has ${Frames.inCategory(c).size}", Frames.inCategory(c).size >= 9)
+        // perforated 35mm film-strip designs were removed on request and must not come back unnoticed
+        assertTrue(Frames.all.none { it.id in setOf("film35", "film35_vertical", "film135_strip", "contact_sheet", "negative_sleeve", "pano_film") })
+        assertTrue(Frames.inCategory(FrameCat.JAPANESE).size >= 20)
         // structure, not colour: no two frames have the same margins + the same kinds and counts of elements
         fun sig(f: FrameDef): String { val sc = FrameEngine.scene(f, FrameOptions(f.id), 3000, 2000, meta)
             val kinds = sc.prims.groupingBy { it::class.simpleName ?: "" }.eachCount().toSortedMap()
@@ -128,7 +131,7 @@ class StudioTest {
     }
 
     @Test fun optionsChangeTheFrameAndCanTurnItsTextOff() {
-        val f = Frames.get("film35")!!
+        val f = Frames.get("film120")!!
         val a = FrameEngine.scene(f, FrameOptions(f.id), 3000, 2000, meta); val b = FrameEngine.scene(f, FrameOptions(f.id, thickness = 2f), 3000, 2000, meta)
         assertTrue(b.w > a.w && b.h > a.h)
         fun texts(sc: Scene) = sc.prims.filterIsInstance<TextP>().map { it.text }
@@ -149,7 +152,8 @@ class StudioTest {
 
     @Test fun searchAndCategories() {
         assertTrue(Frames.search("拍立得").size >= 5)
-        assertTrue(Frames.search("35mm 齒孔").all { it.cat == FrameCat.FILM })
+        assertTrue(Frames.search("35mm").isEmpty())
+        assertTrue(Frames.search("日系").size >= 15)
         assertEquals(Frames.all.size, Frames.search("  ").size)
         assertTrue(Frames.search("zzzz").isEmpty())
         assertEquals(Frames.all.size, FrameCat.values().sumOf { Frames.inCategory(it).size })
@@ -192,7 +196,7 @@ class StudioTest {
         big.createGraphics().apply { drawImage(small, 0, 0, 6000, 4000, null); dispose() }
         val stamp = StampStyles.get("led_red").apply(StampSpec(enabled = true))
         val rep = StringBuilder("studio performance (JVM, java.awt backend - not a phone)\n")
-        for (id in listOf("film35", "instant_classic", "blur_bg", "paper_texture")) {
+        for (id in listOf("film120", "instant_classic", "blur_bg", "paper_texture")) {
             val t0 = System.nanoTime()
             val sc = FrameEngine.scene(Frames.get(id), FrameOptions(id), 6000, 4000, meta, stamp, Stamps.text(stamp, t))
             val layoutMs = (System.nanoTime() - t0) / 1e6
@@ -211,7 +215,7 @@ class StudioTest {
     /** Preview sheets for people: every frame on the photo that suits it, and every stamp style. */
     @Test fun writePreviewSheets() {
         val dir = File("build/reports/frames").apply { mkdirs() }
-        val stampOn = setOf("film35", "retro_print", "instant_classic", "jp_print", "cine_bars", "min_white")
+        val stampOn = setOf("film120", "retro_print", "instant_classic", "jp_print", "cine_bars", "min_white")
         for (cat in FrameCat.values()) {
             val tiles = Frames.inCategory(cat).map { f ->
                 val photo = Awt.sample(f.demo); val m = Meta(t, meta.info, "Hikari", "Taipei", Awt.palette(photo), 12)
