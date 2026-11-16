@@ -1,0 +1,87 @@
+{
+ "id": "jp_clean_day",
+ "name": "Clean Daylight",
+ "zh": "乾淨日光",
+ "series": "japanese",
+ "note": "乾淨日光：中性偏亮、顏色清澈不濃、白就是白，日常記錄的基準色。",
+ "lut": "luts/jp_clean_day.cube",
+ "color": {
+  "lutAmount": 1.0,
+  "exposure": 0.0
+ },
+ "grain": {
+  "amount": 0.08,
+  "size": 0.00092,
+  "chroma": 0.04,
+  "rough": 0.4
+ },
+ "halation": {
+  "amount": 0.0,
+  "threshold": 0.82,
+  "radius": 0.012,
+  "tint": [
+   1.0,
+   0.32,
+   0.12
+  ]
+ },
+ "bloom": {
+  "amount": 0.0,
+  "threshold": 0.78,
+  "radius": 0.045
+ },
+ "diffusion": {
+  "softFocus": 0.0,
+  "mist": 0.0,
+  "radius": 0.006
+ },
+ "lens": {
+  "vignette": 0.02,
+  "vignetteSoft": 0.6,
+  "aberration": 0.0,
+  "edgeSoft": 0.0
+ },
+ "defects": {
+  "dust": 0.0,
+  "scratches": 0.0,
+  "leak": 0.0,
+  "leakColor": [
+   1.0,
+   0.45,
+   0.18
+  ],
+  "uneven": 0.0,
+  "drift": 0.0
+ },
+ "recipe": [
+  "影調曲線：18% 灰處斜率 1.00（減反差），黑位 0.014、白位肩部 0.990，曝光 +0.18 EV（線性光、不裁切）",
+  "白平衡：色溫 -0.07、色調 +0.00",
+  "飽和度（OKLab）：整體飽和 -0.02、自然飽和 +0.04",
+  "分色 HSL：天藍 色相-3° 飽和+0.05 亮度+0.03；綠 色相+5° 飽和-0.05 亮度+0.03；膚色 色相+1° 飽和+0.02 亮度+0.02；黃 色相+0° 飽和-0.08 亮度+0.01",
+  "色度上限（不螢光）：天藍 0.15、藍 0.17、綠 0.13、黃綠 0.13、膚色 0.12",
+  "高光色彩滾降：亮度 0.88 起漸淡 50%（雲與白牆乾淨不泛黃）",
+  "色彩管理：sRGB → 線性光 → OKLab 工作空間 → 色域映射 → sRGB；12 色相區段",
+  "保護：中性白／灰、膚色色相、色域內壓縮（不爆色）",
+  "顆粒：強度 0.08、粒徑 0.92‰ 短邊、彩色 0.04、粗糙 0.40，中間調最強"
+ ],
+ "traits": {
+  "contrast": -0.0062,
+  "sat": -0.0187,
+  "warmth": -0.0925,
+  "shadowLift": 0.019,
+  "hlSoft": 0.1002,
+  "fade": 0.014,
+  "mono": 0.0,
+  "glow": 0.0,
+  "grain": 0.08,
+  "skySat": 1.0229,
+  "skyL": 0.0181,
+  "skyShift": 0.0756,
+  "greenSat": 0.9037,
+  "greenL": 0.0237,
+  "greenShift": 3.4652,
+  "skinSat": 1.0133,
+  "skinL": 0.0168,
+  "skinHue": 0.5107
+ }
+}

@@ -1,0 +1,84 @@
+{
+ "id": "fj_acros",
+ "name": "Acros",
+ "zh": "Acros 細緻黑白",
+ "series": "fuji",
+ "note": "細緻黑白（紅濾鏡感）：天空壓得很深、膚色明亮、黑很深，銳利的細顆粒。",
+ "lut": "luts/fj_acros.cube",
+ "color": {
+  "lutAmount": 1.0,
+  "exposure": 0.0
+ },
+ "inspired": "Acros",
+ "grain": {
+  "amount": 0.3,
+  "size": 0.00092,
+  "chroma": 0.0,
+  "rough": 0.35
+ },
+ "halation": {
+  "amount": 0.0,
+  "threshold": 0.82,
+  "radius": 0.012,
+  "tint": [
+   1.0,
+   0.32,
+   0.12
+  ]
+ },
+ "bloom": {
+  "amount": 0.0,
+  "threshold": 0.78,
+  "radius": 0.045
+ },
+ "diffusion": {
+  "softFocus": 0.0,
+  "mist": 0.0,
+  "radius": 0.006
+ },
+ "lens": {
+  "vignette": 0.12,
+  "vignetteSoft": 0.6,
+  "aberration": 0.0,
+  "edgeSoft": 0.0
+ },
+ "defects": {
+  "dust": 0.0,
+  "scratches": 0.0,
+  "leak": 0.0,
+  "leakColor": [
+   1.0,
+   0.45,
+   0.18
+  ],
+  "uneven": 0.0,
+  "drift": 0.0
+ },
+ "recipe": [
+  "影調曲線：18% 灰處斜率 1.32（加反差），黑位 0.004、白位肩部 0.990，曝光 +0.00 EV（線性光、不裁切）",
+  "黑白轉換：在線性光下混合通道 R 0.50 / G 0.42 / B 0.08（黃濾鏡感：藍天較深、膚色較亮）",
+  "色彩管理：sRGB → 線性光 → 黑白混合 → 影調曲線 → sRGB；輸出 R=G=B，沒有色偏",
+  "保護：中性白／灰、膚色色相、色域內壓縮（不爆色）",
+  "顆粒：強度 0.30、粒徑 0.92‰ 短邊、彩色 0.00、粗糙 0.35，中間調最強"
+ ],
+ "traits": {
+  "contrast": 0.2227,
+  "sat": -1.0,
+  "warmth": -0.0,
+  "shadowLift": -0.0136,
+  "hlSoft": 0.1602,
+  "fade": 0.004,
+  "mono": 1.0,
+  "glow": 0.0,
+  "grain": 0.3,
+  "skySat": 0.0,
+  "skyL": -0.0245,
+  "skyShift": 0.0,
+  "greenSat": 0.0,
+  "greenL": -0.0291,
+  "greenShift": 0.0,
+  "skinSat": 0.0,
+  "skinL": 0.0485,
+  "skinHue": 0.0
+ }
+}

@@ -45,7 +45,13 @@ class EngineDeviceTest {
         val pw = 1600
         val ph = 1200
         var ok = true
-        for (spec in repo.looks) {
+        // On the CI emulator (software GPU, about 20 s per look at 12 MP) engineSample=true checks every
+        // older look and every third of the newer ones; all looks are still rendered by the golden-image
+        // job on the same shaders. Without the argument (a phone) every look is checked here.
+        val sample = androidx.test.platform.app.InstrumentationRegistry.getArguments().getString("engineSample") == "true"
+        val list = if (sample) repo.looks.filterIndexed { i, _ -> i < 27 || i % 3 == 0 } else repo.looks
+        Report.line("looks checked: ${list.size} of ${repo.looks.size}" + if (sample) " (emulator sample)" else "")
+        for (spec in list) {
             val lut = repo.lut(spec)
             // grain off: grain is randomness per pixel, everything else must match
             val req = OffscreenRenderer.Request(spec, lut, Adjustments(grain = 0f), seed = LabViewModel.SEED)

@@ -1,0 +1,87 @@
+{
+ "id": "pr_deep",
+ "name": "Deep Contrast",
+ "zh": "深邃反差",
+ "series": "pro",
+ "note": "深邃反差：很強的反差與深黑，顏色不跟著變艷，畫面有重量。",
+ "lut": "luts/pr_deep.cube",
+ "color": {
+  "lutAmount": 1.0,
+  "exposure": 0.0
+ },
+ "grain": {
+  "amount": 0.12,
+  "size": 0.001,
+  "chroma": 0.04,
+  "rough": 0.4
+ },
+ "halation": {
+  "amount": 0.0,
+  "threshold": 0.82,
+  "radius": 0.012,
+  "tint": [
+   1.0,
+   0.32,
+   0.12
+  ]
+ },
+ "bloom": {
+  "amount": 0.0,
+  "threshold": 0.78,
+  "radius": 0.045
+ },
+ "diffusion": {
+  "softFocus": 0.0,
+  "mist": 0.0,
+  "radius": 0.006
+ },
+ "lens": {
+  "vignette": 0.16,
+  "vignetteSoft": 0.6,
+  "aberration": 0.0,
+  "edgeSoft": 0.0
+ },
+ "defects": {
+  "dust": 0.0,
+  "scratches": 0.0,
+  "leak": 0.0,
+  "leakColor": [
+   1.0,
+   0.45,
+   0.18
+  ],
+  "uneven": 0.0,
+  "drift": 0.0
+ },
+ "recipe": [
+  "影調曲線：18% 灰處斜率 1.88（加反差），黑位 0.006、白位肩部 0.990，曝光 -0.02 EV（線性光、不裁切）",
+  "飽和度（OKLab）：整體飽和 -0.06",
+  "分色 HSL：膚色 色相+0° 飽和+0.06 亮度+0.00",
+  "色度上限（不螢光）：天藍 0.15、藍 0.17、綠 0.13、黃綠 0.13、膚色 0.12",
+  "高光色彩滾降：亮度 0.78 起漸淡 60%（雲與白牆乾淨不泛黃）",
+  "色彩管理：sRGB → 線性光 → OKLab 工作空間 → 色域映射 → sRGB；12 色相區段",
+  "分離色調：暗部 228° × 0.011",
+  "保護：中性白／灰、膚色色相、色域內壓縮（不爆色）",
+  "顆粒：強度 0.12、粒徑 1.00‰ 短邊、彩色 0.04、粗糙 0.40，中間調最強"
+ ],
+ "traits": {
+  "contrast": 0.5671,
+  "sat": -0.1171,
+  "warmth": -0.0001,
+  "shadowLift": -0.029,
+  "hlSoft": 0.3303,
+  "fade": 0.0065,
+  "mono": 0.0,
+  "glow": 0.0,
+  "grain": 0.12,
+  "skySat": 0.9174,
+  "skyL": 0.0405,
+  "skyShift": -0.0267,
+  "greenSat": 0.8854,
+  "greenL": 0.0129,
+  "greenShift": 1.1184,
+  "skinSat": 0.8356,
+  "skinL": 0.0331,
+  "skinHue": 0.0063
+ }
+}

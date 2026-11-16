@@ -1,0 +1,89 @@
+{
+ "id": "fj_proneg_std",
+ "name": "PRO Neg. Std.",
+ "zh": "PRO Neg. Std. 人像柔調",
+ "series": "fuji",
+ "note": "柔光人像：很柔的反差、淡雅的顏色、平滑的膚色過渡。",
+ "lut": "luts/fj_proneg_std.cube",
+ "color": {
+  "lutAmount": 1.0,
+  "exposure": 0.0
+ },
+ "inspired": "Pro Neg Std",
+ "grain": {
+  "amount": 0.12,
+  "size": 0.00096,
+  "chroma": 0.04,
+  "rough": 0.4
+ },
+ "halation": {
+  "amount": 0.0,
+  "threshold": 0.82,
+  "radius": 0.012,
+  "tint": [
+   1.0,
+   0.32,
+   0.12
+  ]
+ },
+ "bloom": {
+  "amount": 0.0,
+  "threshold": 0.78,
+  "radius": 0.045
+ },
+ "diffusion": {
+  "softFocus": 0.0,
+  "mist": 0.0,
+  "radius": 0.006
+ },
+ "lens": {
+  "vignette": 0.05,
+  "vignetteSoft": 0.6,
+  "aberration": 0.0,
+  "edgeSoft": 0.0
+ },
+ "defects": {
+  "dust": 0.0,
+  "scratches": 0.0,
+  "leak": 0.0,
+  "leakColor": [
+   1.0,
+   0.45,
+   0.18
+  ],
+  "uneven": 0.0,
+  "drift": 0.0
+ },
+ "recipe": [
+  "影調曲線：18% 灰處斜率 0.66（減反差），黑位 0.034、白位肩部 0.986，曝光 +0.12 EV（線性光、不裁切）",
+  "白平衡：色溫 +0.07、色調 +0.00",
+  "飽和度（OKLab）：整體飽和 -0.10",
+  "分色 HSL：膚色 色相+0° 飽和+0.06 亮度+0.03；紅 色相+1° 飽和-0.08 亮度+0.00；綠 色相+0° 飽和-0.19 亮度+0.00；黃綠 色相+0° 飽和-0.19 亮度+0.00；天藍 色相+0° 飽和-0.08 亮度+0.03",
+  "色度上限（不螢光）：天藍 0.12、藍 0.17、綠 0.10、黃綠 0.10、膚色 0.11",
+  "高光色彩滾降：亮度 0.88 起漸淡 35%（雲與白牆乾淨不泛黃）",
+  "色彩管理：sRGB → 線性光 → OKLab 工作空間 → 色域映射 → sRGB；12 色相區段",
+  "分離色調：高光 40° × 0.017、暗部 30° × 0.008",
+  "保護：中性白／灰、膚色色相、色域內壓縮（不爆色）",
+  "顆粒：強度 0.12、粒徑 0.96‰ 短邊、彩色 0.04、粗糙 0.40，中間調最強"
+ ],
+ "traits": {
+  "contrast": -0.312,
+  "sat": -0.1483,
+  "warmth": 0.0876,
+  "shadowLift": 0.0635,
+  "hlSoft": 0.0,
+  "fade": 0.0411,
+  "mono": 0.0,
+  "glow": 0.0,
+  "grain": 0.12,
+  "skySat": 0.8782,
+  "skyL": -0.0128,
+  "skyShift": 0.1204,
+  "greenSat": 0.6751,
+  "greenL": 0.0063,
+  "greenShift": -0.5381,
+  "skinSat": 0.9735,
+  "skinL": -0.0127,
+  "skinHue": -0.0466
+ }
+}

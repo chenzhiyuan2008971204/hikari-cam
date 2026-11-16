@@ -1,0 +1,86 @@
+{
+ "id": "pr_arch",
+ "name": "Architecture",
+ "zh": "建築",
+ "series": "pro",
+ "note": "建築：中性準確的白與灰、清楚的邊線反差、天空稍深，材質與線條優先。",
+ "lut": "luts/pr_arch.cube",
+ "color": {
+  "lutAmount": 1.0,
+  "exposure": 0.0
+ },
+ "grain": {
+  "amount": 0.0,
+  "size": 0.00128,
+  "chroma": 0.25,
+  "rough": 0.4
+ },
+ "halation": {
+  "amount": 0.0,
+  "threshold": 0.82,
+  "radius": 0.012,
+  "tint": [
+   1.0,
+   0.32,
+   0.12
+  ]
+ },
+ "bloom": {
+  "amount": 0.0,
+  "threshold": 0.78,
+  "radius": 0.045
+ },
+ "diffusion": {
+  "softFocus": 0.0,
+  "mist": 0.0,
+  "radius": 0.006
+ },
+ "lens": {
+  "vignette": 0.04,
+  "vignetteSoft": 0.6,
+  "aberration": 0.0,
+  "edgeSoft": 0.0
+ },
+ "defects": {
+  "dust": 0.0,
+  "scratches": 0.0,
+  "leak": 0.0,
+  "leakColor": [
+   1.0,
+   0.45,
+   0.18
+  ],
+  "uneven": 0.0,
+  "drift": 0.0
+ },
+ "recipe": [
+  "影調曲線：18% 灰處斜率 1.27（加反差），黑位 0.014、白位肩部 0.990，曝光 +0.03 EV（線性光、不裁切）",
+  "飽和度（OKLab）：整體飽和 -0.08",
+  "分色 HSL：天藍 色相-5° 飽和+0.02 亮度-0.06；藍 色相-5° 飽和+0.00 亮度-0.06；綠 色相+0° 飽和-0.14 亮度-0.01；黃 色相+0° 飽和-0.12 亮度+0.00；紅 色相+0° 飽和-0.05 亮度+0.00",
+  "色度上限（不螢光）：天藍 0.15、藍 0.17、綠 0.13、黃綠 0.13、膚色 0.12",
+  "高光色彩滾降：亮度 0.86 起漸淡 60%（雲與白牆乾淨不泛黃）",
+  "色彩管理：sRGB → 線性光 → OKLab 工作空間 → 色域映射 → sRGB；12 色相區段",
+  "保護：中性白／灰、膚色色相、色域內壓縮（不爆色）",
+  "顆粒：強度 0.00、粒徑 1.28‰ 短邊、彩色 0.25、粗糙 0.40，中間調最強"
+ ],
+ "traits": {
+  "contrast": 0.1795,
+  "sat": -0.1089,
+  "warmth": 0.0,
+  "shadowLift": -0.0012,
+  "hlSoft": 0.1614,
+  "fade": 0.014,
+  "mono": 0.0,
+  "glow": 0.0,
+  "grain": 0.0,
+  "skySat": 0.9272,
+  "skyL": 0.0047,
+  "skyShift": -4.5054,
+  "greenSat": 0.8193,
+  "greenL": 0.0094,
+  "greenShift": 0.0,
+  "skinSat": 0.9196,
+  "skinL": 0.0169,
+  "skinHue": -0.0
+ }
+}

@@ -230,3 +230,22 @@ for _k, _f in FILMS.items():
         _f["fx"]["grain"]["chroma"] = round(_f["fx"]["grain"]["chroma"] * 0.4, 3)
 for _k in ("mellow400", "portrait_soft", "kyoto_soft"):
     FILMS[_k]["fx"]["grain"]["amount"] = round(FILMS[_k]["fx"]["grain"]["amount"] * 0.8, 3)
+
+# the large library (film-simulation set, cinema stocks, Japanese styles, professional, vintage):
+# appended after every existing look, so existing ids, order and categories stay as they were
+from pro import PRO, PRO_SHIP  # noqa: E402
+from pro import PRO_TARGET, PRO_DEFAULT_TARGET  # noqa: E402
+from build import clean_check as _clean  # noqa: E402
+PRO_STRENGTH = {}
+for _k in PRO_SHIP:
+    if PRO[_k]["colour"].get("mono") is not None:
+        continue
+    _base = PRO[_k]["colour"]; _s = PRO_TARGET.get(_k, PRO_DEFAULT_TARGET)
+    while True:
+        _lk = amplify_mood(_base, _s, clean=PRO[_k]["series"] in ("pro", "japanese")) if _s > 1.0 else _base
+        if _s <= 1.0 or not _clean(_lk)[0]:
+            break
+        _s = round(_s - 0.1, 2)
+    PRO[_k]["colour"] = _lk; PRO_STRENGTH[_k] = _s
+FILMS.update(PRO)
+SHIP = SHIP + PRO_SHIP

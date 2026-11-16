@@ -62,7 +62,9 @@ fun HikariTheme(content: @Composable () -> Unit) {
     )
 }
 
-val SERIES_ZH = mapOf("sim" to "Film Simulation 底片模擬", "daylight" to "Daylight 日光系列", "film" to "Film 底片", "japanese" to "Japanese 日系", "ccd" to "CCD 數位", "special" to "Special 特殊")
+val SERIES_ZH = mapOf("sim" to "Film Simulation 底片模擬", "daylight" to "Daylight 日光系列", "film" to "Film 底片", "japanese" to "Japanese 日系", "ccd" to "CCD 數位", "special" to "Special 特殊",
+    // added categories go after the existing ones; a new category only needs a line here and looks with that series id
+    "fuji" to "Fujifilm 底片模擬", "cinema" to "Cinema 電影色彩", "pro" to "Pro 專業攝影", "vintage" to "Vintage 復古底片")
 
 /** One adjustable parameter: [get] shows the look's own value when the user has not changed it. */
 class Param(
