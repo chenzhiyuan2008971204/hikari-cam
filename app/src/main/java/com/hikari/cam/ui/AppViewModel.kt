@@ -128,18 +128,22 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun loadFrameDemos() {
         if (frameDemoJob != null) return
         frameDemoJob = viewModelScope.launch {
-            val photos = HashMap<String, Pair<android.graphics.Bitmap, IntArray>>()
+            // Japanese street and daily-life photos (assets/japan), one per frame with no repeats while
+            // there are enough; the standard photos fill in after that
+            val ctx = getApplication<Application>()
+            val japan: List<String> = runCatching {
+                val arr = org.json.JSONArray(ctx.assets.open("japan/japan.json").bufferedReader().readText())
+                (0 until arr.length()).map { "japan/" + arr.getJSONObject(it).getString("file") }
+            }.getOrDefault(emptyList())
+            val pool = japan + samples.map { "samples/" + it.file }
             val when0 = java.time.LocalDateTime.now()
-            for (def in com.hikari.studio.Frames.all) {
+            for ((idx, def) in com.hikari.studio.Frames.all.withIndex()) {
                 val b = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                    val (photo, pal) = photos.getOrPut(def.demo) {
-                        val sm = samples.firstOrNull { it.id == def.demo } ?: samples.first()
-                        val full = com.hikari.cam.smart.Samples.bitmap(getApplication(), sm)
-                        full to com.hikari.cam.studio.StudioRenderer.palette(full)
-                    }
+                    val photo = ctx.assets.open(pool[idx % pool.size]).use { android.graphics.BitmapFactory.decodeStream(it)!! }
+                    val pal = com.hikari.cam.studio.StudioRenderer.palette(photo)
                     val meta = com.hikari.studio.Meta(when0, "f/1.8 · 1/120s · ISO 100 · 23mm", "Hikari", "", pal, 12)
                     val sc = com.hikari.studio.FrameEngine.scene(def, com.hikari.studio.FrameOptions(def.id), photo.width, photo.height, meta)
-                    com.hikari.cam.studio.StudioRenderer.render(sc, photo, 420f / maxOf(sc.w, sc.h))
+                    com.hikari.cam.studio.StudioRenderer.render(sc, photo, 420f / maxOf(sc.w, sc.h)).also { photo.recycle() }
                 }
                 frameDemos[def.id] = b
             }
