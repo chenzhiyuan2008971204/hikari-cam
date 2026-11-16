@@ -59,24 +59,28 @@ class CameraPreviewRenderer(
         view.requestRender()
     }
 
+    private var uploadErr = 0
     private fun uploadStill(b: android.graphics.Bitmap) {
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
-        if (stillTex == 0 || b.width != stillW || b.height != stillH) {
-            if (stillTex != 0) GLES30.glDeleteTextures(1, intArrayOf(stillTex), 0)
+        if (stillTex == 0) {
             val ids = IntArray(1)
             GLES30.glGenTextures(1, ids, 0)
-            stillTex = ids[0]; stillW = b.width; stillH = b.height
-            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, stillTex)
-            val levels = 1 + kotlin.math.floor(kotlin.math.log2(maxOf(b.width, b.height).toDouble())).toInt()
-            GLES30.glTexStorage2D(GLES30.GL_TEXTURE_2D, levels, GLES30.GL_RGBA8, b.width, b.height)
-            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR_MIPMAP_LINEAR)
-            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
-            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE)
-            GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE)
+            stillTex = ids[0]
         }
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, stillTex)
-        android.opengl.GLUtils.texSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, b, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE)
-        GLES30.glGenerateMipmap(GLES30.GL_TEXTURE_2D)
+        // A plain single-level texture, re-specified from the bitmap every frame: the simplest upload
+        // there is. (Immutable storage + texSubImage2D left the texture black in the preview context.)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_BASE_LEVEL, 0)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAX_LEVEL, 0)
+        GLES30.glPixelStorei(GLES30.GL_UNPACK_ALIGNMENT, 1)
+        while (GLES30.glGetError() != GLES30.GL_NO_ERROR) { /* clear */ }
+        android.opengl.GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, b, 0)
+        uploadErr = GLES30.glGetError()
+        stillW = b.width; stillH = b.height
     }
     private var oesTex = 0
     private var surfaceTexture: SurfaceTexture? = null
@@ -141,7 +145,7 @@ class CameraPreviewRenderer(
             // test source only: one pixel read back, so a run can tell a drawn preview from a black one
             val px = java.nio.ByteBuffer.allocateDirect(4)
             GLES30.glReadPixels(viewW / 2, viewH / 2, 1, 1, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, px)
-            android.util.Log.i("HikariCamera", "still preview centre rgb ${px.get(0).toInt() and 255},${px.get(1).toInt() and 255},${px.get(2).toInt() and 255} view ${viewW}x$viewH tex ${stillW}x$stillH gl 0x${Integer.toHexString(GLES30.glGetError())}")
+            android.util.Log.i("HikariCamera", "still preview centre rgb ${px.get(0).toInt() and 255},${px.get(1).toInt() and 255},${px.get(2).toInt() and 255} view ${viewW}x$viewH tex ${stillW}x$stillH upload 0x${Integer.toHexString(uploadErr)} gl 0x${Integer.toHexString(GLES30.glGetError())}")
         }
     }
 }

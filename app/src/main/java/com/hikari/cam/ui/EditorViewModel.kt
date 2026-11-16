@@ -146,7 +146,7 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
         if (u == uri) return
         uri = u
         viewModelScope.launch {
-            busy = "讀取照片…"
+            busy = LOADING
             try {
                 val ctx = getApplication<Application>()
                 // full-size decode, then our own downscale: the preview starts from the same pixels as the export
@@ -175,6 +175,7 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
                 framed = null
                 val (inf, pal) = withContext(Dispatchers.IO) { com.hikari.cam.studio.PhotoInfo.read(ctx, u) to com.hikari.cam.studio.StudioRenderer.palette(thumb) }
                 info = inf; palette = pal
+                busy = null   // the photo is on screen and can be edited and exported; thumbnails fill in behind
                 for (spec in looks) {
                     val req = withContext(Dispatchers.IO) { OffscreenRenderer.Request(spec, hikari.looks.lut(spec), Adjustments.DEFAULT, seed = SEED) }
                     thumbs[spec.id] = renderer.render(thumb, req, thumb.width, thumb.height, cacheKey = "$cacheKey-t")
@@ -188,7 +189,7 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
                 analysing = false
                 message = "無法開啟：${e.message}"
             } finally {
-                busy = null
+                if (busy == LOADING) busy = null   // an export started meanwhile keeps its own progress line
             }
         }
     }
@@ -326,5 +327,6 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
 
     companion object {
         const val SEED = 7f
+        private const val LOADING = "讀取照片…"
     }
 }

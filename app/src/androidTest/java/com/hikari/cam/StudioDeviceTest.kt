@@ -152,7 +152,8 @@ class StudioDeviceTest {
         val pv = vm.framed!!
         Report.jpeg(ctx, "editor_framed_preview.jpg", pv)
         val n0 = runBlocking { Media.list(ctx) }.size
-        inst.runOnMainSync { vm.export(95) }
+        assertTrue("editor still busy", poll(120_000) { vm.busy == null })
+        inst.runOnMainSync { vm.message = null; vm.export(95) }
         assertTrue("export did not finish", poll(180_000) { vm.message != null && vm.busy == null })
         val list = runBlocking { Media.list(ctx) }
         val newest = list.first()
