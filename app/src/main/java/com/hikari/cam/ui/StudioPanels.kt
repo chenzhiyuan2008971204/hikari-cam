@@ -150,6 +150,102 @@ fun looksInCategory(app: AppViewModel, looks: List<FilterSpec>, query: String = 
     }
 }
 
+// ------------------------------------------------------------------ camera: my looks + "more"
+
+/**
+ * The camera's look panel. Top: a card with the three looks recommended for what the camera sees.
+ * Below: only the looks the user picked for themself (favourites), and a "more" tile that opens the
+ * whole library by category.
+ */
+@Composable
+fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>, recs: List<com.hikari.vision.Recommendation>, sceneLabel: String, onPick: (String) -> Unit) {
+    var more by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
+        if (recs.isNotEmpty()) Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp))
+            .background(Color(0xFF1B1A17)).border(1.dp, Color(0x40E9C46A), RoundedCornerShape(14.dp)).padding(horizontal = 10.dp, vertical = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("✦", color = HikariColors.Accent, fontSize = 13.sp)
+                Text(" 為這個畫面推薦", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                if (sceneLabel.isNotEmpty()) Text(sceneLabel, color = HikariColors.Dim, fontSize = 11.sp)
+            }
+            Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                for (rc in recs.take(3)) {
+                    val on = rc.look.id == look.id
+                    Row(Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(if (on) HikariColors.Accent else Color(0xFF2A2824)).clickable { onPick(rc.look.id) }
+                        .padding(4.dp).testTag("rec"), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(34.dp).clip(RoundedCornerShape(7.dp)).background(Color.Black)) {
+                            app.thumbs[rc.look.id]?.let { b -> Image(remember(b) { b.asImageBitmap() }, rc.look.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
+                        }
+                        Column(Modifier.padding(start = 6.dp)) {
+                            Text(rc.look.name, color = if (on) Color.Black else Color.White, fontSize = 11.sp, maxLines = 1, fontWeight = FontWeight.Bold)
+                            Text("適合度 ${rc.score}", color = if (on) Color(0xFF3A3A3A) else HikariColors.Dim, fontSize = 9.sp)
+                        }
+                    }
+                }
+            }
+        }
+        // my looks: favourites (and the one in use), then "more"
+        val mine = remember(favorites, look.id, app.looks) { app.looks.filter { it.id in favorites || it.id == look.id } }
+        Row(Modifier.padding(start = 14.dp, top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("我的濾鏡", color = HikariColors.Dim, fontSize = 11.sp)
+            if (favorites.isEmpty()) Text("　在「更多」裡按 ★ 把常用的濾鏡放到這裡", color = Color(0xFF6A6A6A), fontSize = 10.sp)
+        }
+        LazyRow(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
+            items(mine, key = { it.id }) { spec ->
+                val sel = spec.id == look.id
+                Column(Modifier.width(64.dp).clickable { onPick(spec.id) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)).background(HikariColors.Panel).border(if (sel) 2.dp else 0.dp, if (sel) HikariColors.Accent else Color.Transparent, RoundedCornerShape(8.dp))) {
+                        app.thumbs[spec.id]?.let { b -> Image(remember(b) { b.asImageBitmap() }, spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
+                    }
+                    Text(spec.name, color = if (sel) HikariColors.Accent else Color.White, fontSize = 10.sp, maxLines = 1)
+                }
+            }
+            item(key = "more") {
+                Column(Modifier.width(64.dp).clickable { more = true }.testTag("moreLooks"), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFF242424)).border(1.dp, Color(0xFF4A4A4A), RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+                        Text("＋", color = Color.White, fontSize = 22.sp)
+                    }
+                    Text("更多", color = Color.White, fontSize = 10.sp)
+                }
+            }
+        }
+    }
+    if (more) AllLooksSheet(app, look.id, favorites, { more = false }) { id -> onPick(id); more = false }
+}
+
+/** The whole library, one category at a time: tap to use a look, tap its star to keep it in "my looks". */
+@Composable
+fun AllLooksSheet(app: AppViewModel, selectedId: String, favorites: Set<String>, onClose: () -> Unit, onPick: (String) -> Unit) {
+    var query by remember { mutableStateOf("") }
+    val shown = looksInCategory(app, app.looks, query)
+    androidx.compose.ui.window.Dialog(onDismissRequest = onClose, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+        Column(Modifier.fillMaxWidth().fillMaxHeight(0.86f).clip(RoundedCornerShape(18.dp)).background(Color(0xFF111111)).padding(top = 12.dp)) {
+            Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("全部濾鏡", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text("${shown.size} 款", color = HikariColors.Dim, fontSize = 12.sp, modifier = Modifier.testTag("moreCount"))
+                Text("關閉", color = HikariColors.Accent, fontSize = 14.sp, modifier = Modifier.clickable(onClick = onClose).padding(start = 14.dp, top = 6.dp, bottom = 6.dp))
+            }
+            LookCategoryBar(app, app.looks)
+            Field(query, "在這個分類中搜尋", "moreSearch") { query = it }
+            LazyVerticalGrid(GridCells.Fixed(3), Modifier.fillMaxSize(), contentPadding = PaddingValues(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(shown, key = { it.id }) { spec ->
+                    val sel = spec.id == selectedId
+                    Column(Modifier.clickable { onPick(spec.id) }.testTag("more-${spec.id}"), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(10.dp)).background(HikariColors.Panel)
+                            .border(if (sel) 2.dp else 0.dp, if (sel) HikariColors.Accent else Color.Transparent, RoundedCornerShape(10.dp))) {
+                            app.thumbs[spec.id]?.let { b -> Image(remember(b) { b.asImageBitmap() }, spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
+                            Text(if (spec.id in favorites) "★" else "☆", color = if (spec.id in favorites) HikariColors.Accent else Color.White, fontSize = 18.sp,
+                                modifier = Modifier.align(Alignment.TopEnd).clip(CircleShape).background(Color(0x66000000)).clickable { app.toggleFavorite(spec.id) }.padding(horizontal = 6.dp, vertical = 2.dp).testTag("star-${spec.id}"))
+                        }
+                        Text(spec.name, color = if (sel) HikariColors.Accent else Color.White, fontSize = 11.sp, maxLines = 1)
+                        Text(spec.zh, color = HikariColors.Dim, fontSize = 9.sp, maxLines = 1)
+                    }
+                }
+            }
+        }
+    }
+}
+
 // ------------------------------------------------------------------ Timestamp Studio
 
 private val STAMP_COLORS = listOf(0xFFFF8A1E, 0xFFFF2A1A, 0xFFFFD84A, 0xFFFFB347, 0xFFFFFFFF, 0xFF111111, 0xFFF6F0E2, 0xFF38E8FF, 0xFF7CE38B).map { it.toInt() }

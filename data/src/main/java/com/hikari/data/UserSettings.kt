@@ -26,7 +26,7 @@ data class UserSettings(
     /** play the bundled test photos instead of the real camera (testing without a phone camera) */
     val virtualCamera: Boolean = false,
     /** which bundled photo the filter thumbnails are rendered from */
-    val thumbScene: String = "sunny",
+    val thumbScene: String = "auto",
     /** show the three recommended looks for what the camera sees */
     val recommend: Boolean = true,
     /** the filter category shown last: "all", "fav" or a series id */
@@ -51,7 +51,7 @@ data class UserSettings(
         Setting("dateStamp", dateStamp.toString()),
         Setting("stampNote", stampNote),
         Setting("virtualCamera", virtualCamera.toString()),
-        Setting("thumbScene", thumbScene),
+        Setting("thumbPhoto", thumbScene),
         Setting("recommend", recommend.toString()),
     )
 
@@ -74,7 +74,7 @@ data class UserSettings(
                 dateStamp = m["dateStamp"]?.toBooleanStrictOrNull() ?: d.dateStamp,
                 stampNote = m["stampNote"] ?: d.stampNote,
                 virtualCamera = m["virtualCamera"]?.toBooleanStrictOrNull() ?: d.virtualCamera,
-                thumbScene = m["thumbScene"] ?: d.thumbScene,
+                thumbScene = m["thumbPhoto"] ?: d.thumbScene,   // new key: everyone starts on "a photo that suits each look"
                 recommend = m["recommend"]?.toBooleanStrictOrNull() ?: d.recommend,
                 filterCategory = m["filterCategory"] ?: d.filterCategory,
                 frameFavs = m["frameFavs"] ?: d.frameFavs,

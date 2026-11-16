@@ -31,3 +31,22 @@ object Browse {
     fun csvToggle(csv: String, id: String) = csv.split(",").filter { it.isNotEmpty() }.let { if (id in it) it - id else listOf(id) + it }.joinToString(",")
     fun csvList(csv: String) = csv.split(",").filter { it.isNotEmpty() }
 }
+
+/** Which standard photo shows a look at its best: a portrait look on a face, a night look on lights, and so on. */
+object LookDemo {
+    private val rules = listOf(
+        listOf("night", "800t", "bloom", "neon", "blue_hour", "tokyo_night", "flash") to "nightstreet",
+        listOf("portrait", "proneg", "pro neg", "astia", "portra", "pastel", "milky", "airy", "studio", "soft", "nostalg", "skin") to "portrait",
+        listOf("child", "instant", "disposable", "90s", "2000s", "ccd", "diary", "dream") to "child",
+        listOf("landscape", "velvia", "ektar", "vivid", "rich", "green", "foliage", "fuji400", "fuji 400") to "foliage",
+        listOf("arch", "mono", "acros", "bleach", "bypass", "deep", "editorial", "concrete") to "concrete",
+        listOf("street", "urban", "classic", "chrome", "2383", "teal", "cold", "eterna", "cine", "kyoto") to "overcast",
+        listOf("golden", "warm", "gold", "summer", "beach", "faded", "vintage", "mellow") to "beach",
+        listOf("blue", "clean", "daylight", "provia", "natural", "sky", "clear") to "sunny",
+    )
+    /** sample id for a look, from its id and name; "sunny" when nothing matches */
+    fun sample(id: String, name: String): String {
+        val hay = "$id ${name.lowercase()}"
+        return rules.firstOrNull { (words, _) -> words.any { it in hay } }?.second ?: "sunny"
+    }
+}

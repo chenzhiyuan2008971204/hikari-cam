@@ -369,7 +369,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             val now = System.currentTimeMillis()
             if (n != null) {
                 val o = subject
-                fun mix(a: Float, b: Float) = a + (b - a) * 0.5f
+                fun mix(a: Float, b: Float) = a + (b - a) * 0.3f   // heavier smoothing: the guide should not chase every twitch
                 val f = n.face
                 val of = o?.face
                 val face = if (f != null && of != null) com.hikari.cam.camera.Subject.Face(
@@ -400,7 +400,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     }
     // the last target shown: the smart guide keeps it unless another point is clearly better
     val lastTarget = remember { arrayOfNulls<androidx.compose.ui.geometry.Offset>(1) }
-    val guidance = if (guide != null) subject?.let { guidance(guide.id, it, lastTarget[0]) }?.also { lastTarget[0] = it.target } else null
+    val guideCalm = remember { GuideStabilizer() }
+    val guidance = guideCalm.update(if (guide != null) subject?.let { guidance(guide.id, it, lastTarget[0]) }?.also { lastTarget[0] = it.target } else null)
     // what the camera sees -> the three looks that suit it (measured scene x measured look traits)
     var recs by remember { mutableStateOf<List<com.hikari.vision.Recommendation>>(emptyList()) }
     var sceneLabel by remember { mutableStateOf("") }
@@ -543,21 +544,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                 if (panel >= 0) Box(Modifier.fillMaxWidth().background(Color(0xD9101010), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                     .padding(top = 4.dp)) {
             when (panel) {
-                0 -> Column {
-                    if (recs.isNotEmpty()) Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(if (sceneLabel.isNotEmpty()) "推薦・$sceneLabel" else "推薦", color = HikariColors.Dim, fontSize = 10.sp)
-                        for (rc in recs) Text("${rc.look.name} ${rc.score}", color = if (rc.look.id == look.id) Color.Black else Color.White, fontSize = 11.sp,
-                            maxLines = 1, modifier = Modifier.clip(RoundedCornerShape(10.dp))
-                                .background(if (rc.look.id == look.id) HikariColors.Accent else Color(0xFF2A2A2A))
-                                .clickable { app.updateSettings { it.copy(lastLook = rc.look.id) }; app.touch(rc.look.id) }
-                                .padding(horizontal = 8.dp, vertical = 3.dp).testTag("rec"))
-                    }
-                    LookCategoryBar(app, app.looks, short = true)
-                    LookStrip(looksInCategory(app, app.looks), app.thumbs, look.id, favorites,
-                        onSelect = { s -> app.updateSettings { it.copy(lastLook = s.id) }; app.touch(s.id) },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), size = 56)
-                }
+                0 -> CameraLookPanel(app, look, favorites, recs, sceneLabel) { id -> app.updateSettings { it.copy(lastLook = id) }; app.touch(id) }
                 1 -> CompositionStrip(guide?.id, { id -> app.updateSettings { it.copy(composition = id ?: "") } },
                     Modifier.fillMaxWidth().padding(vertical = 6.dp))
                 2 -> TonePanel(

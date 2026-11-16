@@ -74,21 +74,33 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         thumbScene = sceneId
         thumbJob?.cancel()
         thumbJob = viewModelScope.launch {
-            val sample = samples.firstOrNull { it.id == sceneId } ?: samples.first()
-            val src = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                val b = com.hikari.cam.smart.Samples.bitmap(getApplication(), sample)
-                // centre square, 256 px: the same crop, exposure and size for every look
-                val side = minOf(b.width, b.height)
-                val sq = android.graphics.Bitmap.createBitmap(b, (b.width - side) / 2, (b.height - side) / 2, side, side)
-                android.graphics.Bitmap.createScaledBitmap(sq, 256, 256, true)
+            // "auto": every look on the standard photo that suits it (a portrait look on a face, a night
+            // look on lights...); otherwise the one photo the user chose, the same for all looks
+            val cache = HashMap<String, android.graphics.Bitmap>()
+            suspend fun source(id: String) = cache.getOrPut(id) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    val sample = samples.firstOrNull { it.id == id } ?: samples.first()
+                    val b = com.hikari.cam.smart.Samples.bitmap(getApplication(), sample)
+                    // centre square (a little above centre for upright portraits), 256 px
+                    val side = minOf(b.width, b.height)
+                    val top = if (b.height > b.width) ((b.height - side) * 0.3f).toInt() else (b.height - side) / 2
+                    val sq = android.graphics.Bitmap.createBitmap(b, (b.width - side) / 2, top, side, side)
+                    android.graphics.Bitmap.createScaledBitmap(sq, 256, 256, true)
+                }
+            }
+            // looks that share a photo are rendered together, so each photo is uploaded to the GPU once
+            val groups = looks.groupBy { if (sceneId == "auto") com.hikari.studio.LookDemo.sample(it.id, it.name) else sceneId }
+            for ((photo, list) in groups) {
+                val src = source(photo)
+                hikari.renderer.forget("appthumbs")
+                for (spec in list) {
+                    val req = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        com.hikari.engine.gl.OffscreenRenderer.Request(spec, hikari.looks.lut(spec), Adjustments.DEFAULT, seed = 7f)
+                    }
+                    thumbs[spec.id] = hikari.renderer.render(src, req, 256, 256, cacheKey = "appthumbs")
+                }
             }
             hikari.renderer.forget("appthumbs")
-            for (spec in looks) {
-                val req = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    com.hikari.engine.gl.OffscreenRenderer.Request(spec, hikari.looks.lut(spec), Adjustments.DEFAULT, seed = 7f)
-                }
-                thumbs[spec.id] = hikari.renderer.render(src, req, 256, 256, cacheKey = "appthumbs")
-            }
         }
     }
 
@@ -132,6 +144,34 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 frameDemos[def.id] = b
             }
         }
+    }
+
+    /** shown briefly by the screen that is open */
+    var notice by mutableStateOf<String?>(null)
+
+    /**
+     * Saves looks as Lightroom / Camera Raw creative profiles (.xmp with the look's LUT embedded) into
+     * Download/Hikari. Colour only: grain, halation, bloom and vignette are not part of a profile.
+     */
+    fun exportXmp(specs: List<FilterSpec>) = viewModelScope.launch {
+        val n = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            var done = 0
+            for (spec in specs) runCatching {
+                val lut = hikari.looks.lut(spec)
+                val text = com.hikari.studio.XmpProfile.xmp("Hikari ${spec.name}", "Hikari", spec.note, lut.data, lut.size)
+                val values = android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.Downloads.DISPLAY_NAME, "Hikari_${spec.name.replace(Regex("[^A-Za-z0-9]+"), "_").trim('_')}.xmp")
+                    put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/rdf+xml")
+                    put(android.provider.MediaStore.Downloads.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS + "/Hikari")
+                }
+                val r = getApplication<Application>().contentResolver
+                val uri = r.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)!!
+                r.openOutputStream(uri)!!.use { it.write(text.toByteArray()) }
+                done++
+            }
+            done
+        }
+        notice = if (n == specs.size) "已匯出 $n 個 XMP 到 Download/Hikari（Lightroom／Camera Raw 的「設定檔」可匯入）" else "匯出了 $n / ${specs.size} 個，其餘失敗"
     }
 
     fun look(id: String?): FilterSpec = hikari.looks.look(id)

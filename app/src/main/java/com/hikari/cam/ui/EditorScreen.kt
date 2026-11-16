@@ -72,11 +72,14 @@ import com.hikari.engine.Adjustments
 @Composable
 fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewModel = viewModel()) {
     LaunchedEffect(uri) { vm.open(uri, lookId) }
-    BackHandler { app.back() }
     val favorites by app.favorites.collectAsState()
     val presets by app.presets.collectAsState()
     val settings by app.settings.collectAsState()
     var tab by remember { mutableStateOf(0) } // 0 looks, 1 effects, 2 timestamp, 3 frame, 4 smart
+    // Back first leaves a tool (timestamp, frame, smart...) and shows the photo with its filter strip
+    // again; back from there leaves the editor. The arrow in the top bar does the same.
+    val goBack = { if (tab != 0) tab = 0 else { app.back(); Unit } }
+    BackHandler { goBack() }
     var pick by remember { mutableStateOf(0) } // which composition suggestion is drawn on the photo
     var showStrength by remember { mutableStateOf(false) }
     var naming by remember { mutableStateOf(false) }
@@ -91,7 +94,7 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
     Column(Modifier.fillMaxSize().background(Color.Black).statusBarsPadding().navigationBarsPadding()) {
         // top bar: back · undo redo · delete · save
         Row(Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            BarIcon(Icons.AutoMirrored.Outlined.ArrowBack, "返回") { app.back() }
+            BarIcon(Icons.AutoMirrored.Outlined.ArrowBack, "返回") { goBack() }
             Text(if (vm.fullW > 0) "${vm.fullW}×${vm.fullH}" else "", color = HikariColors.Dim, fontSize = 11.sp,
                 modifier = Modifier.weight(1f).padding(start = 6.dp))
             BarIcon(Icons.AutoMirrored.Outlined.Undo, "還原", vm.canUndo) { vm.undo() }

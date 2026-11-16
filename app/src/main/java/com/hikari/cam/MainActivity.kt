@@ -57,6 +57,7 @@ fun HikariAppUi(app: AppViewModel = viewModel()) {
     val settings = app.settings.collectAsState().value
     androidx.compose.runtime.LaunchedEffect(settings.thumbScene) { app.loadThumbs(settings.thumbScene) }
     Crossfade(targetState = app.route, animationSpec = tween(220), label = "route") { r -> RouteContent(app, r) }
+    com.hikari.cam.ui.Toast(app.notice) { app.notice = null }
 }
 
 @Composable

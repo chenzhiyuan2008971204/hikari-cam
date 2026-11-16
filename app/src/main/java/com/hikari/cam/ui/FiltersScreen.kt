@@ -66,10 +66,11 @@ fun FiltersScreen(app: AppViewModel) {
         }
         // every thumbnail is the real filter on the same standard photo; pick which photo here
         item {
-            Text("預覽照片（所有縮圖都是用正式濾鏡引擎在同一張照片上算出來的）", color = HikariColors.Dim, fontSize = 11.sp,
+            Text("預覽照片（縮圖都由正式濾鏡引擎算出；「依濾鏡特色」會替每款濾鏡挑適合它的照片）", color = HikariColors.Dim, fontSize = 11.sp,
                 modifier = Modifier.padding(horizontal = 16.dp))
             Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Chip("依濾鏡特色", settings.thumbScene == "auto", "thumb-auto") { app.updateSettings { it.copy(thumbScene = "auto") } }
                 for (sm in app.samples) {
                     val on = sm.id == settings.thumbScene
                     Text(sm.zh, color = if (on) Color.Black else Color.White, fontSize = 12.sp,
@@ -102,7 +103,8 @@ fun FiltersScreen(app: AppViewModel) {
                 androidx.compose.foundation.text.BasicTextField(query, { query = it }, singleLine = true, textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 13.sp),
                     cursorBrush = androidx.compose.ui.graphics.SolidColor(HikariColors.Accent), modifier = Modifier.fillMaxWidth().testTag("lookSearch"))
             }
-            ChipRow { for (so in com.hikari.studio.LookSort.values()) Chip(so.zh, sort == so, "sort-${so.name}") { sort = so } }
+            ChipRow { for (so in com.hikari.studio.LookSort.values()) Chip(so.zh, sort == so, "sort-${so.name}") { sort = so }
+                Chip("匯出這個分類的 XMP", false, "exportXmpAll") { app.exportXmp(shown) } }
         }
         if (shown.isEmpty()) item(key = "empty") { Text(if (settings.filterCategory == "fav" && query.isEmpty()) "還沒有收藏的濾鏡。在濾鏡詳情按「收藏」即可加入。" else "這個分類中沒有符合的濾鏡。",
             color = HikariColors.Dim, fontSize = 13.sp, modifier = Modifier.padding(16.dp)) }
@@ -135,6 +137,7 @@ fun FiltersScreen(app: AppViewModel) {
             },
             confirmButton = {
                 Row {
+                    TextButton(onClick = { app.exportXmp(listOf(spec)) }, modifier = Modifier.testTag("exportXmp")) { Text("匯出 XMP") }
                     TextButton(onClick = { app.toggleFavorite(spec.id) }) { Text(if (spec.id in favorites) "★" else "☆") }
                     TextButton(onClick = {
                         app.updateSettings { it.copy(lastLook = spec.id) }; app.touch(spec.id); detail = null; app.go(Route.Camera)

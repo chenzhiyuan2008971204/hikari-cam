@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -273,7 +274,7 @@ fun smartTarget(s: Subject, previous: Offset? = null): Offset {
     val best = SMART_POINTS.minBy { smartCost(s, it) }
     if (previous != null) {
         val keep = SMART_POINTS.minBy { (it - previous).getDistance() }
-        if (smartCost(s, keep) <= smartCost(s, best) + 0.05f) return keep
+        if (smartCost(s, keep) <= smartCost(s, best) + 0.15f) return keep   // only a clearly better point replaces the one shown
     }
     return best
 }
@@ -321,69 +322,75 @@ fun LiveGuideOverlay(subject: com.hikari.cam.camera.Subject?, guidance: Guidance
             val h = size.height
             // level
             tiltDeg?.let { deg ->
-                val level = kotlin.math.abs(deg) < 1f
+                val level = kotlin.math.abs(deg) < 1.5f
                 val c = Offset(w / 2, h / 2)
-                val len = w * 0.16f
+                val len = w * 0.22f
                 val rad = Math.toRadians(deg.toDouble())
                 val dxl = (cos(rad) * len).toFloat()
                 val dyl = (sin(rad) * len).toFloat()
-                drawLine(if (level) accent else Color.White.copy(alpha = 0.8f), Offset(c.x - dxl, c.y - dyl), Offset(c.x + dxl, c.y + dyl), 2.5f)
+                drawLine(if (level) yellow else Color.White.copy(alpha = 0.8f), Offset(c.x - dxl, c.y - dyl), Offset(c.x + dxl, c.y + dyl), 2.5f)
                 drawLine(Color.White.copy(alpha = 0.5f), Offset(c.x - len * 1.3f, c.y), Offset(c.x - len * 1.1f, c.y), 2f)
                 drawLine(Color.White.copy(alpha = 0.5f), Offset(c.x + len * 1.1f, c.y), Offset(c.x + len * 1.3f, c.y), 2f)
             }
             if (subject != null && guidance != null) {
-                val col = if (guidance.aligned) accent else yellow
-                val fb = subject.face
-                val l = (fb?.left ?: subject.left) * w
-                val t = (fb?.top ?: subject.top) * h
-                val r = (fb?.right ?: subject.right) * w
-                val b = (fb?.bottom ?: subject.bottom) * h
-                val k = min(r - l, b - t) * 0.22f
-                for ((x, y, sx, sy) in listOf(Quad(l, t, 1f, 1f), Quad(r, t, -1f, 1f), Quad(l, b, 1f, -1f), Quad(r, b, -1f, -1f))) {
-                    drawLine(col, Offset(x, y), Offset(x + k * sx, y), 2.5.dp.toPx())
-                    drawLine(col, Offset(x, y), Offset(x, y + k * sy), 2.5.dp.toPx())
-                }
-                val from = Offset(guidance.anchor.x * w, guidance.anchor.y * h)
-                val to = Offset(guidance.target.x * w, guidance.target.y * h)
-                // target in the style of a phone camera's shot suggestion: a large ring where the
-                // subject should go, and a solid dot for where it is now; move the dot into the ring
-                val ring = 34.dp.toPx()
-                val dot = 11.dp.toPx()
+                // Shot-suggestion style: a fixed ring in the middle of the frame is where the camera
+                // points; the dot is the best shot. Turn the camera until the ring sits on the dot.
+                val c = Offset(w / 2, h / 2)
+                val off = Offset((guidance.anchor.x - guidance.target.x) * w, (guidance.anchor.y - guidance.target.y) * h)
+                val best = Offset((c.x + off.x).coerceIn(w * 0.06f, w * 0.94f), (c.y + off.y).coerceIn(h * 0.06f, h * 0.94f))
+                val ring = 30.dp.toPx(); val dot = 9.dp.toPx()
                 if (guidance.aligned) {
-                    drawCircle(accent.copy(alpha = 0.28f), radius = ring, center = to)
-                    drawCircle(accent, radius = ring, center = to, style = Stroke(3.5.dp.toPx()))
-                    // check mark
-                    val c = to
-                    val u = ring * 0.32f
-                    drawLine(Color.White, Offset(c.x - u, c.y), Offset(c.x - u * 0.25f, c.y + u * 0.75f), 3.5.dp.toPx(), cap = StrokeCap.Round)
-                    drawLine(Color.White, Offset(c.x - u * 0.25f, c.y + u * 0.75f), Offset(c.x + u, c.y - u * 0.7f), 3.5.dp.toPx(), cap = StrokeCap.Round)
+                    drawCircle(yellow.copy(alpha = 0.25f), radius = ring, center = c)
+                    drawCircle(yellow, radius = ring, center = c, style = Stroke(3.5.dp.toPx()))
+                    drawCircle(yellow, radius = dot, center = c)
                 } else {
-                    drawCircle(Color.Black.copy(alpha = 0.18f), radius = ring, center = to)
-                    drawCircle(Color.White, radius = ring, center = to, style = Stroke(3.dp.toPx()))
-                    // dashed path from the dot to the ring's edge
-                    val dx = to.x - from.x
-                    val dy = to.y - from.y
-                    val d = kotlin.math.hypot(dx, dy)
-                    if (d > ring + dot) {
-                        val end = Offset(to.x - dx / d * ring, to.y - dy / d * ring)
-                        val start = Offset(from.x + dx / d * dot, from.y + dy / d * dot)
-                        drawLine(Color.White.copy(alpha = 0.85f), start, end, 2.dp.toPx(),
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 6.dp.toPx())))
-                    }
-                    drawCircle(Color.Black.copy(alpha = 0.25f), radius = dot + 2.dp.toPx(), center = from)
-                    drawCircle(yellow, radius = dot, center = from)
-                    drawCircle(Color.White, radius = dot, center = from, style = Stroke(2.dp.toPx()))
+                    drawCircle(Color.Black.copy(alpha = 0.15f), radius = ring, center = c)
+                    drawCircle(Color.White, radius = ring, center = c, style = Stroke(2.5.dp.toPx()))
+                    drawCircle(Color.Black.copy(alpha = 0.25f), radius = dot + 2.dp.toPx(), center = best)
+                    drawCircle(Color.White, radius = dot, center = best)
+                    drawCircle(yellow, radius = dot * 0.55f, center = best)
                 }
             }
         }
+        if (subject != null && guidance != null && !guidance.aligned) {
+            // the label rides with the dot, like "Best shot"
+            androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
+                val bx = (0.5f + guidance.anchor.x - guidance.target.x).coerceIn(0.06f, 0.94f)
+                val by = (0.5f + guidance.anchor.y - guidance.target.y).coerceIn(0.06f, 0.94f)
+                Text("最佳構圖", color = Color.White, fontSize = 11.sp,
+                    modifier = Modifier.offset(x = maxWidth * bx - 26.dp, y = maxHeight * by + 14.dp)
+                        .background(Color(0x99000000), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
+            }
+        }
         guidance?.let { g ->
-            Text(g.tip, color = if (g.aligned) Color.Black else Color.White, fontSize = 13.sp,
-                // top of the preview, under the guide name: the bottom belongs to the zoom stops
+            // one short line, only while something has to change
+            if (!g.aligned) Text(g.tip, color = Color.White, fontSize = 13.sp,
                 modifier = Modifier.align(Alignment.TopCenter).padding(top = 92.dp)
-                    .background(if (g.aligned) accent else Color(0x88000000), RoundedCornerShape(14.dp))
-                    .padding(horizontal = 12.dp, vertical = 4.dp))
+                    .background(Color(0x88000000), RoundedCornerShape(14.dp)).padding(horizontal = 12.dp, vertical = 4.dp))
         }
     }
 }
 
 private data class Quad(val x: Float, val y: Float, val sx: Float, val sy: Float)
+
+/**
+ * Calms the live guide down: the offset between subject and target is low-pass filtered, and
+ * "aligned" has two thresholds (it turns on inside the inner radius and only turns off outside the
+ * outer one), so the ring does not flicker when the hand trembles near the mark.
+ */
+class GuideStabilizer(private val alpha: Float = 0.18f, private val enter: Float = 0.05f, private val exit: Float = 0.10f) {
+    private var dx = 0f; private var dy = 0f; private var has = false; private var aligned = false
+    private var target: Offset? = null
+    fun reset() { has = false; aligned = false; target = null }
+    fun update(g: Guidance?): Guidance? {
+        if (g == null) { reset(); return null }
+        val ox = g.anchor.x - g.target.x; val oy = g.anchor.y - g.target.y
+        // a new target point: start from the measured offset instead of sliding across the frame
+        if (!has || target != g.target) { dx = ox; dy = oy; has = true; target = g.target } else { dx += (ox - dx) * alpha; dy += (oy - dy) * alpha }
+        val d = kotlin.math.hypot(dx, dy)
+        aligned = if (aligned) d < exit else d < enter
+        // "step back" style hints still count: aligned only when the position is right and nothing else is asked
+        val ok = aligned && (g.aligned || !g.tip.contains("退後"))
+        return Guidance(Offset(g.target.x + dx, g.target.y + dy), g.target, if (ok) "" else g.tip.ifEmpty { "移動鏡頭，讓圓圈對準最佳構圖點" }, ok)
+    }
+}
