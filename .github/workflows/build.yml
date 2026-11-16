@@ -22,7 +22,7 @@ jobs:
         run: |
           chmod +x gradlew
           set +e
-          ./gradlew :vision:test testDebugUnitTest assembleRelease > build.log 2>&1
+          ./gradlew :vision:test :studio:test testDebugUnitTest assembleRelease > build.log 2>&1
           status=$?
           set -e
           tail -5 build.log

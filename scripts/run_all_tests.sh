@@ -27,6 +27,9 @@ stage "look checks (daylight collection)" python3 tools/looks/daylight_lab.py --
 # 2. composition geometry, scene analysis, recommender (pure Kotlin, JVM)
 stage "vision unit tests" gradle -p vision test --rerun-tasks -q
 [ -f vision/build/reports/vision_metrics.txt ] && cp vision/build/reports/vision_metrics.txt reports/vision_metrics.txt
+# 2b. timestamp + frame layout, category browsing, rendered output on the fixed photos (pure Kotlin, JVM)
+stage "studio tests (timestamps, frames, categories)" gradle -p studio test --rerun-tasks -q
+[ -d studio/build/reports/frames ] && mkdir -p reports/frames && cp studio/build/reports/frames/*.jpg reports/frames/ && cp studio/build/reports/studio_perf.txt reports/
 # 3. the shipped shaders in headless Chromium: resolution independence, grain, banding, tiled export
 TMP=$(mktemp -d)
 python3 - "$TMP" <<'PY'
