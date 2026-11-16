@@ -147,9 +147,9 @@ class StudioDeviceTest {
         assertTrue("no warning about the missing capture time", poll(20_000) { vm.stampWarning != null })
         Report.line("studio editor: missing EXIF time -> warning shown: ${vm.stampWarning}")
         inst.runOnMainSync { vm.updateStamp(vm.stamp.copy(source = TimeSource.CUSTOM, custom = "2021-03-04T05:06:07")); vm.updateFrame(FrameOptions("instant_classic")) }
-        assertTrue("composed preview missing", poll(30_000) { vm.framed != null && vm.stampWarning == null })
+        // the composed preview follows each change; wait for the one that has the frame's taller card
+        assertTrue("preview is not framed", poll(30_000) { val b = vm.framed; b != null && vm.stampWarning == null && b.width.toFloat() / b.height < vm.fullW.toFloat() / vm.fullH - 0.05f })
         val pv = vm.framed!!
-        assertTrue("preview is not framed", pv.width.toFloat() / pv.height < vm.fullW.toFloat() / vm.fullH)
         Report.jpeg(ctx, "editor_framed_preview.jpg", pv)
         val n0 = runBlocking { Media.list(ctx) }.size
         inst.runOnMainSync { vm.export(95) }

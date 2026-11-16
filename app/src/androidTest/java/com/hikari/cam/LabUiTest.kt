@@ -73,11 +73,12 @@ class LabUiTest {
         rule.onNodeWithTag("lookSearch").performTextClearance(); Thread.sleep(500)
         rule.onNodeWithTag("sort-NAME").performClick(); Thread.sleep(500)
         org.junit.Assert.assertEquals("13 / 13 款", count())
+        rule.onNodeWithTag("sort-DEFAULT").performClick(); Thread.sleep(500)   // back to the library order (the list shows only what fits on screen)
         // an added category: only its own looks, none of the older ones
         rule.onNodeWithTag("cat-cinema").performScrollTo().performClick(); Thread.sleep(1200)
         shot("app_03b2_category_cinema.png")
         org.junit.Assert.assertEquals("11 / 11 款", count())
-        org.junit.Assert.assertTrue(has("Kodak Portra 400") && !has("Tokyo Blue") && !has("Standard Chrome"))
+        org.junit.Assert.assertTrue(has("Kodak 2383") && !has("Tokyo Blue") && !has("Standard Chrome"))
         rule.onNodeWithTag("cat-sim").performScrollTo().performClick(); Thread.sleep(1000)
         org.junit.Assert.assertEquals("7 / 7 款", count())
         org.junit.Assert.assertTrue(has("Standard Chrome") && !has("Tokyo Blue"))
