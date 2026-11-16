@@ -1,0 +1,87 @@
+film35 798x624 photo 15.0,56.0,768.0,512.0 prims 93 texts HIKARI 400|▸ 12A|2026 11 16
+film35_vertical 880x542 photo 56.0,15.0,768.0,512.0 prims 72 texts HIKARI 200  ▸ 12|2026.11.16
+film120 808x604 photo 20.0,46.0,768.0,512.0 prims 32 texts HIKARI PRO 160|12|120|16 NOV 2026|f/1.8 · 1/120s · ISO 100 · 23mm
+film135_strip 922x614 photo 77.0,51.0,768.0,512.0 prims 106 texts 11|12|13|SAFETY FILM
+contact_sheet 860x635 photo 46.0,46.0,768.0,512.0 prims 102 texts ✓ select|ROLL 012|2026.11.16
+analog_info 798x588 photo 15.0,15.0,768.0,512.0 prims 52 texts f/1.8 · 1/120s · ISO 100 · 23mm|Hikari
+slide_mount 922x706 photo 77.0,97.0,768.0,512.0 prims 32 texts HIKARI CHROME|NOV 16 2026|No. 12
+negative_sleeve 830x619 photo 31.0,61.0,768.0,512.0 prims 97 texts No. 0012   2026.11.16
+film_leader 850x574 photo 67.0,31.0,768.0,512.0 prims 29 texts START ▸|2026/11/16
+super8 855x552 photo 67.0,20.0,768.0,512.0 prims 28 texts S8
+retro_print 830x574 photo 31.0,31.0,768.0,512.0 prims 32 texts NOV 16 2026
+print_round 820x579 photo 26.0,26.0,768.0,512.0 prims 28 texts ·  NOV 16 2026  ·
+darkroom_proof 840x635 photo 36.0,36.0,768.0,512.0 prims 37 texts proof #12|2026.11.16|f/1.8 · 1/120s · ISO 100 · 23mm
+edge_code 798x584 photo 15.0,36.0,768.0,512.0 prims 43 texts HIKARI  5063|HIKARI  5063|HIKARI  5063|HIKARI  5063|12  ▸  12A
+pano_film 786x340 photo 9.0,28.0,768.0,284.0 prims 144 texts PANORAMA|2026 11 16
+min_white 820x564 photo 26.0,26.0,768.0,512.0 prims 26 texts 
+min_black 820x584 photo 26.0,26.0,768.0,512.0 prims 27 texts 2026.11.16
+hairline 860x604 photo 46.0,46.0,768.0,512.0 prims 27 texts 
+big_mat 994x758 photo 113.0,113.0,768.0,512.0 prims 27 texts 
+asym_left 963x594 photo 154.0,41.0,768.0,512.0 prims 29 texts Untitled|2026.11.16
+bottom_heavy 850x676 photo 41.0,41.0,768.0,512.0 prims 27 texts 2026-11-16
+top_title 830x651 photo 31.0,108.0,768.0,512.0 prims 28 texts TITLE|16 NOV 2026
+double_line 870x614 photo 51.0,51.0,768.0,512.0 prims 28 texts 
+corner_marks 870x614 photo 51.0,51.0,768.0,512.0 prims 34 texts 
+soft_shadow 890x640 photo 61.0,56.0,768.0,512.0 prims 27 texts 
+inset_line 768x512 photo 0.0,0.0,768.0,512.0 prims 27 texts 
+float_caption 870x655 photo 51.0,51.0,768.0,512.0 prims 29 texts Untitled|2026.11.16
+side_stripe 901x574 photo 31.0,31.0,768.0,512.0 prims 28 texts 2026.11.16
+grey_card 860x635 photo 46.0,46.0,768.0,512.0 prims 36 texts 
+wide_top_bottom 808x716 photo 20.0,102.0,768.0,512.0 prims 27 texts 2026 11 16
+jp_print 840x599 photo 36.0,36.0,768.0,512.0 prims 28 texts 2026.11.16
+jp_retro_date 830x615 photo 31.0,31.0,768.0,512.0 prims 50 texts 
+jp_blank 952x819 photo 92.0,133.0,768.0,512.0 prims 27 texts 2026.11.16
+jp_cream 860x604 photo 46.0,46.0,768.0,512.0 prims 27 texts 
+jp_magazine 870x701 photo 51.0,128.0,768.0,512.0 prims 31 texts 日々|vol. 12|2026.11.16|ふつうの一日
+jp_vertical 906x584 photo 36.0,36.0,768.0,512.0 prims 31 texts 光|の|記|録|2026.11.16
+jp_seal 850x655 photo 41.0,41.0,768.0,512.0 prims 29 texts 光|2026.11.16
+jp_note 850x666 photo 41.0,41.0,768.0,512.0 prims 30 texts today, soft light.|2026.11.16
+jp_diary 840x681 photo 36.0,36.0,768.0,512.0 prims 28 texts 16|NOV  2026
+jp_blush 880x635 photo 56.0,56.0,768.0,512.0 prims 27 texts 
+jp_postcard 1029x584 photo 36.0,36.0,768.0,512.0 prims 34 texts POST CARD|2026.11.16
+cine_bars 768x399 photo 0.0,39.0,768.0,321.0 prims 26 texts 
+cine_subtitle 768x405 photo 0.0,42.0,768.0,321.0 prims 27 texts — and then the light changed.
+cine_still 768x473 photo 0.0,35.0,768.0,384.0 prims 29 texts UNTITLED|STILL 012|16 NOV 2026
+cine_slate 768x650 photo 0.0,0.0,768.0,512.0 prims 64 texts PROD.|HIKARI|SCENE|12|TAKE|1|DATE|2026.11.16
+cine_timecode 768x499 photo 0.0,42.0,768.0,415.0 prims 74 texts KEYKODE  KU 22 9611 1012|A-CAM   ROLL 012|2026-11-16
+cine_academy 858x552 photo 77.0,20.0,704.0,512.0 prims 27 texts 1.37 : 1
+cine_poster 850x737 photo 41.0,41.0,768.0,512.0 prims 30 texts THE LIGHT|A FILM BY HIKARI|DIRECTOR OF PHOTOGRAPHY  ·  EDITOR  ·  MUSIC  ·  PRODUCTION DESIGN|NOV 16 2026
+cine_white 768x411 photo 0.0,45.0,768.0,321.0 prims 27 texts 2026.11.16
+cine_viewfinder 768x415 photo 0.0,0.0,768.0,415.0 prims 40 texts REC|18:05:09|f/1.8 · 1/120s · ISO 100 · 23mm
+cine_ticks 768x391 photo 0.0,35.0,768.0,321.0 prims 265 texts 2.39 : 1
+cine_lower_third 768x384 photo 0.0,0.0,768.0,384.0 prims 30 texts Chapter One|16 NOV 2026
+instant_classic 824x658 photo 28.0,28.0,768.0,512.0 prims 27 texts 
+instant_caption 824x658 photo 28.0,28.0,768.0,512.0 prims 29 texts good day ♥|2026.11.16
+instant_square 578x673 photo 33.0,33.0,512.0,512.0 prims 27 texts 
+instant_retro 830x666 photo 31.0,31.0,768.0,512.0 prims 33 texts NOV 16 2026
+instant_thick 870x747 photo 51.0,51.0,768.0,512.0 prims 27 texts 2026.11.16
+instant_shadow 902x727 photo 67.0,61.0,768.0,512.0 prims 29 texts 
+instant_wide 816x610 photo 24.0,29.0,768.0,480.0 prims 28 texts 2026.11.16
+instant_mini 433x645 photo 27.0,34.0,379.0,512.0 prims 27 texts 
+instant_black 824x658 photo 28.0,28.0,768.0,512.0 prims 28 texts No.012
+instant_tape 912x748 photo 72.0,82.0,768.0,512.0 prims 30 texts 
+instant_label 824x658 photo 28.0,28.0,768.0,512.0 prims 28 texts 2026.11.16
+mag_cover 768x512 photo 0.0,0.0,768.0,512.0 prims 32 texts HIKARI|ISSUE 12|NOV 16 2026|The quiet light issue
+mag_spread 1040x584 photo 36.0,36.0,768.0,512.0 prims 39 texts FEATURE|On Light|Photographed in available light.|f/1.8 · 1/120s · ISO 100 · 23mm|16 NOV 2026
+fig_caption 840x635 photo 36.0,36.0,768.0,512.0 prims 29 texts Fig. 12|Untitled study.|2026.11.16   ·   f/1.8 · 1/120s · ISO 100 · 23mm
+title_block 830x697 photo 31.0,154.0,768.0,512.0 prims 30 texts CONCRETE|A photo essay|2026.11.16
+portfolio 880x666 photo 56.0,77.0,768.0,512.0 prims 32 texts PORTFOLIO|12 / 12|Untitled|2026.11.16
+gallery_label 902x743 photo 67.0,67.0,768.0,512.0 prims 31 texts Untitled|2026|Digital photograph
+index_card 973x574 photo 174.0,31.0,768.0,512.0 prims 39 texts ARCHIVE|NO.|0012|DATE|2026-11-16|CAM|Hikari|EXP|f/1.8 · 1/120s · ISO 100 · 23mm|LOC|Taipei
+newspaper 830x691 photo 31.0,123.0,768.0,512.0 prims 34 texts The Daily Light|16 NOV 2026|VOL. 12   ·   LATE EDITION|Light returns to the city.
+swiss_grid 880x670 photo 56.0,56.0,768.0,512.0 prims 33 texts 12|Photographie|2026.11.16
+color_story 840x656 photo 36.0,36.0,768.0,512.0 prims 38 texts #313227|#505145|#636866|#747C77|#A7AA90|Colour Story|2026.11.16
+exhibition 850x768 photo 41.0,41.0,768.0,512.0 prims 31 texts LIGHT / FORM|Photographs|16 NOV 2026|Taipei
+retro_color 860x604 photo 46.0,46.0,768.0,512.0 prims 31 texts 
+torn_paper 860x619 photo 46.0,46.0,768.0,512.0 prims 31 texts 
+paper_texture 890x645 photo 61.0,61.0,768.0,512.0 prims 29 texts 2026.11.16
+journal 890x727 photo 61.0,72.0,768.0,512.0 prims 35 texts day 12 — wandering|2026.11.16
+collage 912x656 photo 72.0,72.0,768.0,512.0 prims 31 texts 
+geometric 870x614 photo 51.0,51.0,768.0,512.0 prims 30 texts 
+blur_bg 890x634 photo 61.0,61.0,768.0,512.0 prims 29 texts 
+gradient_palette 880x650 photo 56.0,56.0,768.0,512.0 prims 32 texts 
+postage 860x645 photo 46.0,46.0,768.0,512.0 prims 155 texts HIKARI POST|40
+ticket 963x574 photo 31.0,31.0,768.0,512.0 prims 86 texts ADMIT ONE|No. 00012|2026.11.16
+graph_paper 890x655 photo 61.0,61.0,768.0,512.0 prims 130 texts 12
+neon 870x614 photo 51.0,51.0,768.0,512.0 prims 29 texts 
+label_maker 830x640 photo 31.0,31.0,768.0,512.0 prims 28 texts 2026.11.16

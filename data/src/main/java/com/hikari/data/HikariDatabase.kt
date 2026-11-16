@@ -94,6 +94,10 @@ interface SettingDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun put(s: Setting)
+
+    /** one value by key (per-photo records such as "studio:<uri>" live here too) */
+    @Query("SELECT * FROM setting WHERE `key` = :key")
+    suspend fun get(key: String): Setting?
 }
 
 @Database(entities = [Favorite::class, Recent::class, Preset::class, Edit::class, Setting::class], version = 1, exportSchema = false)

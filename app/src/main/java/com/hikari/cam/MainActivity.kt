@@ -67,6 +67,7 @@ private fun RouteContent(app: AppViewModel, r: Route) {
             BackHandler { app.back() }
             FilterLabScreen()
         }
+        Route.Frames -> com.hikari.cam.ui.FramesScreen(app)
         Route.DaylightLab -> com.hikari.cam.lab.DaylightLabScreen(onBack = { app.back() })
         else -> Column(Modifier.fillMaxSize().background(Color.Black).statusBarsPadding()) {
             Box(Modifier.fillMaxWidth().weight(1f)) {

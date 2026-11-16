@@ -159,7 +159,16 @@ class CameraViewModel(app: Application) : AndroidViewModel(app) {
                     OffscreenRenderer.Request(look, hikari.looks.lut(look), adjust, crop = crop, seed = shotSeed)
                 }
                 val out = hikari.renderer.render(d.bitmap, req, outW, outH, releaseSource = true)
-                if (s.dateStamp) drawDateStamp(out, stampText(java.util.Date(), s.stampNote))
+                if (s.dateStamp) {
+                    // the capture moment is the true time of this photo
+                    val spec = if (s.stampSpec.isNotEmpty()) com.hikari.studio.StampSpec.decode(s.stampSpec).copy(enabled = true) else null
+                    val done = spec != null && runCatching {
+                        val text = com.hikari.studio.Stamps.text(spec, java.time.LocalDateTime.now())
+                        val prims = com.hikari.studio.Stamps.prims(spec, text, com.hikari.studio.R(0f, 0f, out.width.toFloat(), out.height.toFloat()))
+                        com.hikari.cam.studio.StudioRenderer.drawOnto(out, prims)
+                    }.isSuccess
+                    if (!done) drawDateStamp(out, stampText(java.util.Date(), s.stampNote))
+                }
                 val uri = Media.saveJpeg(ctx, out, s.jpegQuality, "_" + look.id)
                 Media.copyExif(ctx, null, file, uri)
                 lastThumb = withContext(Dispatchers.Default) { LabViewModel.fit(out, 160) }
@@ -544,7 +553,8 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                                 .clickable { app.updateSettings { it.copy(lastLook = rc.look.id) }; app.touch(rc.look.id) }
                                 .padding(horizontal = 8.dp, vertical = 3.dp).testTag("rec"))
                     }
-                    LookStrip(app.looks, app.thumbs, look.id, favorites,
+                    LookCategoryBar(app, app.looks, short = true)
+                    LookStrip(looksInCategory(app, app.looks), app.thumbs, look.id, favorites,
                         onSelect = { s -> app.updateSettings { it.copy(lastLook = s.id) }; app.touch(s.id) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), size = 56)
                 }

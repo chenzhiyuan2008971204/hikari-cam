@@ -29,8 +29,16 @@ data class UserSettings(
     val thumbScene: String = "sunny",
     /** show the three recommended looks for what the camera sees */
     val recommend: Boolean = true,
+    /** the filter category shown last: "all", "fav" or a series id */
+    val filterCategory: String = "all",
+    /** favourite and recently used frame ids, comma separated (newest first) */
+    val frameFavs: String = "",
+    val frameRecents: String = "",
+    /** the timestamp look used for the camera's date stamp (encoded StampSpec), "" = classic */
+    val stampSpec: String = "",
 ) {
     fun toRows(): List<Setting> = listOf(
+        Setting("filterCategory", filterCategory), Setting("frameFavs", frameFavs), Setting("frameRecents", frameRecents), Setting("stampSpec", stampSpec),
         Setting("jpegQuality", jpegQuality.toString()),
         Setting("naturalDetail", naturalDetail.toString()),
         Setting("saveOriginal", saveOriginal.toString()),
@@ -68,6 +76,10 @@ data class UserSettings(
                 virtualCamera = m["virtualCamera"]?.toBooleanStrictOrNull() ?: d.virtualCamera,
                 thumbScene = m["thumbScene"] ?: d.thumbScene,
                 recommend = m["recommend"]?.toBooleanStrictOrNull() ?: d.recommend,
+                filterCategory = m["filterCategory"] ?: d.filterCategory,
+                frameFavs = m["frameFavs"] ?: d.frameFavs,
+                frameRecents = m["frameRecents"] ?: d.frameRecents,
+                stampSpec = m["stampSpec"] ?: d.stampSpec,
             )
         }
 

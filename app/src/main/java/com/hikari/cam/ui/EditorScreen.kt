@@ -76,7 +76,7 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
     val favorites by app.favorites.collectAsState()
     val presets by app.presets.collectAsState()
     val settings by app.settings.collectAsState()
-    var tab by remember { mutableStateOf(0) } // 0 looks, 1 effects, 2 smart
+    var tab by remember { mutableStateOf(0) } // 0 looks, 1 effects, 2 timestamp, 3 frame, 4 smart
     var pick by remember { mutableStateOf(0) } // which composition suggestion is drawn on the photo
     var showStrength by remember { mutableStateOf(false) }
     var naming by remember { mutableStateOf(false) }
@@ -108,7 +108,13 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
             val o = vm.original
             val p = vm.preview
             if (o != null && p != null) Box(Modifier.clip(RoundedCornerShape(14.dp))) {
-                if (tab == 2) AnalysisView(p, vm.report?.suggestions?.getOrNull(pick)) else CompareView(o, p)
+                val fb = vm.framed
+                when {
+                    tab == 4 -> AnalysisView(p, vm.report?.suggestions?.getOrNull(pick))
+                    // with a timestamp or a frame the preview is the composed result (what export writes)
+                    fb != null -> FramedView(fb, vm, placing = tab == 2)
+                    else -> CompareView(o, p)
+                }
             }
             // look name over the photo, like a print label
             Text(vm.look.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold,
@@ -121,14 +127,16 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
         }
 
         if (tab == 0) {
+            LookCategoryBar(app, vm.looks, short = true)
+            val shown = looksInCategory(app, vm.looks)
             // filter tiles; the selected one shows its strength, tap it again for the ruler
             androidx.compose.foundation.lazy.LazyRow(
                 Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp),
             ) {
-                items(vm.looks.size) { i ->
-                    val spec = vm.looks[i]
+                items(shown.size, key = { shown[it].id }) { i ->
+                    val spec = shown[i]
                     val sel = spec.id == vm.look.id
                     Column(Modifier.width(66.dp).clickable {
                         if (sel) showStrength = !showStrength else { vm.selectLook(spec); app.touch(spec.id); showStrength = false }
@@ -152,6 +160,10 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
             if (showStrength) RulerSlider(vm.adjust.strength, { vm.updateAdjust(vm.adjust.copy(strength = it)) }, { vm.commit() },
                 Modifier.fillMaxWidth().padding(horizontal = 24.dp))
         } else if (tab == 2) {
+            StampPanel(vm, app)
+        } else if (tab == 3) {
+            FramePanel(vm, app)
+        } else if (tab == 4) {
             SmartPanel(vm, pick, { pick = it }, { spec -> vm.selectLook(spec); app.touch(spec.id) })
         } else {
             AdjustSliders(
@@ -162,14 +174,14 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
         }
         // tabs
         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            for ((i, label) in listOf("濾鏡", "效果", "智慧").withIndex()) {
-                Column(Modifier.clickable { tab = i }.padding(horizontal = 16.dp, vertical = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            for ((i, label) in listOf("濾鏡", "效果", "時間戳", "邊框", "智慧").withIndex()) {
+                Column(Modifier.clickable { tab = i }.padding(horizontal = 9.dp, vertical = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(Modifier.size(4.dp).clip(CircleShape).background(if (tab == i) HikariColors.Accent else Color.Transparent))
                     Text(label, color = if (tab == i) Color.White else Color(0xFF8A8A8A), fontSize = 13.sp,
                         fontWeight = if (tab == i) FontWeight.Bold else FontWeight.Normal)
                 }
             }
-            Text("預設", color = Color(0xFF8A8A8A), fontSize = 13.sp, modifier = Modifier.clickable { showPresets = true }.padding(horizontal = 16.dp))
+            Text("預設", color = Color(0xFF8A8A8A), fontSize = 13.sp, modifier = Modifier.clickable { showPresets = true }.padding(horizontal = 9.dp))
         }
     }
 

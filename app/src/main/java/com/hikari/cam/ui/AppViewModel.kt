@@ -29,6 +29,7 @@ sealed interface Route {
     data class Editor(val uri: Uri, val lookId: String? = null) : Route
     data object Lab : Route
     data object DaylightLab : Route
+    data object Frames : Route
 }
 
 /** State shared by every screen: settings, favourites, recents, presets and look thumbnails. */
@@ -107,6 +108,30 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             out += sample.zh to hikari.renderer.render(src, req, src.width, src.height, cacheKey = null)
         }
         return out
+    }
+
+    /** Frame library thumbnails: each frame composed onto the bundled photo that suits it (rendered once). */
+    val frameDemos = androidx.compose.runtime.mutableStateMapOf<String, android.graphics.Bitmap>()
+    private var frameDemoJob: kotlinx.coroutines.Job? = null
+    fun loadFrameDemos() {
+        if (frameDemoJob != null) return
+        frameDemoJob = viewModelScope.launch {
+            val photos = HashMap<String, Pair<android.graphics.Bitmap, IntArray>>()
+            val when0 = java.time.LocalDateTime.now()
+            for (def in com.hikari.studio.Frames.all) {
+                val b = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                    val (photo, pal) = photos.getOrPut(def.demo) {
+                        val sm = samples.firstOrNull { it.id == def.demo } ?: samples.first()
+                        val full = com.hikari.cam.smart.Samples.bitmap(getApplication(), sm)
+                        full to com.hikari.cam.studio.StudioRenderer.palette(full)
+                    }
+                    val meta = com.hikari.studio.Meta(when0, "f/1.8 · 1/120s · ISO 100 · 23mm", "Hikari", "", pal, 12)
+                    val sc = com.hikari.studio.FrameEngine.scene(def, com.hikari.studio.FrameOptions(def.id), photo.width, photo.height, meta)
+                    com.hikari.cam.studio.StudioRenderer.render(sc, photo, 420f / maxOf(sc.w, sc.h))
+                }
+                frameDemos[def.id] = b
+            }
+        }
     }
 
     fun look(id: String?): FilterSpec = hikari.looks.look(id)

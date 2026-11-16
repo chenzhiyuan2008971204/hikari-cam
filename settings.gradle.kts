@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "HikariCam"
-include(":app", ":engine", ":data", ":vision")
+include(":app", ":engine", ":data", ":vision", ":studio")

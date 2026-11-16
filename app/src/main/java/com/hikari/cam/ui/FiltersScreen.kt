@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,6 +47,9 @@ fun FiltersScreen(app: AppViewModel) {
     val recents by app.recents.collectAsState()
     val presets by app.presets.collectAsState()
     val settings by app.settings.collectAsState()
+    var query by remember { mutableStateOf("") }
+    var sort by remember { mutableStateOf(com.hikari.studio.LookSort.DEFAULT) }
+    val shown = looksInCategory(app, app.looks, query, sort)
     var detail by remember { mutableStateOf<FilterSpec?>(null) }
     var pendingLook by remember { mutableStateOf<String?>(null) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -53,7 +57,13 @@ fun FiltersScreen(app: AppViewModel) {
     }
 
     LazyColumn(Modifier.fillMaxSize()) {
-        item { Text("Filters", color = Color.White, fontSize = 22.sp, modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 6.dp)) }
+        item {
+            Row(Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Filters", color = Color.White, fontSize = 22.sp, modifier = Modifier.weight(1f))
+                Text("邊框圖庫 ${com.hikari.studio.Frames.all.size} 款 ›", color = HikariColors.Accent, fontSize = 13.sp,
+                    modifier = Modifier.clickable { app.go(Route.Frames) }.padding(6.dp).testTag("openFrames"))
+            }
+        }
         // every thumbnail is the real filter on the same standard photo; pick which photo here
         item {
             Text("預覽照片（所有縮圖都是用正式濾鏡引擎在同一張照片上算出來的）", color = HikariColors.Dim, fontSize = 11.sp,
@@ -68,18 +78,6 @@ fun FiltersScreen(app: AppViewModel) {
                 }
             }
         }
-        if (recents.isNotEmpty()) {
-            item { SectionTitle("最近使用") }
-            item {
-                LookStrip(recents.map { app.look(it) }, app.thumbs, null, favorites, { detail = it }, size = 72)
-            }
-        }
-        if (favorites.isNotEmpty()) {
-            item { SectionTitle("收藏") }
-            item {
-                LookStrip(app.looks.filter { it.id in favorites }, app.thumbs, null, favorites, { detail = it }, size = 72)
-            }
-        }
         if (presets.isNotEmpty()) {
             item { SectionTitle("自訂參數") }
             items(presets, key = { "preset${it.id}" }) { p ->
@@ -90,13 +88,26 @@ fun FiltersScreen(app: AppViewModel) {
                 }
             }
         }
-        for ((series, title) in SERIES_ZH) {
-            val group = app.looks.filter { it.series == series }
-            if (group.isEmpty()) continue
-            item(key = "title-$series") { SectionTitle(title) }
-            items(group, key = { it.id }) { spec ->
-                LookRow(spec, spec.id in favorites, app) { detail = spec }
+        // one category at a time: horizontal category navigation, then only that category's filters
+        item(key = "cats") {
+            LookCategoryBar(app, app.looks)
+            Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                val cats = com.hikari.studio.Browse.categories(SERIES_ZH.toList(), lookItems(app.looks), favorites)
+                val cur = cats.first { it.id == com.hikari.studio.Browse.valid(settings.filterCategory, cats) }
+                Text(cur.title, color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f).testTag("catTitle"))
+                Text("${shown.size} / ${cur.count} 款", color = HikariColors.Dim, fontSize = 12.sp, modifier = Modifier.testTag("catCount"))
             }
+            Box(Modifier.padding(horizontal = 12.dp).fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFF1E1E1E)).padding(horizontal = 10.dp, vertical = 8.dp)) {
+                if (query.isEmpty()) Text("在這個分類中搜尋", color = Color(0xFF6A6A6A), fontSize = 13.sp)
+                androidx.compose.foundation.text.BasicTextField(query, { query = it }, singleLine = true, textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 13.sp),
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(HikariColors.Accent), modifier = Modifier.fillMaxWidth().testTag("lookSearch"))
+            }
+            ChipRow { for (so in com.hikari.studio.LookSort.values()) Chip(so.zh, sort == so, "sort-${so.name}") { sort = so } }
+        }
+        if (shown.isEmpty()) item(key = "empty") { Text(if (settings.filterCategory == "fav" && query.isEmpty()) "還沒有收藏的濾鏡。在濾鏡詳情按「收藏」即可加入。" else "這個分類中沒有符合的濾鏡。",
+            color = HikariColors.Dim, fontSize = 13.sp, modifier = Modifier.padding(16.dp)) }
+        items(shown, key = { it.id }) { spec ->
+            LookRow(spec, spec.id in favorites, app) { detail = spec }
         }
         item { Box(Modifier.padding(32.dp)) }
     }
