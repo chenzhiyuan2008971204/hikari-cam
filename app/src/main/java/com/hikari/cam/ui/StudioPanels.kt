@@ -177,8 +177,8 @@ fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>,
                             app.thumbs[rc.look.id]?.let { b -> Image(remember(b) { b.asImageBitmap() }, rc.look.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
                         }
                         Column(Modifier.padding(start = 6.dp)) {
-                            Text(rc.look.name, color = if (on) Color.Black else Color.White, fontSize = 11.sp, maxLines = 1, fontWeight = FontWeight.Bold)
-                            Text("適合度 ${rc.score}", color = if (on) Color(0xFF3A3A3A) else HikariColors.Dim, fontSize = 9.sp)
+                            Text(rc.look.name, color = if (on) Color.Black else Color.White, fontSize = 10.sp, maxLines = 2, lineHeight = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("${rc.score}", color = if (on) Color(0xFF3A3A3A) else HikariColors.Accent, fontSize = 10.sp)
                         }
                     }
                 }
