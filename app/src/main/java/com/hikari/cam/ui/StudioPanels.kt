@@ -133,7 +133,7 @@ fun LookCategoryBar(app: AppViewModel, looks: List<FilterSpec>, modifier: Modifi
     val cats = remember(looks, favorites) { Browse.categories(SERIES_ZH.toList(), lookItems(looks), favorites) }
     val cur = Browse.valid(settings.filterCategory, cats)
     ChipRow(modifier) {
-        for (c in cats) Chip((if (short) c.title.substringBefore(' ') else c.title) + " ${c.count}", c.id == cur, "cat-${c.id}") { app.updateSettings { it.copy(filterCategory = c.id) } }
+        for (c in cats) Chip((if (short) c.title.substringAfterLast(' ') else c.title) + " ${c.count}", c.id == cur, "cat-${c.id}") { app.updateSettings { it.copy(filterCategory = c.id) } }
     }
 }
 
