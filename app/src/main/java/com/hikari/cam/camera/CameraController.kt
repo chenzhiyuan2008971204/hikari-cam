@@ -161,6 +161,7 @@ class CameraController(private val context: Context) {
                      virtual: Boolean = false): CameraCaps {
         bindOwner = owner2
         renderer = r
+        tracker.reset(); lastSubject = null   // a new source: start looking for the subject afresh
         direct?.close(); direct = null
         virtualCam?.close(); virtualCam = null
         if (virtual) {
@@ -356,6 +357,8 @@ class CameraController(private val context: Context) {
         return done.joinToString("、")
     }
 
+    private val tracker = com.hikari.vision.SubjectTracker()
+    private var lastSubject: Subject? = null
     private var lastAnalysis = 0L
 
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
@@ -397,17 +400,24 @@ class CameraController(private val context: Context) {
             .addOnSuccessListener(main) {
                 val objs = if (objTask.isSuccessful) objTask.result else emptyList()
                 val faces = if (faceTask.isSuccessful) faceTask.result else emptyList()
-                val face = faces.maxByOrNull { it.boundingBox.width() * it.boundingBox.height() }?.let { f ->
-                    val r = toPreview(f.boundingBox, uw, uh, crop, mirror)
-                    Subject.Face(r.left, r.top, r.right, r.bottom, if (mirror) -f.headEulerAngleY else f.headEulerAngleY)
-                }
-                // a person: the object box that holds the face (their body), else the face itself
+                // One subject, followed from frame to frame (not "whatever is largest in this frame").
+                val faceBoxes = faces.map { toPreview(it.boundingBox, uw, uh, crop, mirror) }
                 val boxes = objs.map { toPreview(it.boundingBox, uw, uh, crop, mirror) }
-                val subject = if (face != null) {
-                    val body = boxes.filter { b -> face.cx in b.left..b.right && face.eyeY in b.top..b.bottom }
-                        .maxByOrNull { it.w * it.h }
-                    (body ?: Subject(face.left, face.top, face.right, face.bottom)).copy(face = face)
-                } else boxes.maxByOrNull { it.w * it.h }
+                fun vb(b: Subject) = com.hikari.vision.Box(b.left, b.top, b.right, b.bottom)
+                val pick = tracker.update(faceBoxes.map(::vb), boxes.map(::vb))
+                val subject: Subject? = when {
+                    pick == null -> null
+                    pick.index < 0 -> lastSubject          // missed in this frame: hold, do not jump
+                    pick.kind == com.hikari.vision.SubjectTracker.Kind.FACE -> {
+                        val f = faces[pick.index]; val r = faceBoxes[pick.index]
+                        val face = Subject.Face(r.left, r.top, r.right, r.bottom, if (mirror) -f.headEulerAngleY else f.headEulerAngleY)
+                        // a person: the object box that holds the face (their body), else the face itself
+                        val body = boxes.filter { b -> face.cx in b.left..b.right && face.eyeY in b.top..b.bottom }.maxByOrNull { it.w * it.h }
+                        (body ?: Subject(face.left, face.top, face.right, face.bottom)).copy(face = face)
+                    }
+                    else -> boxes[pick.index]
+                }
+                lastSubject = subject
                 onSubject?.invoke(subject)
             }
             .addOnCompleteListener { done() }
