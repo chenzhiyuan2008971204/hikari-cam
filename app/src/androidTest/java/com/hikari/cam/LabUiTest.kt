@@ -5,6 +5,9 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -55,6 +58,42 @@ class LabUiTest {
         rule.onNodeWithText("Filters").performClick()
         Thread.sleep(8000)
         shot("app_03_filters.png")
+        // one category at a time: switch, count, search inside the category, sort, favourites, back to all
+        fun has(t: String) = rule.onAllNodesWithText(t, substring = true).fetchSemanticsNodes().isNotEmpty()
+        fun count() = rule.onNodeWithTag("catCount").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.Text].joinToString("") { it.text }
+        rule.onNodeWithTag("cat-all").performClick(); Thread.sleep(800)
+        org.junit.Assert.assertEquals("27 / 27 款", count())
+        rule.onNodeWithTag("cat-japanese").performScrollTo().performClick(); Thread.sleep(1200)
+        shot("app_03b_category_japanese.png")
+        org.junit.Assert.assertEquals("3 / 3 款", count())
+        org.junit.Assert.assertTrue("Japanese category does not show its looks", has("Tokyo Blue") && has("Kyoto Soft"))
+        org.junit.Assert.assertTrue("a look of another category is shown in Japanese", !has("Standard Chrome") && !has("Mellow 400"))
+        rule.onNodeWithTag("lookSearch").performTextInput("tokyo"); Thread.sleep(800)
+        org.junit.Assert.assertEquals("1 / 3 款", count())
+        rule.onNodeWithTag("lookSearch").performTextClearance(); Thread.sleep(500)
+        rule.onNodeWithTag("sort-NAME").performClick(); Thread.sleep(500)
+        org.junit.Assert.assertEquals("3 / 3 款", count())
+        rule.onNodeWithTag("cat-sim").performScrollTo().performClick(); Thread.sleep(1000)
+        org.junit.Assert.assertEquals("7 / 7 款", count())
+        org.junit.Assert.assertTrue(has("Standard Chrome") && !has("Tokyo Blue"))
+        // the category is remembered: leave the tab and come back
+        rule.onNodeWithText("Gallery").performClick(); Thread.sleep(600)
+        rule.onNodeWithText("Filters").performClick(); Thread.sleep(1500)
+        org.junit.Assert.assertEquals("7 / 7 款", count())
+        // frame library: every frame on a demo photo, by category, with search
+        rule.onNodeWithTag("openFrames").performClick(); Thread.sleep(6000)
+        shot("app_03c_frame_library.png")
+        fun frames() = rule.onNodeWithTag("frameCount").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.Text].joinToString("") { it.text }
+        org.junit.Assert.assertEquals("${com.hikari.studio.Frames.all.size} 款", frames())
+        rule.onNodeWithTag("frameCat-INSTANT").performScrollTo().performClick(); Thread.sleep(1500)
+        shot("app_03d_frames_instant.png")
+        org.junit.Assert.assertEquals("${com.hikari.studio.Frames.inCategory(com.hikari.studio.FrameCat.INSTANT).size} 款", frames())
+        rule.onNodeWithTag("frameCat-all").performScrollTo().performClick()
+        rule.onNodeWithTag("frameLibSearch").performTextInput("35mm"); Thread.sleep(1000)
+        org.junit.Assert.assertEquals("${com.hikari.studio.Frames.search("35mm").size} 款", frames())
+        Report.line("ui: filter categories (switch, count, search, sort, remembered) and frame library (${com.hikari.studio.Frames.all.size} frames, category, search) checked")
+        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }; Thread.sleep(800)
+        rule.onNodeWithTag("cat-all").performScrollTo().performClick(); Thread.sleep(500)
         rule.onNodeWithText("Settings").performClick()
         Thread.sleep(800)
         shot("app_04_settings.png")
