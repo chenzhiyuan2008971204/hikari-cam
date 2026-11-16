@@ -1,33 +1,6 @@
-golden + quality: 27 looks x 14 photos = 378 renders, 623 s
-mode: compare, tolerance mean 1.2 / p99 5.0 levels; worst seen mean 0.00 / p99 0.0
+golden + quality: 1 looks x 14 photos = 14 renders, 25 s
+mode: UPDATE (goldens re-recorded)
 result: PASS
 
-self-test (render of soft_chrome against golden of standard_chrome must fail): caught (mean 5.14)
 look                 clip  crush   cast    hl  skinHue  skinC  band
-standard_chrome     0.009  0.000  0.001  0.88     -0.0   1.03   3.4
-soft_chrome         0.004  0.000  0.003  0.94     +0.5   1.08   4.3
-true_negative       0.006  0.000  0.003  0.96     +0.2   0.95   4.0
-silver_bypass       0.000  0.000  0.007  0.80     +1.0   0.68   4.0
-studio_hi           0.006  0.000  0.005  0.81     +0.4   0.90   3.6
-studio_std          0.003  0.000  0.004  1.01     +0.2   0.83   4.6
-mono_fine           0.009  0.000      -  0.85        -      -   3.3
-muted_chrome        0.001  0.000  0.006  0.84     -0.8   0.75   3.6
-street_negative     0.000  0.000  0.012  0.82     -4.4   0.76   4.0
-portrait_soft       0.002  0.000  0.004  1.01     +1.0   0.88   5.9
-vivid_landscape     0.009  0.000  0.011  0.83     -1.4   1.01   4.0
-cine_daylight       0.002  0.000  0.012  1.00     +2.8   0.74   4.8
-nostalgic_summer    0.001  0.000  0.005  0.88     +0.7   1.01   4.2
-clear_daylight      0.019  0.000  0.010  0.85     -0.5   0.93   4.6
-summer400           0.004  0.000  0.006  0.85     -3.5   0.99   3.9
-mellow400           0.000  0.000  0.008  0.88     +2.6   0.96   5.8
-gold_memory         0.000  0.000  0.021  0.68     +1.1   1.24   5.4
-cinema400           0.000  0.000  0.024  0.68     +2.6   0.95   4.8
-vivid100            0.006  0.000  0.008  0.82     -0.7   1.29   3.6
-tokyo_blue          0.004  0.000  0.029  0.88     -5.7   0.68   6.3
-kyoto_soft          0.000  0.000  0.007  0.97     -0.7   0.80   5.9
-summer_green        0.000  0.000  0.013  0.76     +5.8   1.10   4.1
-ccd2000             0.009  0.000  0.018  0.71     -4.1   1.01   4.5
-flash_diary         0.001  0.000  0.005  0.58     -0.5   1.16   4.4
-compact_chrome      0.000  0.000  0.023  0.82     -0.8   0.93   4.5
-night_bloom         0.000  0.000  0.017  0.44     +1.5   1.16   5.2
-dream1998           0.000  0.000  0.012  0.98     -2.8   0.85   6.1
+jp_milky            0.000  0.000  0.006  0.86     -0.7   0.93   5.0

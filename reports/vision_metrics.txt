@@ -31,7 +31,7 @@ real photos (14 bundled samples, hand annotated)
   horizon: none  (truth: 0.575, partial)
   subject: none
   advice: 目前的構圖沒有偵測到明顯需要調整的地方。
-  filters: Muted Chrome 77 | Standard Chrome 72 | Compact Chrome 71  <- 藍天日景：把天空壓深一些，雲朵更立體
+  filters: Muted Chrome 77 | Kodak 2383 76 | Standard Chrome 72  <- 藍天日景：把天空壓深一些，雲朵更立體
 
 02_overcast.jpg
   scene: OVERCAST 0.59, HIGH_CONTRAST 0.24
@@ -39,14 +39,14 @@ real photos (14 bundled samples, hand annotated)
   horizon: none  (truth: none)
   verticals: tilt -0.0 converge +18.8 n 3 conf 0.22
   advice: 目前的構圖沒有偵測到明顯需要調整的地方。
-  filters: Studio Hi 74 | Street Negative 71 | Cinema 400 69  <- 陰天：補上陰天平光缺少的反差
+  filters: Architecture 75 | Studio Hi 74 | Street Negative 71  <- 陰天：補上陰天平光缺少的反差
 
 03_foliage.jpg
   scene: FOLIAGE 0.51
   sky 0.03 blueSky 0.01 green 0.23 skin 0.03 contrast 0.56 warmth +0.029 structure 0.39
   horizon: none  (truth: none)
   advice: 目前的構圖沒有偵測到明顯需要調整的地方。
-  filters: Standard Chrome 99 | Summer 400 99 | Soft Chrome 93  <- 綠色植物：綠色保持自然的飽和度
+  filters: Standard Chrome 99 | Summer 400 99 | Rich Color 94  <- 綠色植物：綠色保持自然的飽和度
 
 04_city.jpg
   scene: ARCHITECTURE 0.42
@@ -54,14 +54,14 @@ real photos (14 bundled samples, hand annotated)
   horizon: none  (truth: none)
   verticals: tilt +1.5 converge -0.0 n 6 conf 0.73
   advice: 目前的構圖沒有偵測到明顯需要調整的地方。
-  filters: Studio Hi 97 | Street Negative 96 | Cinema 400 93  <- 建築／街景：俐落的反差突顯建築線條
+  filters: Architecture 100 | Studio Hi 97 | Street Negative 96  <- 建築／街景：俐落的反差突顯建築線條
 
 05_portrait.jpg
   scene: PORTRAIT 1.00, INDOOR 0.60
   sky 0.02 blueSky 0.00 green 0.00 skin 0.26 contrast 0.38 warmth +0.025 structure 0.43
   horizon: none  (truth: none)
   advice: 目前的構圖沒有偵測到明顯需要調整的地方。
-  filters: True Negative 87 | Nostalgic Summer 82 | Summer 400 76  <- 人像：膚色飽和度自然，不會過橘
+  filters: True Negative 87 | Soft Portrait 84 | Nostalgic Summer 82  <- 人像：膚色飽和度自然，不會過橘
 
 06_backlight.jpg
   scene: BACKLIGHT 0.68
@@ -69,7 +69,7 @@ real photos (14 bundled samples, hand annotated)
   horizon: none  (truth: none)
   subject: none
   advice: 畫面中找不到足夠明確的主體或線條，無法給出有根據的構圖建議。
-  filters: Mellow 400 76 | Portrait Soft 75 | Cine Daylight 74  <- 逆光：較低的反差保住亮暗兩端的細節
+  filters: Airy White 81 | Mellow 400 76 | Eterna 75  <- 逆光：較低的反差保住亮暗兩端的細節
 
 07_contrast.jpg
   scene: BLUE_SKY 0.29, OVERCAST 0.20
@@ -77,7 +77,7 @@ real photos (14 bundled samples, hand annotated)
   horizon: none  (truth: none)
   subject: none
   advice: 畫面中找不到足夠明確的主體或線條，無法給出有根據的構圖建議。
-  filters: Muted Chrome 79 | Studio Hi 75 | Compact Chrome 73  <- 藍天日景：把天空壓深一些，雲朵更立體
+  filters: Kodak 2383 79 | Muted Chrome 79 | Architecture 77  <- 藍天日景：把天空壓深一些，雲朵更立體
 
 08_white.jpg
   scene: ARCHITECTURE 0.33, OVERCAST 0.29
@@ -86,21 +86,21 @@ real photos (14 bundled samples, hand annotated)
   subject: none
   verticals: tilt -3.9 converge +15.0 n 3 conf 0.21
   advice: 目前的構圖沒有偵測到明顯需要調整的地方。
-  filters: Studio Hi 97 | Street Negative 94 | Cinema 400 91  <- 建築／街景：俐落的反差突顯建築線條
+  filters: Architecture 99 | Studio Hi 97 | Street Negative 94  <- 建築／街景：俐落的反差突顯建築線條
 
 09_seaside.jpg
   scene: OVERCAST 0.57, BLUE_SKY 0.51
   sky 0.30 blueSky 0.13 green 0.00 skin 0.00 contrast 0.50 warmth +0.011 structure 0.52
   horizon: y 0.501 tilt -0.5 conf 0.98  (truth: 0.5)
   advice: 低地平線（多留天空） (0.73)
-  filters: Muted Chrome 80 | Studio Hi 80 | Compact Chrome 75  <- 陰天：補上陰天平光缺少的反差
+  filters: Architecture 81 | Kodak 2383 80 | Muted Chrome 80  <- 陰天：補上陰天平光缺少的反差
 
 10_child.jpg
   scene: PORTRAIT 1.00, HIGH_CONTRAST 0.91
   sky 0.04 blueSky 0.00 green 0.01 skin 0.09 contrast 0.80 warmth +0.014 structure 0.41
   horizon: none  (truth: none)
   advice: 目前的構圖沒有偵測到明顯需要調整的地方。
-  filters: Nostalgic Summer 77 | True Negative 73 | Portrait Soft 70  <- 人像：膚色飽和度自然，不會過橘
+  filters: Airy White 81 | Soft Portrait 81 | Nostalgic Summer 77  <- 人像：膚色飽和度自然，不會過橘
 
 11_concrete.jpg
   scene: OVERCAST 1.00, HIGH_CONTRAST 0.49
@@ -108,7 +108,7 @@ real photos (14 bundled samples, hand annotated)
   horizon: none  (truth: none)
   verticals: tilt -1.1 converge +29.2 n 3 conf 0.20
   advice: 目前的構圖沒有偵測到明顯需要調整的地方。
-  filters: Studio Hi 72 | Street Negative 69 | Cinema 400 67  <- 陰天：補上陰天平光缺少的反差
+  filters: Architecture 72 | Studio Hi 72 | Disposable Camera 70  <- 陰天：補上陰天平光缺少的反差
 
 12_beach.jpg
   scene: 
@@ -116,21 +116,21 @@ real photos (14 bundled samples, hand annotated)
   horizon: y 0.226 tilt +2.0 conf 0.85  (truth: 0.226, partial)
   subject: none
   advice: 校正水平線 (0.62)
-  filters: Standard Chrome 97 | Summer 400 93 | True Negative 90  <- 場景沒有特別明顯的特徵，這款色彩忠實、適用範圍廣
+  filters: Standard Chrome 97 | Summer 400 93 | Clean Daylight 92  <- 場景沒有特別明顯的特徵，這款色彩忠實、適用範圍廣
 
 13_night.jpg
   scene: NIGHT 1.00
   sky 0.00 blueSky 0.00 green 0.00 skin 0.07 contrast 0.58 warmth +0.004 structure 0.49
   horizon: none  (truth: none)
   advice: 目前的構圖沒有偵測到明顯需要調整的地方。
-  filters: Night Bloom 80 | Gold Memory 52 | Nostalgic Summer 44  <- 夜景／低光：燈光帶光暈，夜景更有氣氛
+  filters: Night Bloom 80 | CineStill 800T 66 | Tokyo Night 56  <- 夜景／低光：燈光帶光暈，夜景更有氣氛
 
 14_nightstreet.jpg
   scene: NIGHT 0.53
   sky 0.00 blueSky 0.00 green 0.02 skin 0.07 contrast 0.42 warmth +0.029 structure 0.50
   horizon: none  (truth: none)
   advice: 目前的構圖沒有偵測到明顯需要調整的地方。
-  filters: Night Bloom 69 | Gold Memory 52 | Nostalgic Summer 44  <- 夜景／低光：燈光帶光暈，夜景更有氣氛
+  filters: Night Bloom 69 | CineStill 800T 63 | Tokyo Night 54  <- 夜景／低光：燈光帶光暈，夜景更有氣氛
 
 summary
   full horizons found within 4 % and 1.5 deg: 1 / 1
@@ -139,7 +139,7 @@ summary
   verticals found on architecture photos: 4 / 4
   scene type in the top two: 11 / 11
 
-portrait scene -> True Negative 76 (人像：膚色飽和度自然，不會過橘), Nostalgic Summer 74 (人像：膚色飽和度自然，不會過橘), Street Negative 73 (人像：膚色飽和度自然，不會過橘)
+portrait scene -> Soft Portrait 77 (人像：膚色飽和度自然，不會過橘), Architecture 76 (人像：膚色飽和度自然，不會過橘), True Negative 76 (人像：膚色飽和度自然，不會過橘)
 
 blue sky scene -> Standard Chrome 87 (藍天日景：保留藍天的飽和與層次，不會變螢光), Summer 400 83 (藍天日景：保留藍天的飽和與層次，不會變螢光), Clear Daylight 78 (藍天日景：保留藍天的飽和與層次，不會變螢光)
 
