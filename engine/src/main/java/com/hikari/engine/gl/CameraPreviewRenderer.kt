@@ -182,7 +182,7 @@ class CameraPreviewRenderer(
             // test source only: one pixel read back, so a run can tell a drawn preview from a black one
             val px = java.nio.ByteBuffer.allocateDirect(4)
             GLES30.glReadPixels(viewW / 2, viewH / 2, 1, 1, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, px)
-            android.util.Log.i("HikariCamera", "still preview centre rgb ${px.get(0).toInt() and 255},${px.get(1).toInt() and 255},${px.get(2).toInt() and 255} view ${viewW}x$viewH tex ${stillW}x$stillH upload 0x${Integer.toHexString(uploadErr)} gl 0x${Integer.toHexString(GLES30.glGetError())}")
+            android.util.Log.i("HikariCamera", "still preview centre rgb ${px.get(0).toInt() and 255},${px.get(1).toInt() and 255},${px.get(2).toInt() and 255} src ${stillBmp?.takeIf { !it.isRecycled }?.let { b -> val c = b.getPixel(b.width / 2, b.height / 2); "${(c shr 16) and 255},${(c shr 8) and 255},${c and 255}" }} view ${viewW}x$viewH tex ${stillW}x$stillH upload 0x${Integer.toHexString(uploadErr)} gl 0x${Integer.toHexString(GLES30.glGetError())}")
         }
     }
 }
