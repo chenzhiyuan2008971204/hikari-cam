@@ -156,8 +156,8 @@ fun looksInCategory(app: AppViewModel, looks: List<FilterSpec>, query: String = 
 
 /**
  * The camera's look panel. Top: a card with the three looks recommended for what the camera sees.
- * Below: a category bar (favourites first, then all and each category), the looks of the selected
- * category in one row, and a "more" tile that opens the library with search and the ★ to favourite.
+ * Below: one row with every look, whose first cell is 收藏 (favourites only), and a "more" tile that
+ * opens the library by category, with search and the ★ to favourite a look.
  */
 @Composable
 fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>, recs: List<com.hikari.vision.Recommendation>, sceneLabel: String, onPick: (String) -> Unit) {
@@ -186,12 +186,20 @@ fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>,
                 }
             }
         }
-        // every look, one category at a time: favourites come first, then all, then the categories
-        val mine = looksInCategory(app, app.looks)
-        val cat = app.settings.collectAsState().value.filterCategory
-        LookCategoryBar(app, app.looks, Modifier.padding(top = 2.dp), short = true, favFirst = true, tagPrefix = "camcat-")
-        if (cat == Browse.FAV && mine.isEmpty()) Text("還沒有收藏。按右邊「更多」，在濾鏡上按 ★ 就會放到這裡", color = Color(0xFF6A6A6A), fontSize = 10.sp, modifier = Modifier.padding(start = 14.dp, top = 6.dp))
+        // every look in one row; the first cell is 收藏: tap it to show only the favourites, tap again for all
+        var favOnly by remember { mutableStateOf(false) }
+        val mine = remember(favOnly, favorites, app.looks) { if (favOnly) app.looks.filter { it.id in favorites } else app.looks }
+        if (favOnly && mine.isEmpty()) Text("還沒有收藏。按右邊「更多」，在濾鏡上按 ★ 就會放到這裡", color = Color(0xFF6A6A6A), fontSize = 10.sp, modifier = Modifier.padding(start = 14.dp, top = 6.dp))
         LazyRow(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
+            item(key = "favs") {
+                Column(Modifier.width(64.dp).clickable { favOnly = !favOnly }.testTag("favTile"), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)).background(if (favOnly) HikariColors.Accent else Color(0xFF242424))
+                        .border(1.dp, if (favOnly) HikariColors.Accent else Color(0xFF4A4A4A), RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+                        Text("★", color = if (favOnly) Color.Black else HikariColors.Accent, fontSize = 22.sp)
+                    }
+                    Text("收藏 ${favorites.size}", color = if (favOnly) HikariColors.Accent else Color.White, fontSize = 10.sp, maxLines = 1)
+                }
+            }
             items(mine, key = { it.id }) { spec ->
                 val sel = spec.id == look.id
                 Column(Modifier.width(64.dp).clickable { onPick(spec.id) }, horizontalAlignment = Alignment.CenterHorizontally) {
