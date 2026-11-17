@@ -165,6 +165,8 @@ fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>,
     var more by remember { mutableStateOf(false) }
     // the panel can be folded down to one slim row so the viewfinder is not covered
     var open by rememberSaveable { mutableStateOf(true) }
+    var recipeOpen by rememberSaveable { mutableStateOf(true) }
+    var recOpen by rememberSaveable { mutableStateOf(true) }
     val camSettings by app.settings.collectAsState()
     Column(Modifier.fillMaxWidth().padding(bottom = 2.dp)) {
         Row(Modifier.fillMaxWidth().clickable { open = !open }.padding(horizontal = 14.dp, vertical = 4.dp).testTag("lookPanelToggle"), verticalAlignment = Alignment.CenterVertically) {
@@ -174,9 +176,11 @@ fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>,
             Text(if (open) "  收合" else "  展開", color = HikariColors.Dim, fontSize = 11.sp)
         }
         if (open) {
-            // camera recipes: one tap switches the whole style
-            RecipeBar(app, look, remember(camSettings.cameraAdjustJson) { com.hikari.engine.Adjustments.fromJson(camSettings.cameraAdjustJson) })
-            if (recs.isNotEmpty()) Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            // camera recipes (預設 / C1…): its own row that folds away on its own
+            FoldHeader("配方", recipeOpen, "recipeToggle") { recipeOpen = !recipeOpen }
+            if (recipeOpen) RecipeBar(app, look, remember(camSettings.cameraAdjustJson) { com.hikari.engine.Adjustments.fromJson(camSettings.cameraAdjustJson) })
+            if (recs.isNotEmpty()) FoldHeader("推薦", recOpen, "recToggle") { recOpen = !recOpen }
+            if (recs.isNotEmpty() && recOpen) Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("✦", color = HikariColors.Accent, fontSize = 14.sp)
                 for (rc in recs.take(3)) {
                     val on = rc.look.id == look.id
@@ -202,10 +206,10 @@ fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>,
                     Column(Modifier.width(60.dp).clickable { onPick(spec.id) }, horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(Modifier.size(52.dp).clip(Darkroom.R8).background(HikariColors.Panel).border(if (sel) 2.dp else 0.dp, if (sel) HikariColors.Accent else Color.Transparent, Darkroom.R8)) {
                             app.thumbs[spec.id]?.let { b -> Image(remember(b) { b.asImageBitmap() }, spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
-                            // star right here: no need to open the library to keep a look
-                            Text(if (fav) "★" else "☆", color = if (fav) HikariColors.Accent else Color.White, fontSize = 15.sp,
-                                modifier = Modifier.align(Alignment.TopEnd).padding(2.dp).clip(CircleShape).background(Color(0x88000000))
-                                    .clickable { app.toggleFavorite(spec.id) }.padding(horizontal = 4.dp, vertical = 0.dp).testTag("camstar-${spec.id}"))
+                            // star right here, small and tucked into the corner so a tap on the picture does not hit it
+                            Text(if (fav) "★" else "☆", color = if (fav) HikariColors.Accent else Color(0xCCFFFFFF), fontSize = 11.sp, lineHeight = 11.sp,
+                                modifier = Modifier.align(Alignment.TopEnd).padding(1.dp).clip(CircleShape).background(Color(0x66000000))
+                                    .clickable { app.toggleFavorite(spec.id) }.padding(horizontal = 3.dp, vertical = 1.dp).testTag("camstar-${spec.id}"))
                         }
                         Text(spec.name, color = if (sel) HikariColors.Accent else Color.White, fontSize = 10.sp, maxLines = 1)
                     }
@@ -222,6 +226,15 @@ fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>,
         }
     }
     if (more) AllLooksSheet(app, look.id, favorites, { more = false }) { id -> onPick(id); more = false }
+}
+
+/** A slim label row that folds the section below it. */
+@Composable
+private fun FoldHeader(title: String, open: Boolean, tag: String, onToggle: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(horizontal = 14.dp, vertical = 3.dp).testTag(tag), verticalAlignment = Alignment.CenterVertically) {
+        Text(if (open) "▾" else "▸", color = HikariColors.Dim, fontSize = 11.sp)
+        Text("  $title", color = HikariColors.Dim, fontSize = 11.sp)
+    }
 }
 
 /** The whole library, one category at a time: tap to use a look, tap its star to keep it in "my looks". */
