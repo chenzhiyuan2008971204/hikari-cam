@@ -38,7 +38,8 @@ class DaylightLabTest {
             rule.onNodeWithText("${i + 1}. $s").performScrollTo().performClick()
             Thread.sleep(400)
             // all looks rendered when the timing line is back
-            rule.waitUntil(120_000) { rule.onAllNodesWithText("GPU 算繪", substring = true).fetchSemanticsNodes().isNotEmpty() }
+            // (a system dialog right after the emulator boots can hide the window for a moment: keep waiting)
+            rule.waitUntil(120_000) { runCatching { rule.onAllNodesWithText("GPU 算繪", substring = true).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false) }
             Thread.sleep(800)
             shot("daylight_${i + 1}.png")
         }
