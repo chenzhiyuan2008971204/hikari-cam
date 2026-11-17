@@ -107,7 +107,7 @@ jobs:
             mkdir -p lab-emulator
             adb logcat -c || true
             ./gradlew connectedDebugAndroidTest --stacktrace -Pandroid.testInstrumentationRunnerArguments.skipCapture=true -Pandroid.testInstrumentationRunnerArguments.engineSample=true -Pandroid.testInstrumentationRunnerArguments.skipEditorUi=true -Pandroid.testInstrumentationRunnerArguments.notClass=com.hikari.cam.CameraUiTest || touch lab-emulator/TESTS_FAILED
-            timeout 60 adb logcat -d -s LabReport:I AndroidRuntime:E TestRunner:* HikariCamera:W > lab-emulator/logcat.txt || true
+            timeout 60 adb logcat -d -s LabReport:I AndroidRuntime:E TestRunner:* HikariCamera:I > lab-emulator/logcat.txt || true
             timeout 120 adb pull /sdcard/Download/HikariLab lab-emulator/ || true
             timeout 30 adb shell ls -l /sdcard/Pictures/Hikari > lab-emulator/exported_files.txt || true
       - name: Print device reports
@@ -132,8 +132,9 @@ jobs:
       - name: Fail when tests failed
         run: test ! -f lab-emulator/TESTS_FAILED
 
-  # Why the Android emulator dies when the editor screen opens (the main emulator job skips that test): the same
-  # test run alone on three GPU back ends, with the whole logcat and the emulator's own log kept. Never blocks.
+  # Why the Android emulator dies when the editor screen opens (the main emulator job skips that test): the
+  # editor's start-up run only up to stage N (0 = the screen alone ... 5 = everything), one stage per emulator, with
+  # the whole logcat kept. The first stage whose emulator disappears is the step that does it. Never blocks.
   editor-ui:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -141,7 +142,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gpu: [swiftshader_indirect, guest, angle_indirect]
+        stage: [0, 1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -158,7 +159,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug assembleDebugAndroidTest > build.log 2>&1 || { grep -E "^e: " build.log | head -80; exit 1; }
-      - name: Editor screen on ${{ matrix.gpu }}
+      - name: Editor start-up up to stage ${{ matrix.stage }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -166,13 +167,13 @@ jobs:
           arch: x86_64
           ram-size: 4096M
           disk-size: 4096M
-          emulator-options: -no-window -gpu ${{ matrix.gpu }} -noaudio -no-boot-anim -camera-back none -camera-front none -no-snapshot -verbose
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none -no-snapshot -verbose
           disable-animations: true
           script: |
             mkdir -p editor-ui
             adb logcat -c || true
             (adb logcat -v threadtime > editor-ui/logcat_live.txt 2>&1 &) 
-            ./gradlew connectedDebugAndroidTest --stacktrace -Pandroid.testInstrumentationRunnerArguments.class=com.hikari.cam.SmartUiTest#zEditorSmartFlow -Pandroid.testInstrumentationRunnerArguments.skipEditorUi=false -Pandroid.testInstrumentationRunnerArguments.skipCapture=true > editor-ui/gradle.txt 2>&1 || touch editor-ui/TESTS_FAILED
+            ./gradlew connectedDebugAndroidTest --stacktrace -Pandroid.testInstrumentationRunnerArguments.class=com.hikari.cam.EditorBisectTest -Pandroid.testInstrumentationRunnerArguments.stage=${{ matrix.stage }} > editor-ui/gradle.txt 2>&1 || touch editor-ui/TESTS_FAILED
             adb devices > editor-ui/adb_devices.txt 2>&1 || true
             timeout 60 adb logcat -d -b all -v threadtime > editor-ui/logcat_all.txt 2>&1 || true
             timeout 30 adb shell dumpsys meminfo > editor-ui/meminfo.txt 2>&1 || true
@@ -181,5 +182,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: editor-ui-${{ matrix.gpu }}
+          name: editor-ui-stage${{ matrix.stage }}
           path: editor-ui

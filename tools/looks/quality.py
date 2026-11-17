@@ -126,10 +126,17 @@ def measure(table, imgs):
     m["mono"] = bool((np.diff(luma) >= -1e-4).all())
     m["rampStep"] = float(np.abs(np.diff(luma)).max() * 255)
 
-    # LUT roughness in OKLab per grid step
+    # LUT roughness in OKLab per grid step (all of it, and the part above lightness 0.3: near black one grid
+    # step is a big step in OKLab by nature, the interesting steps are the ones in the colours)
     L = lab(table)
     d = [np.linalg.norm(np.diff(L, axis=ax), axis=-1).ravel() for ax in range(3)]
     m["rough"] = float(np.percentile(np.concatenate(d), 99.9) * 100)
+    dm = []
+    for ax in range(3):
+        a0 = np.take(L, range(0, 32), axis=ax); a1 = np.take(L, range(1, 33), axis=ax)
+        keep = np.minimum(a0[..., 0], a1[..., 0]) > 0.3
+        dm.append(np.linalg.norm(a1 - a0, axis=-1)[keep])
+    m["roughMid"] = float(np.percentile(np.concatenate(dm), 99.9) * 100)
 
     # reference patches
     def patch(rgbs):

@@ -66,7 +66,7 @@ class EngineTest {
         bad("version", good.copyOf().also { it[4] = 2 })
         bad("size", good.copyOf().also { it[6] = 1; it[7] = 0 })
         bad("size too large", good.copyOf().also { it[6] = 0; it[7] = 1 })
-        bad("scale", good.copyOf().also { it[8] = 0x10 })
+        bad("scale", good.copyOf().also { it[8] = 0x11 })        // 10001 instead of 10000
         bad("truncated", good.copyOf(good.size - 2))
         bad("too long", good.copyOf(good.size + 2))
         bad("empty", ByteArray(0))

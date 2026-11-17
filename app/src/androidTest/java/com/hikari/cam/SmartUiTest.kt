@@ -129,21 +129,19 @@ class SmartUiTest {
     @Test
     fun virtualPreviewIsNotBlack() {
         assertTrue("virtual camera did not start", poll(40_000) { set("virtualCamera", "true"); has("正在播放") })
-        Thread.sleep(5000)
-        val shot = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()!!
-        Report.png(ctx, "smart_virtual_preview_probe.png", shot)
-        val x0 = (shot.width * 0.2f).toInt(); val x1 = (shot.width * 0.8f).toInt()
-        val y0 = (shot.height * 0.28f).toInt(); val y1 = (shot.height * 0.46f).toInt()
-        var sum = 0.0; var sum2 = 0.0; var n = 0
-        for (y in y0 until y1 step 3) for (x in x0 until x1 step 3) {
-            val p = shot.getPixel(x, y)
-            val l = 0.2126 * ((p shr 16) and 255) + 0.7152 * ((p shr 8) and 255) + 0.0722 * (p and 255)
-            sum += l; sum2 += l * l; n++
-        }
-        val mean = sum / n; val sd = Math.sqrt(sum2 / n - mean * mean)
-        Report.line("smart: virtual preview centre luma mean ${"%.1f".format(mean)} sd ${"%.1f".format(sd)}")
+        Thread.sleep(6000)
+        // The preview renderer reads one centre pixel back from its own GL surface now and then and logs it
+        // ("still preview centre rgb r,g,b"): the preview itself, not a screenshot of the screen (uiautomation
+        // returns no screenshot while a GL surface is busy). A black frame reads about 3,5,5.
+        val log = Runtime.getRuntime().exec(arrayOf("logcat", "-d", "-v", "brief", "-s", "HikariCamera:I")).inputStream.bufferedReader().readText()
+        val px = Regex("still preview centre rgb (\\d+),(\\d+),(\\d+)").findAll(log).map { m -> m.groupValues.drop(1).map { it.toInt() } }.toList()
+        Report.line("smart: virtual preview centre pixel probes: ${px.takeLast(4)} (${px.size} reads)")
+        InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()?.let { Report.png(ctx, "smart_virtual_preview_probe.png", it) }
         Report.flush(ctx, "smart_virtual_probe_report.txt")
-        assertTrue("virtual preview is black (mean ${"%.1f".format(mean)}, sd ${"%.1f".format(sd)})", mean > 25 && sd > 10)
+        assertTrue("the preview never reported a pixel (no frame drawn)", px.isNotEmpty())
+        val last = px.last()
+        val luma = 0.2126 * last[0] + 0.7152 * last[1] + 0.0722 * last[2]
+        assertTrue("virtual preview is black (centre pixel ${last}, luma ${"%.1f".format(luma)})", luma > 25)
     }
 
     /** Editor: top-three recommendation cards, composition analysis with overlays, apply a look, export. */

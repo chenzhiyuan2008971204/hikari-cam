@@ -142,6 +142,13 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { requests.filterNotNull().collect { render(it) } }
     }
 
+    /**
+     * Test hook for finding why the Android emulator dies while the editor screen starts (CI job editor-ui): the
+     * editor stops its start-up after this step: 0 before the photo is read, 1 after decode, 2 after the first
+     * preview, 3 after the look thumbnails, 4 after the frame thumbnails. Always runs to the end in the app.
+     */
+    object EditorDebug { @JvmField @Volatile var stopAfter: Int = Int.MAX_VALUE }
+
     fun open(u: Uri, lookId: String?) {
         if (u == uri) return
         uri = u
@@ -149,10 +156,12 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
             busy = LOADING
             try {
                 val ctx = getApplication<Application>()
+                if (EditorDebug.stopAfter <= 0) return@launch
                 // full-size decode, then our own downscale: the preview starts from the same pixels as the export
                 val d = Media.decode(ctx, Media.source(ctx, u), renderer.maxTexture(), copies = 2)
                 fullW = d.fullWidth
                 fullH = d.fullHeight
+                if (EditorDebug.stopAfter <= 1) { d.bitmap.recycle(); return@launch }
                 val (prev, orig, thumb) = withContext(Dispatchers.Default) {
                     val p = if (maxOf(d.bitmap.width, d.bitmap.height) > LabViewModel.PREVIEW_SRC) LabViewModel.fit(d.bitmap, LabViewModel.PREVIEW_SRC) else d.bitmap
                     if (p !== d.bitmap) d.bitmap.recycle()
@@ -168,6 +177,7 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
                 adjust = Adjustments.fromJson(saved?.adjustJson)
                 undo.clear(); redo.clear(); syncHistory()
                 refresh()
+                if (EditorDebug.stopAfter <= 2) return@launch
                 recs = emptyList(); report = null; analysing = true
                 thumbSrc = thumb
                 val studioRow = hikari.db.settings().get("studio:$u")?.value?.split("\n")
@@ -181,7 +191,9 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
                     thumbs[spec.id] = renderer.render(thumb, req, thumb.width, thumb.height, cacheKey = "$cacheKey-t")
                 }
                 renderer.forget("$cacheKey-t")
+                if (EditorDebug.stopAfter <= 3) return@launch
                 renderFrameThumbs()
+                if (EditorDebug.stopAfter <= 4) return@launch
                 // analysis starts once the preview and the look thumbnails are on screen: the picture comes
                 // first, and the detectors do not compete with the renderer for the CPU
                 analyse(orig)
