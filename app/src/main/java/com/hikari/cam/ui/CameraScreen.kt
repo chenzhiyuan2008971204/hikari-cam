@@ -279,6 +279,56 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         vm.controller.onActivePhysical = cb
         onDispose { if (vm.controller.onActivePhysical === cb) vm.controller.onActivePhysical = null }
     }
+    // ---- optical telephoto: which lens serves the zoom -------------------------------------------------
+    // The phone's own logical camera may switch to its telephoto by itself; if it does not, the zoom step
+    // binds the physical lens (Camera2Interop). Either way the capture results are checked, and the app
+    // falls back to digital zoom on the logical camera when the lens refuses or ignores the zoom.
+    var autoTele by remember { mutableStateOf(prefs.getBoolean("teleAuto", true)) }
+    var autoOpt by remember { mutableStateOf(false) }      // the current lens was chosen by the zoom, not by the user
+    var pendingZoom by remember { mutableStateOf<Float?>(null) }
+    val halResult = remember { androidx.compose.runtime.mutableStateMapOf<String, Boolean>() }
+    val teleBlocked = remember { androidx.compose.runtime.mutableStateListOf<String>() }
+    val teles = remember(probe, vm.caps?.mainFocal35) {
+        com.hikari.cam.camera.TelePlan.teles(probe.first, vm.caps?.mainFocal35 ?: probe.first.firstOrNull()?.focal35)
+    }
+    fun applyZoom(z: Float) {
+        zoom = z
+        val routed = autoTele && lens == CameraSelector.LENS_FACING_BACK && !settings.virtualCamera && (lensOpt == null || autoOpt)
+        val pick = com.hikari.cam.camera.TelePlan.pick(teles, z)
+        val plan = if (routed) com.hikari.cam.camera.TelePlan.step(teles, z, pick?.let { halResult[it.option.key] }, teleBlocked.toSet())
+            else com.hikari.cam.camera.TelePlan.Step.Main
+        when (plan) {
+            is com.hikari.cam.camera.TelePlan.Step.Physical ->
+                if (lensOpt?.key != plan.tele.option.key) { autoOpt = true; pendingZoom = z; lensOpt = plan.tele.option }
+                else vm.controller.setZoom(com.hikari.cam.camera.TelePlan.relativeZoom(z, plan.tele))
+            else ->
+                if (autoOpt && lensOpt != null) { autoOpt = false; pendingZoom = z; lensOpt = null }   // back to the logical camera
+                else vm.controller.setZoom(z)
+        }
+    }
+    LaunchedEffect(Math.round(zoom * 5f), teles, lensOpt, autoTele) {
+        val t = com.hikari.cam.camera.TelePlan.pick(teles, zoom) ?: return@LaunchedEffect
+        if (!autoTele || (lensOpt != null && !autoOpt)) return@LaunchedEffect
+        if (autoOpt && lensOpt?.key == t.option.key) {
+            // we stream the lens ourselves: did the camera honour the zoom that is left over on top of it?
+            delay(1000)
+            val o = vm.controller.observed ?: return@LaunchedEffect
+            val asked = com.hikari.cam.camera.TelePlan.relativeZoom(zoom, t)
+            if (!com.hikari.cam.camera.TelePlan.honoured(asked, o)) {
+                teleBlocked += t.option.key
+                lensMsg = "這顆長焦鏡頭沒有照要求變焦（要 ${"%.1f".format(asked)}×，相機實際 ${"%.1f".format(o.zoomRatio ?: (o.cropFraction?.let { 1f / it } ?: 0f))}×）：改用數位變焦"
+                autoOpt = false; pendingZoom = zoom; lensOpt = null
+            }
+        } else if (t.option.kind == com.hikari.cam.camera.LensOption.Kind.PHYSICAL && lensOpt == null && halResult[t.option.key] == null) {
+            // does the phone move to the telephoto by itself at this zoom? the capture results say which lens streams
+            delay(900)
+            val o = vm.controller.observed ?: return@LaunchedEffect
+            val id = o.activePhysical ?: return@LaunchedEffect   // the phone does not say which lens streams: cannot tell
+            val ok = id == t.option.physicalId
+            halResult[t.option.key] = ok
+            if (ok) lensMsg = "這支手機會自己切到長焦（實體 #$id）" else applyZoom(zoom)
+        }
+    }
     LaunchedEffect(lensMsg) { if (lensMsg != null) { delay(3500); lensMsg = null } }
     LaunchedEffect(lens, settings.saveRaw, settings.naturalDetail, lensOpt, settings.virtualCamera) {
         val opt = lensOpt.takeIf { lens == CameraSelector.LENS_FACING_BACK }
@@ -306,8 +356,19 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         app.rawSupported = c.raw
         app.naturalApplied = c.naturalApplied
         app.cameraReport = c.report
-        zoom = c.minZoom.coerceAtLeast(1f).coerceAtMost(c.maxZoom)
-        vm.controller.setZoom(zoom)
+        val pz = pendingZoom
+        pendingZoom = null
+        if (pz != null) {
+            // the zoom step rebound the camera (another lens): keep the zoom the user asked for
+            zoom = pz.coerceIn(c.minZoom, c.maxZoom)
+            val t = if (autoOpt) teles.firstOrNull { it.option.key == lensOpt?.key } else null
+            vm.controller.setZoom(if (t != null) com.hikari.cam.camera.TelePlan.relativeZoom(zoom, t) else zoom)
+        } else {
+            zoom = c.minZoom.coerceAtLeast(1f).coerceAtMost(c.maxZoom)
+            vm.controller.setZoom(zoom)
+        }
+        // a multi-lens phone: look its lenses up once, so 2x / 3x / 5x can reach a real telephoto
+        if (!probeWanted && !settings.virtualCamera && (c.lensStops.size > 1 || c.maxZoom >= 4f)) probeWanted = true
         vm.controller.setFlash(flash)
         vm.controller.setWhiteBalance(wb.mode)
         ev = 0
@@ -459,11 +520,10 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             Box(
                 (if (fitHeight) Modifier.fillMaxHeight().aspectRatio(aspect) else Modifier.fillMaxWidth().aspectRatio(aspect))
                     .clip(RoundedCornerShape(10.dp))
-                    .pointerInput(caps) {
+                    .pointerInput(caps, teles) {
                         detectTransformGestures { _, _, z, _ ->
                             val c = caps ?: return@detectTransformGestures
-                            zoom = (zoom * z).coerceIn(c.minZoom, c.maxZoom)
-                            vm.controller.setZoom(zoom)
+                            applyZoom((zoom * z).coerceIn(c.minZoom, c.maxZoom))
                         }
                     }
                     .pointerInput(Unit) {
@@ -524,7 +584,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                         onSearchHidden = {
                             prefs.edit().putBoolean("probeHidden", true).apply(); probeHidden = true
                             lensMsg = "已搜尋系統未列出的鏡頭"
-                        }) { lensOpt = it }
+                        }, teleAuto = autoTele, onTeleAuto = { autoTele = it; prefs.edit().putBoolean("teleAuto", it).apply() }) { autoOpt = false; lensOpt = it }
                 }
                 lensMsg?.let {
                     Text(it, color = Color.White, fontSize = 12.sp,
@@ -536,10 +596,10 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             }
             // zoom stops, and the open panel laid over the bottom of the preview so the preview keeps its size
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
-                if (caps != null && caps.maxZoom > caps.minZoom) ZoomStops(caps.minZoom, caps.maxZoom, caps.lensStops, caps.mainFocal35, zoom) { z ->
-                    zoom = z
+                if (caps != null && caps.maxZoom > caps.minZoom) ZoomStops(caps.minZoom, caps.maxZoom,
+                    (caps.lensStops + teles.map { Math.round(it.ratio * 10f) / 10f }).distinct().sorted(), caps.mainFocal35, zoom) { z ->
                     view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                    vm.controller.setZoom(z)
+                    applyZoom(z)
                 }
                 if (panel >= 0) Box(Modifier.fillMaxWidth().background(Color(0xD9101010), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                     .padding(top = 4.dp)) {
@@ -692,6 +752,8 @@ private fun LensPicker(
     searched: Boolean,
     onOpen: () -> Unit,
     onSearchHidden: () -> Unit,
+    teleAuto: Boolean,
+    onTeleAuto: (Boolean) -> Unit,
     onSelect: (com.hikari.cam.camera.LensOption?) -> Unit,
 ) {
     var open by remember { mutableStateOf(false) }
@@ -715,6 +777,9 @@ private fun LensPicker(
                 },
                 fontSize = 12.sp, color = Color.Gray,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).widthIn(max = 280.dp))
+            androidx.compose.material3.DropdownMenuItem(
+                text = { Text(if (teleAuto) "長焦自動切換：開 ✓" else "長焦自動切換：關") },
+                onClick = { onTeleAuto(!teleAuto) })
             androidx.compose.material3.DropdownMenuItem(
                 text = { Text("自動（系統預設＋變焦切換）") },
                 onClick = { open = false; onSelect(null) })

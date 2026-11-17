@@ -148,6 +148,8 @@ class CameraController(private val context: Context) {
     /** Physical lens currently streaming behind a logical camera (from capture results), for the UI. */
     @Volatile var onActivePhysical: ((String?) -> Unit)? = null
     private var lastActive: String? = null
+    /** what the camera said about its last frame (physical lens, zoom applied): null on single-lens cameras */
+    @Volatile var observed: TelePlan.Observed? = null
     private var direct: DirectCamera? = null
 
     @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
@@ -229,6 +231,12 @@ class CameraController(private val context: Context) {
                 .setResolutionStrategy(ResolutionStrategy(android.util.Size(1440, 1080), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER))
                 .build())
         withPhysical(pvb) { androidx.camera.camera2.interop.Camera2Interop.Extender(it) }
+        // phones with several lenses behind one camera: watch which lens streams and which zoom the camera really
+        // applies (the long-focus switching depends on it); single-lens cameras and emulators are left alone
+        observed = null
+        if (physical != null || runCatching { p.getCameraInfo(selector).physicalCameraInfos.size > 1 }.getOrDefault(false)) {
+            runCatching { trackObserved(pvb, p.getCameraInfo(selector)) }
+        }
         val pv = pvb.build()
         pv.setSurfaceProvider(main) { req -> onSurfaceRequest(req) }
 
@@ -282,6 +290,29 @@ class CameraController(private val context: Context) {
             naturalApplied = naturalApplied,
             report = runCatching { report(p, cam, zoom?.minZoomRatio ?: 1f, zoom?.maxZoomRatio ?: 1f) }.getOrDefault(""),
         ).also { caps = it }
+    }
+
+    /** Reads the physical lens and the zoom the camera applies from every few capture results. */
+    @androidx.annotation.OptIn(androidx.camera.camera2.interop.ExperimentalCamera2Interop::class)
+    private fun trackObserved(b: Preview.Builder, info: androidx.camera.core.CameraInfo) {
+        val active = androidx.camera.camera2.interop.Camera2CameraInfo.from(info)
+            .getCameraCharacteristic(android.hardware.camera2.CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
+        var last = 0L
+        androidx.camera.camera2.interop.Camera2Interop.Extender(b).setSessionCaptureCallback(object : android.hardware.camera2.CameraCaptureSession.CaptureCallback() {
+            override fun onCaptureCompleted(session: android.hardware.camera2.CameraCaptureSession, request: android.hardware.camera2.CaptureRequest,
+                                            result: android.hardware.camera2.TotalCaptureResult) {
+                val now = android.os.SystemClock.elapsedRealtime()
+                if (now - last < 250) return
+                last = now
+                val id = result.get(android.hardware.camera2.CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID)
+                val zr = if (android.os.Build.VERSION.SDK_INT >= 30) result.get(android.hardware.camera2.CaptureResult.CONTROL_ZOOM_RATIO) else null
+                val crop = result.get(android.hardware.camera2.CaptureResult.SCALER_CROP_REGION)
+                val frac = if (crop != null && active != null && active.width() > 0) crop.width().toFloat() / active.width() else null
+                val changed = id != observed?.activePhysical
+                observed = TelePlan.Observed(id, zr, frac)
+                if (changed) main.execute { onActivePhysical?.invoke(id) }
+            }
+        })
     }
 
     /**

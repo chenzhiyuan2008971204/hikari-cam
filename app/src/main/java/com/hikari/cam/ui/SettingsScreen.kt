@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +57,11 @@ fun SettingsScreen(app: AppViewModel, rawSupported: Boolean?) {
             null -> Info("DNG RAW", "開啟一次相機後才知道這支手機是否支援。")
         }
         Info("相機資訊", app.cameraReport.ifEmpty { "開啟一次相機後顯示這支手機開放給 App 的鏡頭" })
+        var diag by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+        androidx.compose.material3.TextButton({ diag = true }, modifier = Modifier.padding(horizontal = 8.dp).testTag("openCameraDiag")) {
+            Text("完整相機診斷（鏡頭、實體 ID、焦距、光圈、感光元件、變焦、RAW）", color = HikariColors.Accent, fontSize = 13.sp)
+        }
+        if (diag) CameraDiagDialog { diag = false }
         Toggle("九宮格", "相機取景格線", s.grid) { v -> app.updateSettings { it.copy(grid = v) } }
         Text("預設長寬比", color = Color.White, modifier = Modifier.padding(start = 16.dp, top = 10.dp))
         Row(Modifier.padding(horizontal = 12.dp)) {
