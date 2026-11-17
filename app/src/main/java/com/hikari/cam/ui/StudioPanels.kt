@@ -127,13 +127,15 @@ fun lookItems(looks: List<FilterSpec>) = looks.map { LookItem(it.id, it.name, it
 
 /** Horizontal category navigation; the selected category is remembered in the settings. */
 @Composable
-fun LookCategoryBar(app: AppViewModel, looks: List<FilterSpec>, modifier: Modifier = Modifier, short: Boolean = false) {
+fun LookCategoryBar(app: AppViewModel, looks: List<FilterSpec>, modifier: Modifier = Modifier, short: Boolean = false, favFirst: Boolean = false, tagPrefix: String = "cat-") {
     val settings by app.settings.collectAsState()
     val favorites by app.favorites.collectAsState()
-    val cats = remember(looks, favorites) { Browse.categories(SERIES_ZH.toList(), lookItems(looks), favorites) }
+    val cats = remember(looks, favorites, favFirst) {
+        Browse.categories(SERIES_ZH.toList(), lookItems(looks), favorites).let { l -> if (favFirst) l.sortedBy { if (it.id == Browse.FAV) 0 else 1 } else l }
+    }
     val cur = Browse.valid(settings.filterCategory, cats)
     ChipRow(modifier) {
-        for (c in cats) Chip((if (short) c.title.substringAfterLast(' ') else c.title) + " ${c.count}", c.id == cur, "cat-${c.id}") { app.updateSettings { it.copy(filterCategory = c.id) } }
+        for (c in cats) Chip((if (short) c.title.substringAfterLast(' ') else c.title) + " ${c.count}", c.id == cur, "$tagPrefix${c.id}") { app.updateSettings { it.copy(filterCategory = c.id) } }
     }
 }
 
@@ -154,8 +156,8 @@ fun looksInCategory(app: AppViewModel, looks: List<FilterSpec>, query: String = 
 
 /**
  * The camera's look panel. Top: a card with the three looks recommended for what the camera sees.
- * Below: only the looks the user picked for themself (favourites), and a "more" tile that opens the
- * whole library by category.
+ * Below: a category bar (favourites first, then all and each category), the looks of the selected
+ * category in one row, and a "more" tile that opens the library with search and the ★ to favourite.
  */
 @Composable
 fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>, recs: List<com.hikari.vision.Recommendation>, sceneLabel: String, onPick: (String) -> Unit) {
@@ -184,12 +186,11 @@ fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>,
                 }
             }
         }
-        // my looks: favourites (and the one in use), then "more"
-        val mine = remember(favorites, look.id, app.looks) { app.looks.filter { it.id in favorites || it.id == look.id } }
-        Row(Modifier.padding(start = 14.dp, top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("我的濾鏡", color = HikariColors.Dim, fontSize = 11.sp)
-            if (favorites.isEmpty()) Text("　在「更多」裡按 ★ 把常用的濾鏡放到這裡", color = Color(0xFF6A6A6A), fontSize = 10.sp)
-        }
+        // every look, one category at a time: favourites come first, then all, then the categories
+        val mine = looksInCategory(app, app.looks)
+        val cat = app.settings.collectAsState().value.filterCategory
+        LookCategoryBar(app, app.looks, Modifier.padding(top = 2.dp), short = true, favFirst = true, tagPrefix = "camcat-")
+        if (cat == Browse.FAV && mine.isEmpty()) Text("還沒有收藏。按右邊「更多」，在濾鏡上按 ★ 就會放到這裡", color = Color(0xFF6A6A6A), fontSize = 10.sp, modifier = Modifier.padding(start = 14.dp, top = 6.dp))
         LazyRow(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
             items(mine, key = { it.id }) { spec ->
                 val sel = spec.id == look.id
