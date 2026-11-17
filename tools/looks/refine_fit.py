@@ -105,6 +105,7 @@ def style_drift(ref, b0, b, mono=False):
     )
     cast = 0.0
     for m in ref.band:
+        m = m & ~ref.skin   # skin is corrected on purpose; the cast of everything else must not move
         if m.any():
             cast = max(cast, float(np.hypot(*(b[m, 1:].mean(0) - b0[m, 1:].mean(0)))))
     d["cast"] = cast
@@ -113,22 +114,22 @@ def style_drift(ref, b0, b, mono=False):
 
 def cost(m, d, mono, monotone):
     c = 3.0 * m["clipLo"] + 5.0 * m["clipHi"]
-    c += 70 * max(0.0, 0.95 - m["shKeep"]) + 70 * max(0.0, 0.96 - m["hlKeep"])
+    c += 90 * max(0.0, 0.95 - m["shKeep"]) + 90 * max(0.0, 0.96 - m["hlKeep"])
     c += 8.0 * m["neon"]
     if not mono:
         c += 1.1 * m["mud"]
-        c += 0.9 * max(0.0, m["skinH"] - 3.0) ** 2
+        c += 1.5 * max(0.0, m["skinH"] - 2.5) ** 2
         c += 160 * max(0.0, -m["skinL"] - 0.04)
         c += 120 * max(0.0, -m["greenL"] - 0.05)
         c += 30 * max(0.0, 0.62 - m["greenC"])
     if not monotone:
         c += 200
     # style: the look must stay the look
-    c += 9.0 * max(0.0, d["dE"] - 2.0) ** 1.5 + 0.25 * d["dE"]
-    c += 900 * max(0.0, abs(d["dL"]) - 0.010)
-    c += 250 * max(0.0, abs(d["dC"]) - 0.05)
-    c += 250 * max(0.0, abs(d["dContrast"]) - 0.04)
-    c += 4000 * max(0.0, d["cast"] - 0.004)
+    c += 9.0 * max(0.0, d["dE"] - 2.6) ** 1.5 + 0.15 * d["dE"]
+    c += 700 * max(0.0, abs(d["dL"]) - 0.018)
+    c += 200 * max(0.0, abs(d["dC"]) - 0.07)
+    c += 200 * max(0.0, abs(d["dContrast"]) - 0.06)
+    c += 3000 * max(0.0, d["cast"] - 0.008)
     return c
 
 
