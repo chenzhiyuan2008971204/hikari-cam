@@ -62,7 +62,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     /**
      * Look thumbnails: every look rendered by the real engine (same shaders and LUTs as capture
-     * and export) on one bundled standard photo, so they can be compared like for like.
+     * and export), by default each on its own Japanese photo that shows its character; or all on
+     * one standard photo the user picks, to compare them like for like.
      */
     val thumbs = androidx.compose.runtime.mutableStateMapOf<String, android.graphics.Bitmap>()
     val samples by lazy { com.hikari.cam.smart.Samples.list(app) }
@@ -76,11 +77,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         thumbJob = viewModelScope.launch {
             // "auto": every look on the standard photo that suits it (a portrait look on a face, a night
             // look on lights...); otherwise the one photo the user chose, the same for all looks
+            // "auto" with the Japanese photo pool: each look on its own photo of the kind that shows
+            // its character (night looks on night streets, pastel looks on sakura ...), none repeated
+            val pool = demoPhotos()
+            val own = if (sceneId == "auto") com.hikari.studio.LookDemo.assign(looks.map { it.id to it.name }, pool) else emptyMap()
             val cache = HashMap<String, android.graphics.Bitmap>()
             suspend fun source(id: String) = cache.getOrPut(id) {
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    val sample = samples.firstOrNull { it.id == id } ?: samples.first()
-                    val b = com.hikari.cam.smart.Samples.bitmap(getApplication(), sample)
+                    val b = if (id.startsWith("japan/")) {
+                        getApplication<Application>().assets.open(id).use { android.graphics.BitmapFactory.decodeStream(it)!! }
+                    } else com.hikari.cam.smart.Samples.bitmap(getApplication(), samples.firstOrNull { it.id == id } ?: samples.first())
                     // centre square (a little above centre for upright portraits), 256 px
                     val side = minOf(b.width, b.height)
                     val top = if (b.height > b.width) ((b.height - side) * 0.3f).toInt() else (b.height - side) / 2
@@ -89,7 +95,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
             // looks that share a photo are rendered together, so each photo is uploaded to the GPU once
-            val groups = looks.groupBy { if (sceneId == "auto") com.hikari.studio.LookDemo.sample(it.id, it.name) else sceneId }
+            val groups = looks.groupBy {
+                when {
+                    sceneId != "auto" -> sceneId
+                    own[it.id] != null -> "japan/" + own[it.id]
+                    else -> com.hikari.studio.LookDemo.sample(it.id, it.name)
+                }
+            }
             for ((photo, list) in groups) {
                 val src = source(photo)
                 hikari.renderer.forget("appthumbs")
@@ -122,6 +134,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         return out
     }
 
+    /** the bundled Japanese photo pool (assets/japan/japan.json), with what each photo shows */
+    private val demoPool by lazy {
+        runCatching {
+            val arr = org.json.JSONArray(getApplication<Application>().assets.open("japan/japan.json").bufferedReader().readText())
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                val tags = o.optJSONArray("tags")?.let { t -> (0 until t.length()).map { t.getString(it) }.toSet() } ?: emptySet()
+                com.hikari.studio.LookDemo.Photo(o.getString("file"), tags)
+            }
+        }.getOrDefault(emptyList())
+    }
+    fun demoPhotos(): List<com.hikari.studio.LookDemo.Photo> = demoPool
+
     /** Frame library thumbnails: each frame composed onto the bundled photo that suits it (rendered once). */
     val frameDemos = androidx.compose.runtime.mutableStateMapOf<String, android.graphics.Bitmap>()
     private var frameDemoJob: kotlinx.coroutines.Job? = null
@@ -131,11 +156,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             // Japanese street and daily-life photos (assets/japan), one per frame with no repeats while
             // there are enough; the standard photos fill in after that
             val ctx = getApplication<Application>()
-            val japan: List<String> = runCatching {
-                val arr = org.json.JSONArray(ctx.assets.open("japan/japan.json").bufferedReader().readText())
-                (0 until arr.length()).map { "japan/" + arr.getJSONObject(it).getString("file") }
-            }.getOrDefault(emptyList())
-            val pool = japan + samples.map { "samples/" + it.file }
+            val japan = demoPhotos().map { "japan/" + it.file }
+            val pool = japan.ifEmpty { samples.map { "samples/" + it.file } }
             val when0 = java.time.LocalDateTime.now()
             for ((idx, def) in com.hikari.studio.Frames.all.withIndex()) {
                 val b = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
