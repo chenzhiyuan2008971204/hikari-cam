@@ -15,7 +15,7 @@ from build import bake, clean_check, write_cube
 from films import FILMS, SHIP, RETIRED
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-ASSETS = os.path.join(ROOT, "engine/src/main/assets")
+ASSETS = os.environ.get("HIKARI_ASSETS") or os.path.join(ROOT, "engine/src/main/assets")
 
 
 HUE_ZH = dict(red="紅", orange="橙", yellow="黃", green="綠", aqua="青", blue="藍", purple="紫", magenta="洋紅",
@@ -69,6 +69,11 @@ def recipe(c, fx):
     if sp:
         out.append("分離色調：" + "、".join(f"{dict(shadows='暗部', mids='中間調', highlights='高光')[k]} {h:.0f}° × {a:.3f}"
                                          for k, (h, a) in sp.items()))
+    rf = c.get("refine")
+    if rf:
+        zh = dict(shadow_open="暗部層次展開", hl_open="高光層次展開", toe="黑位微調", mud="髒色還原（去灰濁）", skin_hue="膚色色相修正",
+                  green_light="植物亮度", green_sat="植物飽和", sky_hue="天空色相修正", neon="色度上限收斂")
+        out.append("品質微調（逐款擬合，不改風格）：" + "、".join(f"{zh[k]} {v:+.3g}" if k not in ("neon",) else f"{zh[k]} ×{v:.2f}" for k, v in rf.items()))
     out.append("保護：中性白／灰、膚色色相、色域內壓縮（不爆色）")
     g = fx["grain"]
     out.append(f"顆粒：強度 {g['amount']:.2f}、粒徑 {g['size'] * 1000:.2f}‰ 短邊、彩色 {g['chroma']:.2f}、粗糙 {g['rough']:.2f}，中間調最強")

@@ -262,3 +262,17 @@ RETIRED = {
     "street_negative": "ci_2383", "true_negative": "jp_clean_day", "mono_fine": "fj_acros", "fj_provia": "studio_hi",
 }
 SHIP = [k for k in SHIP if k not in RETIRED]
+
+# Quality refinement: per-look corrections fitted by refine_fit.py (refine_params.json), applied on top of
+# each finished recipe. BASE keeps the recipes as they were before, for the fit and for A/B comparisons.
+import copy as _copy, json as _json, os as _os  # noqa: E402
+BASE = {_k: _copy.deepcopy(_v["colour"]) for _k, _v in FILMS.items()}
+_RP = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "refine_params.json")
+if _os.path.exists(_RP) and not _os.environ.get("HIKARI_NO_REFINE"):
+    from refine import refine_look as _refine  # noqa: E402
+    REFINE = _json.load(open(_RP))
+    for _k in SHIP:
+        if _k in REFINE and REFINE[_k]["params"]:
+            FILMS[_k]["colour"] = _refine(BASE[_k], REFINE[_k]["params"])
+else:
+    REFINE = {}
