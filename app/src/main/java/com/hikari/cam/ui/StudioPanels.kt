@@ -42,6 +42,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -162,62 +163,60 @@ fun looksInCategory(app: AppViewModel, looks: List<FilterSpec>, query: String = 
 @Composable
 fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>, recs: List<com.hikari.vision.Recommendation>, sceneLabel: String, onPick: (String) -> Unit) {
     var more by remember { mutableStateOf(false) }
+    // the panel can be folded down to one slim row so the viewfinder is not covered
+    var open by rememberSaveable { mutableStateOf(true) }
     val camSettings by app.settings.collectAsState()
-    Column(Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
-        // camera recipes: one tap switches the whole style
-        RecipeBar(app, look, remember(camSettings.cameraAdjustJson) { com.hikari.engine.Adjustments.fromJson(camSettings.cameraAdjustJson) })
-        if (recs.isNotEmpty()) Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp).fillMaxWidth().clip(Darkroom.R12)
-            .background(Color(0xCC1C1C1E)).border(1.dp, Color(0x33F59E0B), Darkroom.R12).padding(horizontal = 10.dp, vertical = 8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("✦", color = HikariColors.Accent, fontSize = 13.sp)
-                Text(" 為這個畫面推薦", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                if (sceneLabel.isNotEmpty()) Text(sceneLabel, color = HikariColors.Dim, fontSize = 11.sp)
-            }
-            Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxWidth().padding(bottom = 2.dp)) {
+        Row(Modifier.fillMaxWidth().clickable { open = !open }.padding(horizontal = 14.dp, vertical = 4.dp).testTag("lookPanelToggle"), verticalAlignment = Alignment.CenterVertically) {
+            Text(if (open) "▾" else "▴", color = HikariColors.Accent, fontSize = 13.sp)
+            Text("  ${look.name}", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.weight(1f))
+            if (sceneLabel.isNotEmpty()) Text(sceneLabel, color = HikariColors.Dim, fontSize = 11.sp)
+            Text(if (open) "  收合" else "  展開", color = HikariColors.Dim, fontSize = 11.sp)
+        }
+        if (open) {
+            // camera recipes: one tap switches the whole style
+            RecipeBar(app, look, remember(camSettings.cameraAdjustJson) { com.hikari.engine.Adjustments.fromJson(camSettings.cameraAdjustJson) })
+            if (recs.isNotEmpty()) Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("✦", color = HikariColors.Accent, fontSize = 14.sp)
                 for (rc in recs.take(3)) {
                     val on = rc.look.id == look.id
-                    Row(Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(if (on) HikariColors.Accent else Color(0xFF2A2824)).clickable { onPick(rc.look.id) }
-                        .padding(4.dp).testTag("rec"), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(34.dp).clip(RoundedCornerShape(7.dp)).background(Color.Black)) {
+                    Row(Modifier.weight(1f).clip(RoundedCornerShape(8.dp)).background(if (on) HikariColors.Accent else Color(0xCC2A2824)).clickable { onPick(rc.look.id) }
+                        .padding(3.dp).testTag("rec"), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(26.dp).clip(RoundedCornerShape(6.dp)).background(Color.Black)) {
                             app.thumbs[rc.look.id]?.let { b -> Image(remember(b) { b.asImageBitmap() }, rc.look.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
                         }
-                        Column(Modifier.padding(start = 6.dp)) {
-                            Text(rc.look.name, color = if (on) Color.Black else Color.White, fontSize = 10.sp, maxLines = 2, lineHeight = 12.sp, fontWeight = FontWeight.Bold)
-                            Text("${rc.score}", color = if (on) Color(0xFF3A3A3A) else HikariColors.Accent, fontSize = 10.sp)
+                        Text(rc.look.name, color = if (on) Color.Black else Color.White, fontSize = 9.sp, maxLines = 2, lineHeight = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).padding(start = 4.dp))
+                        Text("${rc.score}", color = if (on) Color(0xFF3A3A3A) else HikariColors.Accent, fontSize = 10.sp, modifier = Modifier.padding(end = 3.dp))
+                    }
+                }
+            }
+            // category switch: 收藏 first, then 全部 and every category
+            LookCategoryBar(app, app.looks, Modifier.padding(top = 2.dp), short = true, favFirst = true, tagPrefix = "camcat-")
+            val mine = looksInCategory(app, app.looks)
+            val curFav = camSettings.filterCategory == com.hikari.studio.Browse.FAV
+            if (curFav && mine.isEmpty()) Text("還沒有收藏：點下面濾鏡右上角的 ☆ 就會放到這裡", color = Color(0xFF8E8E93), fontSize = 10.sp, modifier = Modifier.padding(start = 14.dp, top = 4.dp))
+            LazyRow(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
+                items(mine, key = { it.id }) { spec ->
+                    val sel = spec.id == look.id
+                    val fav = spec.id in favorites
+                    Column(Modifier.width(60.dp).clickable { onPick(spec.id) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(Modifier.size(52.dp).clip(Darkroom.R8).background(HikariColors.Panel).border(if (sel) 2.dp else 0.dp, if (sel) HikariColors.Accent else Color.Transparent, Darkroom.R8)) {
+                            app.thumbs[spec.id]?.let { b -> Image(remember(b) { b.asImageBitmap() }, spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
+                            // star right here: no need to open the library to keep a look
+                            Text(if (fav) "★" else "☆", color = if (fav) HikariColors.Accent else Color.White, fontSize = 15.sp,
+                                modifier = Modifier.align(Alignment.TopEnd).padding(2.dp).clip(CircleShape).background(Color(0x88000000))
+                                    .clickable { app.toggleFavorite(spec.id) }.padding(horizontal = 4.dp, vertical = 0.dp).testTag("camstar-${spec.id}"))
                         }
+                        Text(spec.name, color = if (sel) HikariColors.Accent else Color.White, fontSize = 10.sp, maxLines = 1)
                     }
                 }
-            }
-        }
-        // every look in one row; the first cell is 收藏: tap it to show only the favourites, tap again for all
-        var favOnly by remember { mutableStateOf(false) }
-        val mine = remember(favOnly, favorites, app.looks) { if (favOnly) app.looks.filter { it.id in favorites } else app.looks }
-        if (favOnly && mine.isEmpty()) Text("還沒有收藏。按右邊「更多」，在濾鏡上按 ★ 就會放到這裡", color = Color(0xFF6A6A6A), fontSize = 10.sp, modifier = Modifier.padding(start = 14.dp, top = 6.dp))
-        LazyRow(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
-            item(key = "favs") {
-                Column(Modifier.width(64.dp).clickable { favOnly = !favOnly }.testTag("favTile"), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)).background(if (favOnly) HikariColors.Accent else Color(0xFF242424))
-                        .border(1.dp, if (favOnly) HikariColors.Accent else Color(0xFF4A4A4A), RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
-                        Text("★", color = if (favOnly) Color.Black else HikariColors.Accent, fontSize = 22.sp)
+                item(key = "more") {
+                    Column(Modifier.width(60.dp).clickable { more = true }.testTag("moreLooks"), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(Modifier.size(52.dp).clip(Darkroom.R8).background(Color(0xFF242424)).border(1.dp, Color(0xFF4A4A4A), Darkroom.R8), contentAlignment = Alignment.Center) {
+                            Text("＋", color = Color.White, fontSize = 20.sp)
+                        }
+                        Text("更多", color = Color.White, fontSize = 10.sp)
                     }
-                    Text("收藏 ${favorites.size}", color = if (favOnly) HikariColors.Accent else Color.White, fontSize = 10.sp, maxLines = 1)
-                }
-            }
-            items(mine, key = { it.id }) { spec ->
-                val sel = spec.id == look.id
-                Column(Modifier.width(64.dp).clickable { onPick(spec.id) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)).background(HikariColors.Panel).border(if (sel) 2.dp else 0.dp, if (sel) HikariColors.Accent else Color.Transparent, RoundedCornerShape(8.dp))) {
-                        app.thumbs[spec.id]?.let { b -> Image(remember(b) { b.asImageBitmap() }, spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
-                    }
-                    Text(spec.name, color = if (sel) HikariColors.Accent else Color.White, fontSize = 10.sp, maxLines = 1)
-                }
-            }
-            item(key = "more") {
-                Column(Modifier.width(64.dp).clickable { more = true }.testTag("moreLooks"), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFF242424)).border(1.dp, Color(0xFF4A4A4A), RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
-                        Text("＋", color = Color.White, fontSize = 22.sp)
-                    }
-                    Text("更多", color = Color.White, fontSize = 10.sp)
                 }
             }
         }
