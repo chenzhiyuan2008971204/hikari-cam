@@ -137,7 +137,18 @@ fun FiltersScreen(app: AppViewModel) {
             },
             confirmButton = {
                 Row {
-                    TextButton(onClick = { app.exportXmp(listOf(spec)) }, modifier = Modifier.testTag("exportXmp")) { Text("匯出 XMP") }
+                    var exportMenu by remember { mutableStateOf(false) }
+                    Box {
+                        TextButton(onClick = { exportMenu = true }, modifier = Modifier.testTag("exportMenu")) { Text("匯出 ▾") }
+                        androidx.compose.material3.DropdownMenu(exportMenu, { exportMenu = false }) {
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Column { Text("XMP 設定檔"); Text("Lightroom／Camera Raw 的「設定檔」", fontSize = 11.sp, color = Color.Gray) } },
+                                onClick = { exportMenu = false; app.exportXmp(listOf(spec)) }, modifier = Modifier.testTag("exportXmp"))
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Column { Text("3D LUT（.cube，33×33×33）"); Text("DaVinci Resolve、Photoshop、Premiere 等", fontSize = 11.sp, color = Color.Gray) } },
+                                onClick = { exportMenu = false; app.exportCube(listOf(spec)) }, modifier = Modifier.testTag("exportCube"))
+                        }
+                    }
                     TextButton(onClick = { app.toggleFavorite(spec.id) }) { Text(if (spec.id in favorites) "★" else "☆") }
                     TextButton(onClick = {
                         app.updateSettings { it.copy(lastLook = spec.id) }; app.touch(spec.id); detail = null; app.go(Route.Camera)

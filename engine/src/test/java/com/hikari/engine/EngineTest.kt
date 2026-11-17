@@ -42,6 +42,21 @@ class EngineTest {
         assertEquals(ids.sorted().map { "$it.lut" }, files.sorted())          // no .cube text, no stray files
     }
 
+    /** The exported .cube is standard text: header, 33^3 rows of three 4-decimal numbers in 0..1, red fastest. */
+    @Test
+    fun cubeExportIsStandardCubeText() {
+        val lut = CubeLut.parseBinary(File(assets, "luts/${ids.first()}.lut").readBytes())
+        val lines = lut.toCubeText("Hikari Test \"quoted\"").lines().filter { it.isNotEmpty() }
+        assertEquals("TITLE \"Hikari Test 'quoted'\"", lines[0])
+        assertEquals("LUT_3D_SIZE 33", lines[1])
+        assertEquals(2 + 33 * 33 * 33, lines.size)
+        val row = Regex("[01]\\.\\d{4} [01]\\.\\d{4} [01]\\.\\d{4}")
+        assertTrue("every data row is three 4-decimal numbers", lines.drop(2).all { row.matches(it) })
+        // red changes fastest: the second row differs from the first only in red for an ordinary look
+        val r0 = lines[2].split(" ").map { it.toFloat() }; val r1 = lines[3].split(" ").map { it.toFloat() }
+        assertTrue(r1[0] > r0[0])
+    }
+
     @Test
     fun binaryLutRejectsWhatIsNotAValidLut() {
         val good = File(assets, "luts/${ids.first()}.lut").readBytes()

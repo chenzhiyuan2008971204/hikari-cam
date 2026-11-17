@@ -200,6 +200,31 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         notice = if (n == specs.size) "已匯出 $n 個 XMP 到 Download/Hikari（Lightroom／Camera Raw 的「設定檔」可匯入）" else "匯出了 $n / ${specs.size} 個，其餘失敗"
     }
 
+    /**
+     * Saves looks as standard .cube 3D LUTs (33x33x33, the look's own table written as 4-decimal text) into
+     * Download/Hikari, for DaVinci Resolve, Photoshop, Premiere and other tools that load .cube files.
+     * Colour only: grain, halation, bloom and vignette are not part of a LUT.
+     */
+    fun exportCube(specs: List<FilterSpec>) = viewModelScope.launch {
+        val n = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            var done = 0
+            for (spec in specs) runCatching {
+                val text = hikari.looks.lut(spec).toCubeText("Hikari ${spec.name}")
+                val values = android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.Downloads.DISPLAY_NAME, "Hikari_${spec.name.replace(Regex("[^A-Za-z0-9]+"), "_").trim('_')}.cube")
+                    put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/octet-stream")
+                    put(android.provider.MediaStore.Downloads.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS + "/Hikari")
+                }
+                val r = getApplication<Application>().contentResolver
+                val uri = r.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)!!
+                r.openOutputStream(uri)!!.use { it.write(text.toByteArray()) }
+                done++
+            }
+            done
+        }
+        notice = if (n == specs.size) "已匯出 $n 個 .cube 3D LUT 到 Download/Hikari" else "匯出了 $n / ${specs.size} 個，其餘失敗"
+    }
+
     fun look(id: String?): FilterSpec = hikari.looks.look(id)
 
     fun go(r: Route) {
