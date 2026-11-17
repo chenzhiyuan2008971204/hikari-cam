@@ -49,11 +49,13 @@ class VideoRecordTest {
         val before = videos().size
         rule.onNodeWithTag("modeVideo").performClick()
         Thread.sleep(500)
+        val t0 = System.currentTimeMillis()
         rule.onNodeWithTag("shutter").performClick()
         val started = poll(15_000) { rule.onAllNodesWithTagCount("recTimer") > 0 }
         Report.line("video: recording started = $started")
         Thread.sleep(4500)
         rule.onNodeWithTag("shutter").performClick()
+        val held = System.currentTimeMillis() - t0   // the emulator's UI is slow: the recording is as long as the time between the two taps
         val saved = poll(60_000) { videos().size > before }
         Report.line("video: saved = $saved")
         assertTrue("recording did not start", started)
@@ -70,7 +72,8 @@ class VideoRecordTest {
         Report.line("video: $name ${w}x$h, $dur ms, audio=$hasAudio, frame at 1 s = ${frame?.width}x${frame?.height}")
         Report.flush(ctx, "video_report.txt")
         mmr.release()
-        assertTrue("duration $dur ms", dur in 2500..8000)
+        Report.line("video: held $held ms between the start and the stop tap")
+        assertTrue("duration $dur ms, shutter held $held ms", dur in (held - 2500)..(held + 1500) && dur >= 3000)
         assertTrue("size ${w}x$h", w % 2 == 0 && h % 2 == 0 && minOf(w, h) >= 720)
         assertTrue("a frame could not be decoded", frame != null)
     }
