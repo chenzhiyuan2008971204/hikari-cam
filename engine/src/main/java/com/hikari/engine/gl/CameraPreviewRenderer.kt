@@ -36,6 +36,52 @@ class CameraPreviewRenderer(
 
     private var pipeline: FilmPipeline? = null
 
+    /** While set, every frame drawn on screen is drawn once more, with the same look, into this recording. */
+    @Volatile var recorder: FilmRecorder? = null
+
+    /**
+     * Stops feeding [rec] and lets go of its surface on the GL thread, then finishes the file on another thread.
+     * [done] gets the length in ms (0 = nothing recorded) and any failure.
+     */
+    fun stopRecording(rec: FilmRecorder, done: (Long, Throwable?) -> Unit) {
+        recorder = null
+        view.queueEvent {
+            val d = android.opengl.EGL14.eglGetCurrentDisplay()
+            rec.releaseEgl(d)
+            Thread {
+                val ms = try { rec.finish() } catch (e: Throwable) { 0L }
+                done(ms, rec.failure)
+            }.start()
+        }
+        view.requestRender()
+    }
+
+    private fun encodeFrame(rec: FilmRecorder, pipe: FilmPipeline, src: Int, p: FilmParams, lk: Look, still: Boolean) {
+        val dpy = android.opengl.EGL14.eglGetCurrentDisplay()
+        val ctx = android.opengl.EGL14.eglGetCurrentContext()
+        val drawS = android.opengl.EGL14.eglGetCurrentSurface(android.opengl.EGL14.EGL_DRAW)
+        val readS = android.opengl.EGL14.eglGetCurrentSurface(android.opengl.EGL14.EGL_READ)
+        val surf = rec.eglSurface(dpy, ctx) ?: return
+        try {
+            if (!android.opengl.EGL14.eglMakeCurrent(dpy, surf, surf, ctx)) return
+            val a = rec.aspect
+            val map = if (still) {
+                val sa = stillW.toFloat() / stillH
+                if (sa > a) { val w = a / sa; SourceMap.bitmap((1f - w) / 2f, 0f, (1f + w) / 2f, 1f) }
+                else { val h = sa / a; SourceMap.bitmap(0f, (1f - h) / 2f, 1f, (1f + h) / 2f) }
+            } else SourceMap.camera(rotationDegrees, mirror, bufferWidth, bufferHeight, a)
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+            GLES30.glViewport(0, 0, rec.width, rec.height)
+            GLES30.glClearColor(0f, 0f, 0f, 1f)
+            GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
+            pipe.composite(FilmPipeline.Frame(src, map, a, rec.width, rec.height, seed, seed + frame, onScreen = true), p, lk.lut, 0, 0, rec.width, rec.height)
+            android.opengl.EGLExt.eglPresentationTimeANDROID(dpy, surf, rec.nextPts())
+            if (android.opengl.EGL14.eglSwapBuffers(dpy, surf)) rec.framesDrawn++
+        } finally {
+            android.opengl.EGL14.eglMakeCurrent(dpy, drawS, readS, ctx)
+        }
+    }
+
     // Still-frame source (the virtual camera): upright bitmaps uploaded as an ordinary 2D texture and
     // drawn through the same film pipeline (its 2D-source variant, the one export uses).
     private val pendingStill = java.util.concurrent.atomic.AtomicReference<android.graphics.Bitmap?>(null)
@@ -178,6 +224,7 @@ class CameraPreviewRenderer(
         frame = (frame + 1) % 997
         val fr = FilmPipeline.Frame(src, map, cropAspect, viewW, viewH, seed, seed + frame, onScreen = true)
         pipe.composite(fr, p, l.lut, 0, 0, viewW, viewH)
+        recorder?.let { rec -> encodeFrame(rec, pipe, src, p, l, still) }
         if (still && frame % 8 == 1) {
             // test source only: one pixel read back, so a run can tell a drawn preview from a black one
             val px = java.nio.ByteBuffer.allocateDirect(4)

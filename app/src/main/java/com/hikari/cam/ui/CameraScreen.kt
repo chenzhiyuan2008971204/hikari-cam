@@ -71,6 +71,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
@@ -106,6 +108,9 @@ import com.hikari.data.UserSettings
 import com.hikari.engine.Adjustments
 import com.hikari.engine.FilterSpec
 import com.hikari.engine.gl.CameraPreviewRenderer
+import com.hikari.engine.gl.FilmRecorder
+import com.hikari.engine.gl.RecordableConfigChooser
+import com.hikari.engine.gl.VideoSize
 import com.hikari.engine.gl.OffscreenRenderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -259,6 +264,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     val glView = remember {
         GLSurfaceView(ctx).apply {
             setEGLContextClientVersion(3)
+            setEGLConfigChooser(RecordableConfigChooser())   // a config the video encoder's surface can share
             val r = CameraPreviewRenderer(ctx.assets, this) { st -> vm.controller.onSurfaceTexture(st) }
             renderer.r = r
             setRenderer(r)
@@ -440,53 +446,57 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     }
 
     val caps = vm.caps
-    var panel by remember { mutableIntStateOf(-1) } // -1 closed, 0 looks, 1 composition, 2 tone, 3 adjust
-    val guide = composition(settings.composition)
-    var showHint by remember { mutableStateOf(false) }
-
-    // live composition: tracked subject (smoothed) and the phone's tilt, only while a guide is on
-    var subject by remember { mutableStateOf<com.hikari.cam.camera.Subject?>(null) }
-    var lastSeen by remember { mutableStateOf(0L) }
-    var tilt by remember { mutableStateOf<Float?>(null) }
-    DisposableEffect(guide?.id) {
-        if (guide == null) { vm.controller.onSubject = null; subject = null; tilt = null; return@DisposableEffect onDispose {} }
-        val onSubject: (com.hikari.cam.camera.Subject?) -> Unit = { n ->
-            val now = System.currentTimeMillis()
-            if (n != null) {
-                val o = subject
-                fun mix(a: Float, b: Float) = a + (b - a) * 0.3f   // heavier smoothing: the guide should not chase every twitch
-                val f = n.face
-                val of = o?.face
-                val face = if (f != null && of != null) com.hikari.cam.camera.Subject.Face(
-                    mix(of.left, f.left), mix(of.top, f.top), mix(of.right, f.right), mix(of.bottom, f.bottom), mix(of.yaw, f.yaw)) else f
-                val next = if (o == null) n else com.hikari.cam.camera.Subject(
-                    mix(o.left, n.left), mix(o.top, n.top), mix(o.right, n.right), mix(o.bottom, n.bottom), face)
-                // redraw only for visible movement (saves battery, keeps the UI calm)
-                if (o == null || kotlin.math.abs(next.cx - o.cx) > 0.005f || kotlin.math.abs(next.cy - o.cy) > 0.005f ||
-                    kotlin.math.abs(next.h - o.h) > 0.005f) subject = next
-                lastSeen = now
-            } else if (now - lastSeen > 700) subject = null
+    // video: the same film pipeline, drawn a second time into the encoder
+    var videoMode by rememberSaveable { mutableStateOf(false) }
+    var active by remember { mutableStateOf<ActiveRec?>(null) }
+    var recSecs by remember { mutableIntStateOf(0) }
+    fun beginRecording(withAudio: Boolean) {
+        if (active != null) return
+        val nv = try { Media.createVideo(ctx) } catch (e: Exception) { vm.message = "無法建立影片檔"; return }
+        var rec: FilmRecorder? = null
+        var err: Throwable? = null
+        // 1080 on the short side; a phone whose encoder refuses that gets 720
+        for (short in listOf(1080, 720)) {
+            val (w, h) = VideoSize.forAspect(r.cropAspect, short)
+            try { rec = FilmRecorder(w, h, nv.pfd.fileDescriptor, withAudio).also { it.start() }; break } catch (e: Throwable) { err = e }
         }
-        vm.controller.onSubject = onSubject
-        val sm = ctx.getSystemService(android.content.Context.SENSOR_SERVICE) as android.hardware.SensorManager
-        val sensor = sm.getDefaultSensor(android.hardware.Sensor.TYPE_GRAVITY) ?: sm.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)
-        val listener = object : android.hardware.SensorEventListener {
-            override fun onSensorChanged(e: android.hardware.SensorEvent) {
-                val roll = Math.toDegrees(kotlin.math.atan2(e.values[0].toDouble(), e.values[1].toDouble())).toFloat()
-                // relative to the nearest upright or landscape orientation
-                val t = roll - Math.round(roll / 90f) * 90f
-                if (tilt.let { it == null || kotlin.math.abs(it - t) > 0.3f }) tilt = t
-            }
-            override fun onAccuracyChanged(s: android.hardware.Sensor?, a: Int) {}
+        if (rec == null) {
+            runCatching { nv.pfd.close() }; Media.discardVideo(ctx, nv.uri)
+            vm.message = "這支手機無法錄影（${err?.javaClass?.simpleName}）"
+            return
         }
-        sensor?.let { sm.registerListener(listener, it, android.hardware.SensorManager.SENSOR_DELAY_UI) }
-        // clear only our own callback: a newer screen may already have set its own
-        onDispose { if (vm.controller.onSubject === onSubject) vm.controller.onSubject = null; sm.unregisterListener(listener) }
+        r.recorder = rec
+        active = ActiveRec(rec, nv.uri, nv.pfd)
+        glView.requestRender()
+        if (!rec.hasAudio) vm.message = if (withAudio) "麥克風無法使用，這支影片沒有聲音" else "沒有麥克風權限，這支影片沒有聲音"
     }
-    // the last target shown: the smart guide keeps it unless another point is clearly better
-    val lastTarget = remember { arrayOfNulls<androidx.compose.ui.geometry.Offset>(1) }
-    val guideCalm = remember { GuideStabilizer() }
-    val guidance = guideCalm.update(if (guide != null) subject?.let { guidance(guide.id, it, lastTarget[0]) }?.also { lastTarget[0] = it.target } else null)
+    fun endRecording() {
+        val a = active ?: return
+        active = null
+        r.stopRecording(a.rec) { ms, err ->
+            scope.launch(Dispatchers.IO) {
+                runCatching { a.pfd.close() }
+                if (ms >= 300 && err == null) {
+                    Media.publishVideo(ctx, a.uri)
+                    withContext(Dispatchers.Main) { vm.message = "影片已儲存到 Movies/Hikari（${ms / 1000} 秒）" }
+                } else {
+                    Media.discardVideo(ctx, a.uri)
+                    withContext(Dispatchers.Main) { vm.message = "錄影失敗${err?.let { "：" + it.javaClass.simpleName } ?: "（沒有錄到畫面）"}" }
+                }
+            }
+        }
+    }
+    val micLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> beginRecording(granted) }
+    fun toggleRecord() {
+        if (active != null) endRecording()
+        else if (ContextCompat.checkSelfPermission(ctx, android.Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) beginRecording(true)
+        else micLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
+    }
+    val endNow by rememberUpdatedState(::endRecording)
+    DisposableEffect(Unit) { onDispose { endNow() } }   // leaving the screen ends and saves the recording
+    LaunchedEffect(active) { recSecs = 0; while (active != null) { delay(1000); recSecs++ } }
+    var panel by remember { mutableIntStateOf(-1) } // -1 closed, 0 looks, 2 tone, 3 adjust
+
     // what the camera sees -> the three looks that suit it (measured scene x measured look traits)
     var recs by remember { mutableStateOf<List<com.hikari.vision.Recommendation>>(emptyList()) }
     var sceneLabel by remember { mutableStateOf("") }
@@ -504,16 +514,6 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         vm.controller.onScene = cb
         onDispose { if (vm.controller.onScene === cb) vm.controller.onScene = null }
     }
-    var wasAligned by remember { mutableStateOf(false) }
-    LaunchedEffect(guidance?.aligned) {
-        val a = guidance?.aligned == true
-        if (a && !wasAligned) view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY)
-        wasAligned = a
-    }
-    LaunchedEffect(settings.composition) {
-        if (guide != null) { showHint = true; delay(4000); showHint = false }
-    }
-
     Column(Modifier.fillMaxSize().background(Darkroom.Ground)) {
         // top bar: icons only, only what this camera supports
         Row(Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 22.dp), verticalAlignment = Alignment.CenterVertically,
@@ -576,25 +576,14 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                         drawLine(c, Offset(0f, size.height * i / 3), Offset(size.width, size.height * i / 3), 1f)
                     }
                 }
-                guide?.let {
-                    CompositionOverlay(it)
-                    LiveGuideOverlay(subject, guidance, tilt)
-                }
                 focusAt?.let { f ->
                     LaunchedEffect(f) { delay(1200); focusAt = null }
                     Canvas(Modifier.fillMaxSize()) {
                         drawCircle(HikariColors.Accent, radius = 36f, center = f, style = androidx.compose.ui.graphics.drawscope.Stroke(2f))
                     }
                 }
-                // composition name, and its tip for a few seconds after choosing it
-                guide?.let { g ->
-                    Column(Modifier.align(Alignment.TopCenter).padding(top = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(g.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                            modifier = Modifier.background(Color(0x66000000), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 3.dp))
-                        if (showHint) Text(g.hint, color = Color.White, fontSize = 12.sp,
-                            modifier = Modifier.padding(top = 4.dp).background(Color(0x66000000), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 3.dp))
-                    }
-                }
+                if (active != null) Text("● %02d:%02d".format(recSecs / 60, recSecs % 60), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.TopCenter).padding(top = 10.dp).background(Color(0xCCE5484D), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 3.dp).testTag("recTimer"))
                 if (countdown > 0) Text("$countdown", color = Color.White, fontSize = 72.sp, modifier = Modifier.align(Alignment.Center))
                 if (settings.dateStamp) Text(stampText(java.util.Date(), settings.stampNote), color = Color.White, fontSize = 12.sp,
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Serif, letterSpacing = 2.sp,
@@ -633,8 +622,6 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                     .padding(top = 4.dp)) {
             when (panel) {
                 0 -> CameraLookPanel(app, look, favorites, recs, sceneLabel) { id -> app.updateSettings { it.copy(lastLook = id) }; app.touch(id) }
-                1 -> CompositionStrip(guide?.id, { id -> app.updateSettings { it.copy(composition = id ?: "") } },
-                    Modifier.fillMaxWidth().padding(vertical = 6.dp))
                 2 -> TonePanel(
                     evIndex = ev, evMin = caps?.evRange?.lower ?: 0, evMax = caps?.evRange?.upper ?: 0, evStep = caps?.evStep ?: 0f,
                     onEv = { ev = it; vm.controller.setExposure(it) },
@@ -660,15 +647,23 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             }
         }
 
-        // bottom panel: 濾鏡 / 構圖 / 調整
+        // bottom panel: 濾鏡 / 光影 / 調整
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.Center) {
-            for ((i, label) in listOf("濾鏡", "構圖", "光影", "調整").withIndex()) {
+            for ((i, label) in listOf(0 to "濾鏡", 2 to "光影", 3 to "調整")) {
                 Column(Modifier.clickable { panel = if (panel == i) -1 else i }.padding(horizontal = 18.dp, vertical = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(label, color = if (panel == i) Color.White else Color(0xFF8A8A8A), fontSize = 13.sp,
                         fontWeight = if (panel == i) FontWeight.Bold else FontWeight.Normal)
                     Box(Modifier.padding(top = 3.dp).size(width = 14.dp, height = 2.dp)
                         .background(if (panel == i) HikariColors.Accent else Color.Transparent, RoundedCornerShape(1.dp)))
                 }
+            }
+        }
+        // photo / video
+        if (active == null) Row(Modifier.fillMaxWidth().padding(top = 2.dp), horizontalArrangement = Arrangement.Center) {
+            for ((isVideo, label) in listOf(false to "拍照", true to "錄影")) {
+                Text(label, color = if (videoMode == isVideo) (if (isVideo) Color(0xFFE5484D) else Darkroom.Amber) else Color(0xFF8A8A8A), fontSize = 12.sp,
+                    fontWeight = if (videoMode == isVideo) FontWeight.Bold else FontWeight.Normal,
+                    modifier = Modifier.clickable { videoMode = isVideo }.padding(horizontal = 16.dp, vertical = 3.dp).testTag(if (isVideo) "modeVideo" else "modePhoto"))
             }
         }
         // shutter row
@@ -680,9 +675,11 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                 vm.lastThumb?.let { Image(it.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
                 if (vm.processing > 0) Text("…", color = HikariColors.Accent, modifier = Modifier.align(Alignment.Center))
             }
-            ShutterButton(enabled = vm.processing <= 2 && countdown == 0, busy = vm.processing > 0) { shoot() }
+            ShutterButton(enabled = videoMode || (vm.processing <= 2 && countdown == 0), busy = !videoMode && vm.processing > 0, video = videoMode, recording = active != null) {
+                if (videoMode) toggleRecord() else shoot()
+            }
             if (caps != null && caps.hasFront && caps.hasBack) Box(
-                Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(Darkroom.CardHi).border(1.dp, Darkroom.Border, RoundedCornerShape(12.dp)).clickable {
+                Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(Darkroom.CardHi).border(1.dp, Darkroom.Border, RoundedCornerShape(12.dp)).clickable(enabled = active == null) {
                     lens = if (lens == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
                 }, contentAlignment = Alignment.Center,
             ) { Icon(Icons.Outlined.Cameraswitch, contentDescription = "翻轉", tint = Darkroom.Text, modifier = Modifier.size(22.dp)) }
@@ -743,7 +740,7 @@ private fun TopIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, desc:
 
 /** A two-ring mechanical shutter: thin amber outer ring, a gap, a solid disc; the whole button presses in on touch. */
 @Composable
-private fun ShutterButton(enabled: Boolean, busy: Boolean, onClick: () -> Unit) {
+private fun ShutterButton(enabled: Boolean, busy: Boolean, video: Boolean = false, recording: Boolean = false, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val view = LocalView.current
@@ -757,11 +754,16 @@ private fun ShutterButton(enabled: Boolean, busy: Boolean, onClick: () -> Unit) 
             .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Box(Modifier.size(58.dp).graphicsLayer { scaleX = disc; scaleY = disc }.clip(CircleShape)
-            .background(if (!enabled) Color(0xFF636366) else if (pressed) Color(0xFFD9D3C7) else Color(0xFFF4EFE6)))
+        val red = Color(0xFFE5484D)
+        if (recording) Box(Modifier.size(30.dp).graphicsLayer { scaleX = disc; scaleY = disc }.clip(RoundedCornerShape(6.dp)).background(red))
+        else Box(Modifier.size(58.dp).graphicsLayer { scaleX = disc; scaleY = disc }.clip(CircleShape)
+            .background(if (!enabled) Color(0xFF636366) else if (video) (if (pressed) Color(0xFFB23A3E) else red) else if (pressed) Color(0xFFD9D3C7) else Color(0xFFF4EFE6)))
         if (busy) Box(Modifier.size(14.dp).clip(CircleShape).background(Darkroom.Amber))
     }
 }
+
+/** One recording in progress: the encoder, the file it writes, and the descriptor to close afterwards. */
+private class ActiveRec(val rec: FilmRecorder, val uri: android.net.Uri, val pfd: android.os.ParcelFileDescriptor)
 
 /** Holds the GL renderer created inside the view factory. */
 private class CameraPreviewRendererHolder { var r: CameraPreviewRenderer? = null }

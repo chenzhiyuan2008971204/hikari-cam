@@ -76,7 +76,7 @@ fun SettingsScreen(app: AppViewModel, rawSupported: Boolean?) {
 
         DarkCard("智慧功能") {
             Toggle("即時濾鏡推薦", "相機依畫面量測到的場景，從全部濾鏡中排出最適合的三款", s.recommend) { v -> app.updateSettings { it.copy(recommend = v) } }
-            Toggle("虛擬相機（測試用）", "不開實體鏡頭，改用內建的標準測試照片當作相機畫面；預覽、濾鏡、構圖、推薦與拍照都走同一條流程。切換鏡頭鍵會換下一張照片",
+            Toggle("虛擬相機（測試用）", "不開實體鏡頭，改用內建的標準測試照片當作相機畫面；預覽、濾鏡、推薦與拍照都走同一條流程。切換鏡頭鍵會換下一張照片",
                 s.virtualCamera) { v -> app.updateSettings { it.copy(virtualCamera = v) } }
             Info("標準測試照片", app.samples.joinToString("\n") { "${it.zh}：${it.source}（${it.license}）" })
         }

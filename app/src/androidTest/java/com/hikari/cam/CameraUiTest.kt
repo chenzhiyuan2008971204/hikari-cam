@@ -50,20 +50,6 @@ class CameraUiTest {
             Report.flush(ctx, "camera_report.txt")
             return
         }
-        // live composition guidance on the virtual camera scene. While a guide tracks the subject the
-        // UI keeps redrawing, so nothing here waits for Compose to go idle: screenshot directly,
-        // then switch the guide off through the settings table.
-        rule.onNodeWithText("構圖").performClick()
-        Thread.sleep(800)
-        rule.onNodeWithText("智慧構圖").performClick()
-        Thread.sleep(1500)
-        // make sure the guide is on even if the tap landed during a recomposition
-        runBlocking { com.hikari.data.HikariDatabase.get(ctx).settings().put(com.hikari.data.Setting("composition", "smart")) }
-        Thread.sleep(6000)
-        InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()?.let { Report.png(ctx, "cam_01b_composition.png", it) }
-        runBlocking { com.hikari.data.HikariDatabase.get(ctx).settings().put(com.hikari.data.Setting("composition", "")) }
-        Thread.sleep(1500)
-        Report.line("camera: live composition guide shown and switched off")
         rule.onNodeWithText("濾鏡").performClick()
         Thread.sleep(1500)
         shot("cam_01c_looks.png")

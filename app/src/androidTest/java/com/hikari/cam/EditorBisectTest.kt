@@ -44,7 +44,7 @@ class EditorBisectTest {
         Report.line("bisect stage $stage: opening the editor")
         rule.runOnUiThread { ViewModelProvider(rule.activity)[AppViewModel::class.java].go(Route.Editor(uri)) }
         val end = System.currentTimeMillis() + 60_000
-        while (System.currentTimeMillis() < end && rule.onAllNodesWithText("智慧", substring = true).fetchSemanticsNodes().isEmpty()) Thread.sleep(300)
+        while (System.currentTimeMillis() < end && rule.onAllNodesWithText("時間戳", substring = true).fetchSemanticsNodes().isEmpty()) Thread.sleep(300)
         Report.line("bisect stage $stage: editor screen shown")
         // let the start-up run to its stage and the screen stay up
         Thread.sleep(25_000)

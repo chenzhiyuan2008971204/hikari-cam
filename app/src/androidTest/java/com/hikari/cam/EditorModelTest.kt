@@ -38,15 +38,8 @@ class EditorModelTest {
         Report.line("editor-model: preview rendered in ${(System.nanoTime() - t0) / 1_000_000} ms (${vm.fullW}x${vm.fullH})")
         assertTrue("thumbnails missing: ${vm.thumbs.size}", poll(240_000) { vm.thumbs.size == vm.looks.size })
         Report.line("editor-model: ${vm.thumbs.size} look thumbnails rendered, ${(System.nanoTime() - t0) / 1_000_000} ms after open")
-        assertTrue("analysis did not finish", poll(120_000) { !vm.analysing && vm.busy == null })
-        val rep = vm.report
-        Report.line("editor-model: scene ${vm.sceneLabel}; looks ${vm.recs.joinToString(" | ") { "${it.look.name} ${it.score}" }}; " +
-            "advice ${rep?.suggestions?.joinToString(" | ") { it.title } ?: "-"}; ${vm.detectorNote}; analysis ${vm.analysisMs.toInt()} ms")
-        assertTrue("no top three", vm.recs.size == 3 && vm.recs.map { it.look.id }.toSet().size == 3)
-        assertTrue("no composition report", rep != null && (rep.suggestions.isNotEmpty() || rep.note.isNotEmpty()))
-        // the sea horizon cuts this photo in half: that must be found
-        assertTrue("horizon advice missing", rep!!.suggestions.any { it.kind == com.hikari.vision.Suggestion.Kind.HORIZON_PLACEMENT })
-        val first = vm.looks.first { it.id == vm.recs.first().look.id }
+        assertTrue("editor still busy", poll(120_000) { vm.busy == null })
+        val first = vm.looks.first { it.id != vm.look.id }
         val before = vm.preview
         inst.runOnMainSync { vm.selectLook(first) }
         assertTrue("look not applied", poll(60_000) { vm.look.id == first.id && vm.preview !== before })

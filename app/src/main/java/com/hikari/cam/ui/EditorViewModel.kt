@@ -178,7 +178,7 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
                 undo.clear(); redo.clear(); syncHistory()
                 refresh()
                 if (EditorDebug.stopAfter <= 2) return@launch
-                recs = emptyList(); report = null; analysing = true
+                recs = emptyList(); report = null; analysing = false
                 thumbSrc = thumb
                 val studioRow = hikari.db.settings().get("studio:$u")?.value?.split("\n")
                 stamp = com.hikari.studio.StampSpec.decode(studioRow?.getOrNull(0)); frame = com.hikari.studio.FrameOptions.decode(studioRow?.getOrNull(1))
@@ -194,9 +194,7 @@ class EditorViewModel(app: Application) : AndroidViewModel(app) {
                 if (EditorDebug.stopAfter <= 3) return@launch
                 renderFrameThumbs()
                 if (EditorDebug.stopAfter <= 4) return@launch
-                // analysis starts once the preview and the look thumbnails are on screen: the picture comes
-                // first, and the detectors do not compete with the renderer for the CPU
-                analyse(orig)
+                // (the composition analysis that used to start here was removed with the smart composition feature)
             } catch (e: Throwable) {
                 analysing = false
                 message = "無法開啟：${e.message}"

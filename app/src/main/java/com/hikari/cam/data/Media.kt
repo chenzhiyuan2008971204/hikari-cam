@@ -46,6 +46,33 @@ object Media {
             uri
         }
 
+    /** A new, still hidden video file in Movies/Hikari and the descriptor to write it through (a seekable one, for the mp4 muxer). */
+    class NewVideo(val uri: Uri, val pfd: android.os.ParcelFileDescriptor)
+
+    fun createVideo(context: Context): NewVideo {
+        val values = ContentValues().apply {
+            put(MediaStore.Video.Media.DISPLAY_NAME, "HIKARI_${stamp()}.mp4")
+            put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+            put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/" + FOLDER)
+            put(MediaStore.Video.Media.IS_PENDING, 1)
+        }
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values) ?: error("無法建立影片檔")
+        val pfd = resolver.openFileDescriptor(uri, "rw")
+        if (pfd == null) { resolver.delete(uri, null, null); error("無法寫入影片檔") }
+        return NewVideo(uri, pfd)
+    }
+
+    /** Makes a finished recording visible in the gallery. */
+    fun publishVideo(context: Context, uri: Uri) {
+        context.contentResolver.update(uri, ContentValues().apply { put(MediaStore.Video.Media.IS_PENDING, 0) }, null, null)
+    }
+
+    /** Removes a recording that failed or was empty. */
+    fun discardVideo(context: Context, uri: Uri) {
+        runCatching { context.contentResolver.delete(uri, null, null) }
+    }
+
     /** Copies a file (the camera's original JPEG, with its EXIF) into the gallery unchanged. */
     suspend fun saveFileCopy(context: Context, file: File, mime: String, name: String): Uri = withContext(Dispatchers.IO) {
         val values = ContentValues().apply {

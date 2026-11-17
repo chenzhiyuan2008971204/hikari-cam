@@ -82,11 +82,6 @@ class SmartUiTest {
         Thread.sleep(2500)
         shot("smart_03_recommended_look.png")
 
-        // live composition guide on the same frames
-        set("composition", "smart")
-        Thread.sleep(6000)
-        shot("smart_04_composition_live.png")
-        set("composition", "")
         Thread.sleep(1500)
 
         // capture: the still goes through the same full-resolution engine path as a real photo
@@ -144,7 +139,7 @@ class SmartUiTest {
         assertTrue("virtual preview is black (centre pixel ${last}, luma ${"%.1f".format(luma)})", luma > 25)
     }
 
-    /** Editor: top-three recommendation cards, composition analysis with overlays, apply a look, export. */
+    /** Editor: open a photo, export it. */
     @Test
     fun zEditorSmartFlow() {
         // On the CI emulator (software GPU) the emulator process itself dies the moment the editor screen
@@ -165,26 +160,13 @@ class SmartUiTest {
         Thread.sleep(4000)
         Report.line("editor: gallery shown, opening the editor")
         rule.runOnUiThread { ViewModelProvider(rule.activity)[AppViewModel::class.java].go(Route.Editor(uri)) }
-        assertTrue("editor did not open", poll(60_000) { has("智慧") })
+        assertTrue("editor did not open", poll(60_000) { has("時間戳") })
         Report.line("editor: opened")
         poll(120_000) { !has("讀取照片") }
         Report.line("editor: photo loaded and looks rendered")
         Thread.sleep(3000)
         shot("smart_08_editor.png")
-        rule.onNodeWithText("智慧").performClick()
-        Report.line("editor: smart tab opened")
-        val analysed = poll(90_000) { tags("recCard") >= 3 }
         Thread.sleep(1500)
-        shot("smart_09_editor_smart.png")
-        Report.line("editor: recommendation cards ${tags("recCard")}, composition suggestions ${tags("compCard")}, 'nothing to adjust' note ${tags("compNote")}")
-        assertTrue("editor recommendation missing", analysed)
-        // either real suggestions or an honest 'nothing to say' note, never neither
-        assertTrue("composition panel empty", tags("compCard") + tags("compNote") > 0)
-        // the sea horizon sits in the middle of this photo: that must be found
-        assertTrue("horizon advice missing on the seaside photo", has("地平線"))
-        runCatching { rule.onAllNodesWithTag("recCard").onFirst().performClick() }
-        Thread.sleep(3000)
-        shot("smart_10_editor_applied.png")
         val n0 = runBlocking { Media.list(ctx) }.size
         rule.onNodeWithContentDescription("儲存").performClick()
         val exported = poll(180_000) { has("已儲存") || has("匯出失敗") }
