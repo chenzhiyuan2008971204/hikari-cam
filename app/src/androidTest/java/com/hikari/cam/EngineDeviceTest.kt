@@ -36,6 +36,19 @@ class EngineDeviceTest {
     private fun ms(t0: Long) = (System.nanoTime() - t0) / 1e6
     private fun f(x: Double) = "%.2f".format(x)
 
+    /** a favourite, preset or edit saved under a retired near-duplicate look opens the look that stayed */
+    @Test
+    fun retiredLookIdsOpenTheirTwin() {
+        org.junit.Assert.assertEquals(17, repo.retired.size)
+        for ((old, twin) in repo.retired) {
+            org.junit.Assert.assertTrue(old, repo.looks.none { it.id == old })
+            org.junit.Assert.assertEquals(old, twin, repo.look(old).id)
+            org.junit.Assert.assertTrue(old in repo.aliases(twin))
+        }
+        org.junit.Assert.assertEquals("studio_hi", repo.look("fj_provia").id)
+        org.junit.Assert.assertEquals("mellow400", repo.look("mellow400").id)
+    }
+
     @Test
     fun looksRenderAndPreviewMatchesExport() = runBlocking {
         renderer.maxTexture()

@@ -44,9 +44,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     val settings: StateFlow<UserSettings> = db.settings().all().map { UserSettings.from(it) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, UserSettings())
-    val favorites: StateFlow<Set<String>> = db.looks().favorites().map { l -> l.map { it.lookId }.toSet() }
+    val favorites: StateFlow<Set<String>> = db.looks().favorites().map { l -> l.mapNotNull { hikari.looks.canonical(it.lookId) }.toSet() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
-    val recents: StateFlow<List<String>> = db.looks().recents().map { l -> l.map { it.lookId } }
+    val recents: StateFlow<List<String>> = db.looks().recents().map { l -> l.mapNotNull { hikari.looks.canonical(it.lookId) }.distinct() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val presets: StateFlow<List<Preset>> = db.looks().presets()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -219,7 +219,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun toggleFavorite(id: String) = viewModelScope.launch {
-        if (id in favorites.value) db.looks().removeFavorite(id) else db.looks().addFavorite(Favorite(id, System.currentTimeMillis()))
+        // a favourite saved under a retired id shows as the look that replaced it; unstarring removes both
+        if (id in favorites.value) hikari.looks.aliases(id).forEach { db.looks().removeFavorite(it) } else db.looks().addFavorite(Favorite(id, System.currentTimeMillis()))
     }
 
     fun touch(id: String) = viewModelScope.launch { db.looks().touch(Recent(id, System.currentTimeMillis())) }

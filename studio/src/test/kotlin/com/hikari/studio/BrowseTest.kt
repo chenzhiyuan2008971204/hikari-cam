@@ -17,13 +17,14 @@ class BrowseTest {
         File(Awt.root, "app/src/main/java/com/hikari/cam/ui/Components.kt").readText().substringAfter("val SERIES_ZH").substringBefore(")\n")).map { it.groupValues[1] to it.groupValues[2] }.toList()
 
     @Test fun existingFiltersIdsAndCategoriesAreUntouched() {
-        assertEquals(79, items.size)
+        assertEquals(62, items.size)
         assertEquals(ids, items.map { it.id })                       // file name = id, as before
         assertEquals(listOf("sim", "daylight", "film", "japanese", "ccd", "special", "fuji", "cinema", "pro", "vintage"), order.map { it.first })
-        val expected = listOf("standard_chrome", "soft_chrome", "true_negative", "silver_bypass", "studio_hi", "studio_std", "mono_fine", "muted_chrome", "street_negative",
-            "portrait_soft", "vivid_landscape", "cine_daylight", "nostalgic_summer", "clear_daylight", "summer400", "mellow400", "gold_memory", "cinema400", "vivid100", "tokyo_blue",
+        // the older looks that were not retired as near-duplicates (filters/retired.json)
+        val expected = listOf("standard_chrome", "studio_hi", "studio_std",
+            "portrait_soft", "vivid_landscape", "cine_daylight", "clear_daylight", "summer400", "mellow400", "gold_memory", "cinema400", "vivid100", "tokyo_blue",
             "kyoto_soft", "summer_green", "ccd2000", "flash_diary", "compact_chrome", "night_bloom", "dream1998")
-        assertEquals(expected, ids.take(27))                          // the 27 older looks: same ids, same order, still first
+        assertEquals(expected, ids.take(20))                          // the 20 older looks kept: same ids, same order, still first
         // the older Japanese looks are still in their category, before the added ones
         assertEquals(listOf("tokyo_blue", "kyoto_soft", "summer_green"), items.filter { it.series == "japanese" }.take(3).map { it.id })
         assertTrue(items.all { it.series in order.map { o -> o.first } })
@@ -32,11 +33,11 @@ class BrowseTest {
     @Test fun oneCategoryAtATimeNeverMixed() {
         val cats = Browse.categories(order, items, setOf("mellow400"))
         assertEquals(listOf("all", "fav") + order.map { it.first }, cats.map { it.id })
-        assertEquals(79, cats[0].count); assertEquals(1, cats[1].count)
+        assertEquals(62, cats[0].count); assertEquals(1, cats[1].count)
         var sum = 0
         for (c in cats.drop(2)) { val l = Browse.list(items, c.id, emptySet())
             assertEquals(c.count, l.size); assertTrue(l.all { it.series == c.id }); assertTrue(l.isNotEmpty()); sum += l.size }
-        assertEquals(79, sum)                                         // every filter is in exactly one category
+        assertEquals(62, sum)                                         // every filter is in exactly one category
         assertEquals(listOf("mellow400"), Browse.list(items, Browse.FAV, setOf("mellow400")).map { it.id })
         assertEquals("all", Browse.valid("gone", cats)); assertEquals("japanese", Browse.valid("japanese", cats))
     }

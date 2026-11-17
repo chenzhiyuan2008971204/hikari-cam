@@ -249,3 +249,16 @@ for _k in PRO_SHIP:
     PRO[_k]["colour"] = _lk; PRO_STRENGTH[_k] = _s
 FILMS.update(PRO)
 SHIP = SHIP + PRO_SHIP
+
+# Looks taken out of the app because another look gives practically the same picture (measured on
+# the GPU engine's own renders of the 14 standard photos, then checked by eye side by side). Their
+# recipes stay here; the app maps a retired id to the look it duplicated (RETIRED value), so a
+# favourite, recent or preset keeps working.
+RETIRED = {
+    "pr_arch": "studio_hi", "pr_night": "pr_portrait", "pr_editorial": "fj_proneg_hi", "pr_rich": "ci_ektar100",
+    "pr_landscape": "vivid_landscape", "pr_natural": "standard_chrome", "vt_90s": "fj_nostalgic_neg",
+    "pr_street": "fj_proneg_hi", "jp_milky": "kyoto_soft", "muted_chrome": "fj_classic_chrome",
+    "silver_bypass": "fj_classic_chrome", "nostalgic_summer": "ci_portra400", "soft_chrome": "ci_portra400",
+    "street_negative": "ci_2383", "true_negative": "jp_clean_day", "mono_fine": "fj_acros", "fj_provia": "studio_hi",
+}
+SHIP = [k for k in SHIP if k not in RETIRED]

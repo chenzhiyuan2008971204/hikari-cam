@@ -12,7 +12,7 @@ import numpy as np
 
 import look as engine
 from build import bake, clean_check, write_cube
-from films import FILMS, SHIP
+from films import FILMS, SHIP, RETIRED
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 ASSETS = os.path.join(ROOT, "engine/src/main/assets")
@@ -118,6 +118,9 @@ def main():
             json.dump(spec(key, f), fh, ensure_ascii=False, indent=1)
     with open(os.path.join(ASSETS, "filters", "index.json"), "w") as fh:
         json.dump(SHIP, fh)
+    # retired look id -> the shipped look it duplicated (the app resolves old favourites through it)
+    with open(os.path.join(ASSETS, "filters", "retired.json"), "w") as fh:
+        json.dump(RETIRED, fh, indent=1)
     if bad:
         sys.exit("not clean: " + ", ".join(bad))
 

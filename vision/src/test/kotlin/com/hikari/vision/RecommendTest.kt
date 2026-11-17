@@ -11,10 +11,10 @@ class RecommendTest {
 
     @Test
     fun everyShippedLookIsRankedWithTraits() {
-        assertEquals(79, looks.size)
+        assertEquals(62, looks.size)
         for (l in looks) assertTrue(l.id, l.t.size >= 12)
         val r = FilterRecommender.rank(SceneAnalyzer.analyze(Synth.landscape(0.5f, 0f)), looks)
-        assertEquals(79, r.size)
+        assertEquals(62, r.size)
         assertTrue(r.all { it.score in 0..100 && it.reason.isNotBlank() })
     }
 

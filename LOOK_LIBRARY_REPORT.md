@@ -1,5 +1,26 @@
 # LOOK_LIBRARY_REPORT — 濾鏡庫擴充
 
+> **更新：刪除太過相似的濾鏡（79 → 62 款）。** 用 GPU 引擎對 14 張標準照片的實際輸出（golden 圖）量每兩款之間的差異（OKLab 平均色差），把差異 < 1.10 的 40 組逐組並排目視；其中 5 組雖然平均差異小，但局部色相看得出不同（Ektar 的洋紅偏紅 vs Provia／Landscape／Vivid Landscape、Vista vs Provia、Kyoto Film 偏橘 vs Nostalgic Neg.），保留；另外顆粒或光暈差很多的組合也不算重複。其餘 35 組，用「最少刪除數」挑出 17 款刪除（同分時優先保留底片型號名稱與原有濾鏡）：
+>
+> | 刪除 | 幾乎一樣的保留款（舊的收藏／預設會自動改開這款） |
+> |---|---|
+> | Architecture | Studio Hi |
+> | Night Photography | Soft Portrait |
+> | Editorial、Urban Street | PRO Neg. Hi |
+> | Rich Color | Kodak Ektar 100 |
+> | Landscape | Vivid Landscape |
+> | Clean Natural | Standard Chrome |
+> | 90s Film | Nostalgic Neg. |
+> | Milky Color | Kyoto Soft |
+> | Muted Chrome、Silver Bypass | Classic Chrome |
+> | Nostalgic Summer、Soft Chrome | Kodak Portra 400 |
+> | Street Negative | Kodak 2383 |
+> | True Negative | Clean Daylight |
+> | Mono Fine | Acros |
+> | Provia | Studio Hi |
+>
+> 配方仍留在 `tools/looks`（`films.py` 的 `RETIRED`），App 只是不再內建；`filters/retired.json` 記錄對應關係，收藏、最近使用、自訂預設、已存的編輯若指向被刪的濾鏡，會自動開啟對應的保留款。其餘 62 款的 LUT 與設定檔逐位元未變。
+
 ## 結果
 
 - 濾鏡從 27 款增加到 **79 款**（新增 52 款），分類從 6 個增加到 **10 個**。

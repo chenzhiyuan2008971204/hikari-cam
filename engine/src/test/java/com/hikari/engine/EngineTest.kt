@@ -18,8 +18,8 @@ class EngineTest {
 
     @Test
     fun shippedLooksParseAndTheirLutsLoad() {
-        assertEquals(79, ids.size)
-        assertEquals(8, ids.count { it in DAYLIGHT })
+        assertEquals(62, ids.size)
+        assertEquals(5, ids.count { it in DAYLIGHT })                // three daylight looks retired as near-duplicates
         for (id in ids) {
             val spec = FilterSpec.parse(asset("filters/$id.json"))
             assertEquals(id, spec.id)
@@ -28,6 +28,19 @@ class EngineTest {
             assertTrue("$id lut range", lut.data.all { it in 0f..1f })
             assertTrue("$id grain size", spec.grain.size in 0.0003f..0.003f)
             assertTrue("$id recipe", spec.recipe.size >= 5)
+        }
+    }
+
+    /** Retired near-duplicate looks: not shipped, no files left, and each points at a shipped look. */
+    @Test
+    fun retiredLooksPointAtShippedOnes() {
+        val o = org.json.JSONObject(asset("filters/retired.json"))
+        assertEquals(17, o.length())
+        for (k in o.keys()) {
+            assertTrue("$k still shipped", k !in ids)
+            assertTrue("$k json left", !File(assets, "filters/$k.json").exists())
+            assertTrue("$k lut left", !File(assets, "luts/$k.cube").exists())
+            assertTrue("$k -> ${o.getString(k)} not shipped", o.getString(k) in ids)
         }
     }
 

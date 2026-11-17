@@ -2,6 +2,7 @@ package com.hikari.engine
 
 import android.content.Context
 import org.json.JSONArray
+import org.json.JSONObject
 
 /** Loads the bundled film looks (assets/filters, assets/luts) once and keeps them in memory. */
 class LookRepository(context: Context) {
@@ -15,7 +16,25 @@ class LookRepository(context: Context) {
         }
     }
 
-    fun look(id: String?): FilterSpec = looks.firstOrNull { it.id == id } ?: looks.first()
+    /**
+     * Looks taken out because another look gives practically the same picture: retired id -> the
+     * look that stays (filters/retired.json). Saved favourites, recents, presets and edits that
+     * name a retired look open the look that replaced it.
+     */
+    val retired: Map<String, String> by lazy {
+        runCatching {
+            val o = JSONObject(assets.open("filters/retired.json").use { it.readBytes().decodeToString() })
+            o.keys().asSequence().associateWith { o.getString(it) }
+        }.getOrDefault(emptyMap())
+    }
+
+    /** the shipped id for a look id that may be retired */
+    fun canonical(id: String?): String? = id?.let { retired[it] ?: it }
+
+    /** a shipped id and the retired ids that now open it */
+    fun aliases(id: String): List<String> = listOf(id) + retired.filterValues { it == id }.keys
+
+    fun look(id: String?): FilterSpec = canonical(id).let { c -> looks.firstOrNull { it.id == c } } ?: looks.first()
 
     fun lut(spec: FilterSpec): CubeLut = synchronized(luts) {
         luts.getOrPut(spec.lut) { CubeLut.parse(assets.open(spec.lut).use { it.readBytes().decodeToString() }) }
