@@ -514,10 +514,10 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         if (guide != null) { showHint = true; delay(4000); showHint = false }
     }
 
-    Column(Modifier.fillMaxSize().background(Color.Black)) {
+    Column(Modifier.fillMaxSize().background(Darkroom.Ground)) {
         // top bar: icons only, only what this camera supports
-        Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly) {
+        Row(Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 22.dp), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween) {
             if (caps?.hasFlash == true) TopIcon(
                 when (flash) { Flash.OFF -> Icons.Outlined.FlashOff; Flash.AUTO -> Icons.Outlined.FlashAuto; Flash.ON -> Icons.Outlined.FlashOn },
                 "閃光燈", flash != Flash.OFF,
@@ -525,12 +525,12 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             TopIcon(when (timer) { 3 -> Icons.Outlined.Timer3; 10 -> Icons.Outlined.Timer10; else -> Icons.Outlined.TimerOff }, "計時器", timer != 0) {
                 timer = listOf(0, 3, 10)[(listOf(0, 3, 10).indexOf(timer) + 1) % 3]
             }
-            Box(Modifier.clip(RoundedCornerShape(6.dp)).border(1.dp, Color(0xFF888888), RoundedCornerShape(6.dp))
+            Box(Modifier.clip(RoundedCornerShape(6.dp)).border(1.dp, Darkroom.Border, RoundedCornerShape(6.dp))
                 .clickable {
                     val i = UserSettings.ASPECTS.indexOf(settings.aspect)
                     app.updateSettings { it.copy(aspect = UserSettings.ASPECTS[(i + 1) % UserSettings.ASPECTS.size]) }
                 }.padding(horizontal = 8.dp, vertical = 2.dp)) {
-                Text(settings.aspect, color = Color.White, fontSize = 12.sp)
+                Text(settings.aspect, color = Darkroom.Text, fontSize = 12.sp)
             }
             TopIcon(if (settings.grid) Icons.Outlined.GridOn else Icons.Outlined.GridOff, "格線", settings.grid) {
                 app.updateSettings { it.copy(grid = !it.grid) }
@@ -565,7 +565,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                         Text("$it\n\n仍可在 Gallery 匯入照片套用濾鏡。", color = HikariColors.Dim, fontSize = 14.sp,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         Text("改用虛擬相機（內建測試照片）", color = Color.Black, fontSize = 13.sp,
-                            modifier = Modifier.padding(top = 14.dp).clip(RoundedCornerShape(18.dp)).background(HikariColors.Accent)
+                            modifier = Modifier.padding(top = 14.dp).clip(Darkroom.R8).background(HikariColors.Accent)
                                 .clickable { app.updateSettings { it.copy(virtualCamera = true) } }.padding(horizontal = 14.dp, vertical = 8.dp))
                     }
                 }
@@ -625,7 +625,11 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
                     view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                     applyZoom(z)
                 }
-                if (panel >= 0) Box(Modifier.fillMaxWidth().background(Color(0xD9101010), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                // the panel is see-through graphite (the picture shows faintly behind it) with a hairline top edge
+                if (panel >= 0) Box(Modifier.fillMaxWidth()
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                    .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color(0xC71C1C1E), Color(0xD10D0D0D))))
+                    .border(0.5.dp, Color(0x33FFFFFF), RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
                     .padding(top = 4.dp)) {
             when (panel) {
                 0 -> CameraLookPanel(app, look, favorites, recs, sceneLabel) { id -> app.updateSettings { it.copy(lastLook = id) }; app.touch(id) }
@@ -678,10 +682,10 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
             }
             ShutterButton(enabled = vm.processing <= 2 && countdown == 0, busy = vm.processing > 0) { shoot() }
             if (caps != null && caps.hasFront && caps.hasBack) Box(
-                Modifier.size(48.dp).clip(CircleShape).background(Color(0xFF222222)).clickable {
+                Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(Darkroom.CardHi).border(1.dp, Darkroom.Border, RoundedCornerShape(12.dp)).clickable {
                     lens = if (lens == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
                 }, contentAlignment = Alignment.Center,
-            ) { Icon(Icons.Outlined.Cameraswitch, contentDescription = "翻轉", tint = Color.White) }
+            ) { Icon(Icons.Outlined.Cameraswitch, contentDescription = "翻轉", tint = Darkroom.Text, modifier = Modifier.size(22.dp)) }
             else Box(Modifier.size(48.dp))
         }
     }
@@ -689,9 +693,9 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
 }
 
 /**
- * Zoom stops like the system camera: the phone's own lenses (e.g. 0.6 / 1 / 2.6, read from the
- * hardware), plus 2x / 5x / 10x digital stops inside the zoom range that are not next to a lens.
- * The active stop shows the exact current zoom; pinch still zooms freely.
+ * Zoom stops as a ruler along the bottom of the viewfinder: the phone's own lenses (e.g. 0.6 / 1 / 2.6, read from the
+ * hardware) and 2x / 5x / 10x digital stops, each with a short scale under it. The stop in use is amber, larger and shows
+ * the exact zoom; the others are small and grey. Moving to another stop (a tap, or a pinch crossing it) ticks the phone.
  */
 @Composable
 private fun ZoomStops(min: Float, max: Float, lenses: List<Float>, focal35: Float?, zoom: Float, onZoom: (Float) -> Unit) {
@@ -700,31 +704,30 @@ private fun ZoomStops(min: Float, max: Float, lenses: List<Float>, focal35: Floa
         .distinct().sorted()
     if (stops.size < 2) return
     val active = stops.minBy { kotlin.math.abs(kotlin.math.ln(it / zoom)) }
-    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.Center) {
-        Row(Modifier.background(Color(0x77000000), RoundedCornerShape(30.dp)).padding(horizontal = 6.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            for (z in stops) {
-                val on = z == active
-                val lens = z in native
-                fun fmt(v: Float) = if (v == Math.round(v).toFloat() && v >= 1f) "%.0f".format(v) else "%.1f".format(v)
-                Column(
-                    Modifier.clip(RoundedCornerShape(22.dp))
-                        .background(if (on) Color(0xCC2A2A2A) else Color.Transparent)
-                        .clickable { onZoom(z) }
-                        .padding(horizontal = 7.dp, vertical = 4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text((if (on) fmt(zoom) else fmt(z)) + "×",
-                        color = if (on) HikariColors.Accent else Color.White,
-                        fontSize = 13.sp, fontWeight = if (lens) FontWeight.Bold else FontWeight.Normal,
-                        maxLines = 1, softWrap = false)
-                    // native lenses: their 35 mm-equivalent focal length and a dot; digital stops: "數位"
-                    Text(
-                        if (lens) (focal35?.let { "${Math.round(it * z)}mm" } ?: "鏡頭") + " •"
-                        else "數位",
-                        color = if (lens) Color(0xFFDDDDDD) else Color(0xFF999999), fontSize = 9.sp,
-                        maxLines = 1, softWrap = false,
-                    )
+    val view = LocalView.current
+    var shown by remember { mutableStateOf(active) }
+    LaunchedEffect(active) { if (active != shown) { view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK); shown = active } }
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.Bottom) {
+        for (z in stops) {
+            val on = z == active
+            val lens = z in native
+            fun fmt(v: Float) = if (v == Math.round(v).toFloat() && v >= 1f) "%.0f".format(v) else "%.1f".format(v)
+            Column(Modifier.width(58.dp).clickable { onZoom(z) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                Text((if (on) fmt(zoom) else fmt(z)) + "×",
+                    color = if (on) Darkroom.Amber else Darkroom.Dim, fontSize = if (on) 16.sp else 11.sp,
+                    fontWeight = if (on) FontWeight.Normal else FontWeight.Light, maxLines = 1, softWrap = false)
+                // native lenses: their 35 mm-equivalent focal length; digital stops: "數位"
+                Text(if (lens) (focal35?.let { "${Math.round(it * z)}mm" } ?: "鏡頭") else "數位",
+                    color = if (on) Color(0xFFE5C07B) else Color(0xFF636366), fontSize = 9.sp, maxLines = 1, softWrap = false)
+                androidx.compose.foundation.Canvas(Modifier.padding(top = 3.dp).fillMaxWidth().height(9.dp)) {
+                    // five ticks per stop, the middle one long; the stop in use gets an amber long tick
+                    for (i in 0..4) {
+                        val x = size.width * (0.1f + 0.2f * i)
+                        val long = i == 2
+                        drawLine(if (long && on) Darkroom.Amber else if (long) Color(0xFF8E8E93) else Color(0xFF48484A),
+                            androidx.compose.ui.geometry.Offset(x, size.height), androidx.compose.ui.geometry.Offset(x, size.height - (if (long) 9 else 4).dp.toPx()),
+                            strokeWidth = (if (long && on) 1.6f else 1f).dp.toPx())
+                    }
                 }
             }
         }
@@ -733,29 +736,30 @@ private fun ZoomStops(min: Float, max: Float, lenses: List<Float>, focal35: Floa
 
 @Composable
 private fun TopIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, desc: String, on: Boolean, onClick: () -> Unit) {
-    Box(Modifier.size(40.dp).clip(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Icon(icon, contentDescription = desc, tint = if (on) HikariColors.Accent else Color.White, modifier = Modifier.size(22.dp))
+    Box(Modifier.size(42.dp).clip(RoundedCornerShape(10.dp)).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Icon(icon, contentDescription = desc, tint = if (on) Darkroom.Amber else Color(0xFFD1D1D6), modifier = Modifier.size(20.dp))
     }
 }
 
-/** A shutter that feels pressed: the inner disc sinks on touch and springs back. */
+/** A two-ring mechanical shutter: thin amber outer ring, a gap, a solid disc; the whole button presses in on touch. */
 @Composable
 private fun ShutterButton(enabled: Boolean, busy: Boolean, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val view = LocalView.current
     LaunchedEffect(pressed) { if (pressed) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP) }
-    val scale by animateFloatAsState(if (pressed) 0.84f else 1f, spring(dampingRatio = 0.42f, stiffness = 700f), label = "shutter")
+    val scale by animateFloatAsState(if (pressed) 0.93f else 1f, spring(dampingRatio = 0.5f, stiffness = 800f), label = "shutter")
+    val disc by animateFloatAsState(if (pressed) 0.88f else 1f, spring(dampingRatio = 0.42f, stiffness = 700f), label = "shutterDisc")
     Box(
-        Modifier.size(70.dp).border(2.dp, Color(0xFFE8E2D6), CircleShape).padding(5.dp)
-            .border(1.dp, HikariColors.Accent.copy(alpha = 0.6f), CircleShape)
+        Modifier.size(72.dp).graphicsLayer { scaleX = scale; scaleY = scale }
+            .border(1.5.dp, if (enabled) Darkroom.Amber else Darkroom.Border, CircleShape)
             .testTag("shutter").semantics { contentDescription = "快門" }
             .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Box(Modifier.size(58.dp).graphicsLayer { scaleX = scale; scaleY = scale }.clip(CircleShape)
-            .background(if (!enabled) Color.Gray else if (pressed) Color(0xFFD9D3C7) else Color(0xFFF4EFE6)))
-        if (busy) Box(Modifier.size(18.dp).clip(CircleShape).background(HikariColors.Accent))
+        Box(Modifier.size(58.dp).graphicsLayer { scaleX = disc; scaleY = disc }.clip(CircleShape)
+            .background(if (!enabled) Color(0xFF636366) else if (pressed) Color(0xFFD9D3C7) else Color(0xFFF4EFE6)))
+        if (busy) Box(Modifier.size(14.dp).clip(CircleShape).background(Darkroom.Amber))
     }
 }
 

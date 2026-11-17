@@ -5,6 +5,9 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.horizontalScroll
@@ -59,24 +62,18 @@ fun FiltersScreen(app: AppViewModel) {
     LazyColumn(Modifier.fillMaxSize()) {
         item {
             Row(Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Filters", color = Color.White, fontSize = 22.sp, modifier = Modifier.weight(1f))
-                Text("邊框圖庫 ${com.hikari.studio.Frames.all.size} 款 ›", color = HikariColors.Accent, fontSize = 13.sp,
-                    modifier = Modifier.clickable { app.go(Route.Frames) }.padding(6.dp).testTag("openFrames"))
+                Text("Filters", color = Darkroom.Text, fontSize = 22.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Light, modifier = Modifier.weight(1f))
+                Text("邊框圖庫 ${com.hikari.studio.Frames.all.size} 款 ›", color = Darkroom.Dim, fontSize = 11.sp,
+                    modifier = Modifier.clip(Darkroom.R6).clickable { app.go(Route.Frames) }.padding(horizontal = 6.dp, vertical = 4.dp).testTag("openFrames"))
             }
         }
         // every thumbnail is the real filter on the same standard photo; pick which photo here
         item {
-            Text("預覽照片（縮圖都由正式濾鏡引擎算出；「依濾鏡特色」會替每款濾鏡挑適合它的照片）", color = HikariColors.Dim, fontSize = 11.sp,
+            Text("預覽照片（縮圖都由正式濾鏡引擎算出；「依濾鏡特色」會替每款濾鏡挑適合它的照片）", color = Darkroom.Dim, fontSize = 11.sp,
                 modifier = Modifier.padding(horizontal = 16.dp))
-            Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Chip("依濾鏡特色", settings.thumbScene == "auto", "thumb-auto") { app.updateSettings { it.copy(thumbScene = "auto") } }
-                for (sm in app.samples) {
-                    val on = sm.id == settings.thumbScene
-                    Text(sm.zh, color = if (on) Color.Black else Color.White, fontSize = 12.sp,
-                        modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (on) HikariColors.Accent else Color(0xFF222222))
-                            .clickable { app.updateSettings { it.copy(thumbScene = sm.id) } }.padding(horizontal = 10.dp, vertical = 5.dp))
-                }
+            Row(Modifier.horizontalScroll(rememberScrollState()).padding(vertical = 6.dp)) {
+                TextTabs(listOf("auto" to "依濾鏡特色") + app.samples.map { it.id to it.zh }, settings.thumbScene,
+                    { id -> app.updateSettings { it.copy(thumbScene = id) } }, Modifier.padding(horizontal = 0.dp))
             }
         }
         if (presets.isNotEmpty()) {
@@ -95,11 +92,11 @@ fun FiltersScreen(app: AppViewModel) {
             Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 val cats = com.hikari.studio.Browse.categories(SERIES_ZH.toList(), lookItems(app.looks), favorites)
                 val cur = cats.first { it.id == com.hikari.studio.Browse.valid(settings.filterCategory, cats) }
-                Text(cur.title, color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f).testTag("catTitle"))
-                Text("${shown.size} / ${cur.count} 款", color = HikariColors.Dim, fontSize = 12.sp, modifier = Modifier.testTag("catCount"))
+                Text(cur.title, color = Darkroom.Text, fontSize = 15.sp, modifier = Modifier.weight(1f).testTag("catTitle"))
+                Text("${shown.size} / ${cur.count} 款", color = Darkroom.Dim, fontSize = 12.sp, modifier = Modifier.testTag("catCount"))
             }
-            Box(Modifier.padding(horizontal = 12.dp).fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(Color(0xFF1E1E1E)).padding(horizontal = 10.dp, vertical = 8.dp)) {
-                if (query.isEmpty()) Text("在這個分類中搜尋", color = Color(0xFF6A6A6A), fontSize = 13.sp)
+            Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth().clip(Darkroom.R8).background(Darkroom.Card).padding(horizontal = 10.dp, vertical = 8.dp)) {
+                if (query.isEmpty()) Text("在這個分類中搜尋", color = Color(0xFF636366), fontSize = 13.sp)
                 androidx.compose.foundation.text.BasicTextField(query, { query = it }, singleLine = true, textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 13.sp),
                     cursorBrush = androidx.compose.ui.graphics.SolidColor(HikariColors.Accent), modifier = Modifier.fillMaxWidth().testTag("lookSearch"))
             }
@@ -168,21 +165,29 @@ fun FiltersScreen(app: AppViewModel) {
 
 @Composable
 private fun LookRow(spec: FilterSpec, favorite: Boolean, app: AppViewModel, onClick: () -> Unit) {
+    // "Standard Chrome 標準" -> English in amber, the Chinese part in light grey
+    val zh = spec.zh.removePrefix(spec.name).trim().ifEmpty { spec.zh.takeIf { it != spec.name }.orEmpty() }
     Row(
         Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(Modifier.size(88.dp).clip(RoundedCornerShape(14.dp)).background(HikariColors.Panel), contentAlignment = Alignment.Center) {
+        // 3:2 thumbnail with a hairline edge
+        Box(Modifier.width(96.dp).aspectRatio(1.5f).clip(Darkroom.R6).background(HikariColors.Panel).border(1.dp, Darkroom.Border, Darkroom.R6), contentAlignment = Alignment.Center) {
             val b = app.thumbs[spec.id]
             if (b != null) Image(remember(b) { b.asImageBitmap() }, spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            else FilmIcon(spec, 76.dp)
+            else FilmIcon(spec, 56.dp)
         }
         Column(Modifier.weight(1f)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text((if (favorite) "★ " else "") + spec.name, color = Color.White, fontSize = 17.sp)
-            Text(spec.zh, color = HikariColors.Accent, fontSize = 13.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(spec.name, color = Darkroom.Amber, fontSize = 16.sp, maxLines = 1, modifier = Modifier.weight(1f, fill = false))
+                if (zh.isNotEmpty()) Text("  |  ", color = Darkroom.Border, fontSize = 14.sp)
+                if (zh.isNotEmpty()) Text(zh, color = Color(0xFFC7C7CC), fontSize = 13.sp, maxLines = 1, modifier = Modifier.weight(1f, fill = false))
+            }
+            Text(spec.note, color = Darkroom.Dim, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Light, maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp))
         }
-        Text(spec.note, color = HikariColors.Dim, fontSize = 12.sp, maxLines = 2)
-        }
+        // favourite star: amber when kept
+        Text(if (favorite) "★" else "☆", color = if (favorite) Darkroom.Amber else Darkroom.Dim, fontSize = 18.sp,
+            modifier = Modifier.clip(Darkroom.R6).clickable { app.toggleFavorite(spec.id) }.padding(6.dp).testTag("star-${spec.id}"))
     }
 }

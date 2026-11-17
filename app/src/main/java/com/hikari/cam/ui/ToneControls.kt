@@ -76,10 +76,10 @@ fun WhiteBalancePad(temp: Float, tint: Float, onChange: (Float, Float) -> Unit, 
         onChange((t * 100).roundToInt() / 100f, (g * 100).roundToInt() / 100f)
     }
     Column(modifier) {
-        Text("${kelvinLabel(temp)}  ${tintLabel(tint)}" + if (temp != 0f || tint != 0f) "　·　點兩下回中" else "", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+        Text("${kelvinLabel(temp)}  ${tintLabel(tint)}" + if (temp != 0f || tint != 0f) "　·　點兩下回中" else "", color = Darkroom.Text, fontSize = 11.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 4.dp))
         Canvas(
-            Modifier.fillMaxWidth().height(64.dp).clip(RoundedCornerShape(10.dp))
+            Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(8.dp))
                 .pointerInput(Unit) {
                     detectDragGestures(onDragEnd = onCommit) { change, _ ->
                         update(change.position, size.width.toFloat(), size.height.toFloat())
@@ -117,33 +117,33 @@ fun TonePanel(
     Column(modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (evMax > evMin) Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("☀ ${if (evIndex > 0) "+" else ""}$evIndex", color = Color.Black, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier.background(Color(0xFFE9E6E0), RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 4.dp))
-            Slider(evIndex.toFloat(), { onEv(it.roundToInt()) }, valueRange = evMin.toFloat()..evMax.toFloat(),
-                modifier = Modifier.weight(1f).padding(start = 10.dp))
-            Text("%+.1f EV".format(evIndex * evStep), color = Color(0xFFAAAAAA), fontSize = 11.sp, modifier = Modifier.width(52.dp))
+            Text("☀ ${if (evIndex > 0) "+" else ""}$evIndex", color = Darkroom.Text, fontSize = 12.sp,
+                modifier = Modifier.background(Darkroom.CardHi, RoundedCornerShape(6.dp)).padding(horizontal = 10.dp, vertical = 4.dp))
+            ThinSlider(evIndex.toFloat(), { onEv(it.roundToInt()) }, evMin.toFloat()..evMax.toFloat(), steps = (evMax - evMin - 1).coerceAtLeast(0),
+                modifier = Modifier.weight(1f).padding(horizontal = 10.dp))
+            Text("%+.1f EV".format(evIndex * evStep), color = Darkroom.Dim, fontSize = 11.sp, modifier = Modifier.width(52.dp))
         }
         Row(verticalAlignment = Alignment.Bottom) {
             // the dot shows the preset's own position plus the user's fine adjustment on top of it
             val b = preset.base
             WhiteBalancePad((temp + b).coerceIn(-1f, 1f), tint,
-                { t, g -> onTempTint(((t - b) * 100).roundToInt() / 100f, g) }, onCommit, Modifier.weight(1f),
+                { t, g -> onTempTint(((t - b) * 100).roundToInt() / 100f, g) }, onCommit, Modifier.weight(0.7f),
                 onReset = { onTempTint(0f, 0f) })
-            Row(Modifier.padding(start = 10.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(Modifier.padding(start = 8.dp, bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 for (p in WbPreset.entries) Box(
-                    Modifier.size(36.dp).clip(CircleShape)
-                        .border(1.5.dp, if (p == preset) Color(0xFFFFB86B) else Color(0xFF777777), CircleShape)
+                    Modifier.size(28.dp).clip(CircleShape)
+                        .border(1.dp, if (p == preset) Darkroom.Amber else Darkroom.Border, CircleShape)
                         .clickable { onPreset(p) },
                     contentAlignment = Alignment.Center,
-                ) { Text(p.label, color = if (p == preset) Color(0xFFFFB86B) else Color.White, fontSize = 14.sp) }
+                ) { Text(p.label, color = if (p == preset) Darkroom.Amber else Darkroom.Dim, fontSize = 11.sp) }
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("日期戳記", color = Color.White, fontSize = 13.sp)
-                Text(stampText(Date(), note), color = Color(0xFFAAAAAA), fontSize = 11.sp)
+                Text("日期戳記", color = Darkroom.Text, fontSize = 13.sp)
+                Text(stampText(Date(), note), color = Darkroom.Dim, fontSize = 11.sp)
             }
-            Switch(stamp, onStamp)
+            QuietSwitch(stamp, onStamp)
         }
         if (stamp) BasicTextField(
             note, { onNote(it.take(24)) }, singleLine = true,

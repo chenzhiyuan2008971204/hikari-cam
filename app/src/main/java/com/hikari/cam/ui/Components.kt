@@ -44,10 +44,10 @@ import com.hikari.engine.FilterSpec
 import kotlin.math.roundToInt
 
 object HikariColors {
-    val Accent = Color(0xFFFFB86B)
-    val Panel = Color(0xFF141414)
-    val Dim = Color(0xFF9A9A9A)
-    val Line = Color(0xFF2A2A2A)
+    val Accent = Darkroom.Amber
+    val Panel = Color(0xFF161618)
+    val Dim = Darkroom.Dim
+    val Line = Color(0xFF2C2C2E)
 }
 
 @Composable
@@ -55,7 +55,7 @@ fun HikariTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = darkColorScheme(
             primary = HikariColors.Accent, onPrimary = Color.Black,
-            surface = HikariColors.Panel, background = Color.Black,
+            surface = Darkroom.Card, background = Darkroom.Ground, onSurface = Darkroom.Text, onBackground = Darkroom.Text,
             secondaryContainer = Color(0xFF3A2A18), onSecondaryContainer = HikariColors.Accent,
         ),
         content = content,
@@ -202,5 +202,5 @@ fun LookStrip(
 
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(text, color = HikariColors.Dim, fontSize = 12.sp, modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
+    Text(text, color = Darkroom.Dim, fontSize = 12.sp, letterSpacing = 0.6.sp, modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
 }

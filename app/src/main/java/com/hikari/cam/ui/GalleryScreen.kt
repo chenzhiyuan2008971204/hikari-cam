@@ -39,6 +39,14 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.Movie
+import androidx.compose.material.icons.Icons
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -120,9 +128,15 @@ fun GalleryScreen(app: AppViewModel) {
                 Button(onClick = { confirm = true },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD04848), contentColor = Color.White)) { Text("刪除") }
             } else {
-                Text("Gallery", color = Color.White, fontSize = 22.sp, modifier = Modifier.weight(1f))
-                Button(onClick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
-                    Text("匯入照片編輯")
+                Text("Gallery", color = Darkroom.Text, fontSize = 22.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Light, modifier = Modifier.weight(1f))
+                // import: a quiet translucent graphite button with the import icon
+                Row(
+                    Modifier.clip(Darkroom.R8).background(Color(0xFF2C2C2E)).clickable { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+                        .padding(horizontal = 10.dp, vertical = 7.dp).testTag("importPhoto"),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    androidx.compose.material3.Icon(Icons.Outlined.FileDownload, contentDescription = null, tint = Darkroom.Dim, modifier = Modifier.size(16.dp))
+                    Text("匯入照片編輯", color = Darkroom.Text, fontSize = 12.sp)
                 }
             }
         }
@@ -132,10 +146,11 @@ fun GalleryScreen(app: AppViewModel) {
             list.isEmpty() -> Text("還沒有照片。用相機拍一張，或匯入相簿裡的照片。", color = HikariColors.Dim,
                 modifier = Modifier.padding(24.dp))
             else -> {
-                if (!selecting) Text("長按照片可選取、刪除", color = HikariColors.Dim, fontSize = 11.sp, modifier = Modifier.padding(start = 16.dp, bottom = 6.dp))
+                if (!selecting) Text("長按照片可選取、刪除", color = Darkroom.Dim, fontSize = 11.sp, modifier = Modifier.padding(start = 16.dp, bottom = 6.dp))
+                // contact-sheet order: 4 dp of charcoal between the frames
                 LazyVerticalGrid(
-                    GridCells.Fixed(3), contentPadding = PaddingValues(2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp), verticalArrangement = Arrangement.spacedBy(2.dp),
+                    GridCells.Fixed(3), contentPadding = PaddingValues(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     items(list, key = { it.uri.toString() }) { p ->
                         val thumb by produceState<Bitmap?>(null, p.uri) {
@@ -145,8 +160,8 @@ fun GalleryScreen(app: AppViewModel) {
                         }
                         val isSel = p.uri in selected
                         Box(
-                            Modifier.aspectRatio(1f).background(HikariColors.Panel)
-                                .border(if (isSel) 3.dp else 0.dp, if (isSel) HikariColors.Accent else Color.Transparent)
+                            Modifier.aspectRatio(1f).clip(RoundedCornerShape(2.dp)).background(HikariColors.Panel)
+                                .border(if (isSel) 2.dp else 0.dp, if (isSel) Darkroom.Amber else Color.Transparent, RoundedCornerShape(2.dp))
                                 .combinedClickable(
                                     onClick = {
                                         if (selecting) selected = if (isSel) selected - p.uri else selected + p.uri
@@ -158,8 +173,13 @@ fun GalleryScreen(app: AppViewModel) {
                             thumb?.let { Image(it.asImageBitmap(), p.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
                             if (selecting) Text(if (isSel) "●" else "○", color = if (isSel) HikariColors.Accent else Color.White,
                                 fontSize = 18.sp, modifier = Modifier.align(Alignment.TopEnd).padding(6.dp))
-                            if (p.name.contains("original")) Text("原圖", color = Color.White, fontSize = 10.sp,
-                                modifier = Modifier.align(Alignment.BottomStart).background(Color(0x99000000)).padding(horizontal = 4.dp))
+                            if (p.name.contains("original")) Row(
+                                Modifier.align(Alignment.BottomStart).padding(4.dp).clip(RoundedCornerShape(4.dp)).background(Color(0x66000000)).padding(horizontal = 4.dp, vertical = 1.dp),
+                                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            ) {
+                                androidx.compose.material3.Icon(Icons.Outlined.Movie, contentDescription = null, tint = Color(0xB3FFFFFF), modifier = Modifier.size(9.dp))
+                                Text("原圖", color = Color(0xB3FFFFFF), fontSize = 9.sp)
+                            }
                         }
                     }
                 }

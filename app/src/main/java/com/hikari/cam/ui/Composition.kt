@@ -366,7 +366,7 @@ fun LiveGuideOverlay(subject: com.hikari.cam.camera.Subject?, guidance: Guidance
             // one short line, only while something has to change
             if (!g.aligned) Text(g.tip, color = Color.White, fontSize = 13.sp,
                 modifier = Modifier.align(Alignment.TopCenter).padding(top = 92.dp)
-                    .background(Color(0x88000000), RoundedCornerShape(14.dp)).padding(horizontal = 12.dp, vertical = 4.dp))
+                    .background(Color(0x88000000), RoundedCornerShape(8.dp)).padding(horizontal = 12.dp, vertical = 4.dp))
         }
     }
 }

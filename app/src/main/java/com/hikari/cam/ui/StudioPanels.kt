@@ -78,8 +78,8 @@ import kotlin.math.roundToInt
 
 @Composable
 fun Chip(text: String, on: Boolean, tag: String = "", onClick: () -> Unit) {
-    Text(text, color = if (on) Color.Black else Color.White, fontSize = 12.sp, maxLines = 1,
-        modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (on) HikariColors.Accent else Color(0xFF242424))
+    Text(text, color = if (on) Color.Black else Darkroom.Text, fontSize = 12.sp, maxLines = 1,
+        modifier = Modifier.clip(Darkroom.R6).background(if (on) HikariColors.Accent else Darkroom.CardHi)
             .clickable(onClick = onClick).padding(horizontal = 10.dp, vertical = 5.dp).then(if (tag.isNotEmpty()) Modifier.testTag(tag) else Modifier))
 }
 
@@ -166,8 +166,8 @@ fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>,
     Column(Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
         // camera recipes: one tap switches the whole style
         RecipeBar(app, look, remember(camSettings.cameraAdjustJson) { com.hikari.engine.Adjustments.fromJson(camSettings.cameraAdjustJson) })
-        if (recs.isNotEmpty()) Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF1B1A17)).border(1.dp, Color(0x40E9C46A), RoundedCornerShape(14.dp)).padding(horizontal = 10.dp, vertical = 8.dp)) {
+        if (recs.isNotEmpty()) Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp).fillMaxWidth().clip(Darkroom.R12)
+            .background(Color(0xCC1C1C1E)).border(1.dp, Color(0x33F59E0B), Darkroom.R12).padding(horizontal = 10.dp, vertical = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("✦", color = HikariColors.Accent, fontSize = 13.sp)
                 Text(" 為這個畫面推薦", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
@@ -231,7 +231,7 @@ fun AllLooksSheet(app: AppViewModel, selectedId: String, favorites: Set<String>,
     var query by remember { mutableStateOf("") }
     val shown = looksInCategory(app, app.looks, query)
     androidx.compose.ui.window.Dialog(onDismissRequest = onClose, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(Modifier.fillMaxWidth().fillMaxHeight(0.86f).clip(RoundedCornerShape(18.dp)).background(Color(0xFF111111)).padding(top = 12.dp)) {
+        Column(Modifier.fillMaxWidth().fillMaxHeight(0.86f).clip(Darkroom.R12).background(Darkroom.Card).padding(top = 12.dp)) {
             Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("全部濾鏡", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 Text("${shown.size} 款", color = HikariColors.Dim, fontSize = 12.sp, modifier = Modifier.testTag("moreCount"))

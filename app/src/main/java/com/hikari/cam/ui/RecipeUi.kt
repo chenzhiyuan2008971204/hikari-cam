@@ -70,7 +70,7 @@ fun RecipeBar(app: AppViewModel, look: FilterSpec, adjust: Adjustments) {
 @Composable
 private fun RecipeChip(text: String, on: Boolean, tag: String, empty: Boolean = false, onClick: () -> Unit, onLong: (() -> Unit)?) {
     Text(text, color = if (on) Color.Black else if (empty) Color(0xFF8A8A8A) else Color.White, fontSize = 12.sp, maxLines = 1,
-        modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (on) HikariColors.Accent else Color(0xFF242424))
+        modifier = Modifier.clip(Darkroom.R6).background(if (on) HikariColors.Accent else Darkroom.CardHi)
             .combinedClickable(onClick = onClick, onLongClick = onLong).padding(horizontal = 10.dp, vertical = 5.dp).testTag(tag))
 }
 
