@@ -46,7 +46,9 @@ rm -rf "$TMP"
 if [ -n "${ANDROID_HOME:-}${ANDROID_SDK_ROOT:-}" ] || [ -f local.properties ]; then
   stage "android unit tests + release build" ./gradlew testDebugUnitTest assembleRelease
 else skip "android unit tests + release build" "no Android SDK on this machine (runs on CI: .github/workflows/build.yml)"; fi
-# 6. instrumented UI tests on an emulator or phone
+# 6. instrumented UI tests on an emulator or phone (camera and virtual-camera flow with a black-preview check, the editor screen,
+#    filter and frame lists, database migration). The editor screen test is skipped on the CI emulator, where the emulator
+#    process dies; the CI job "editor-ui" runs it alone on three GPU back ends to find out why.
 if [ $DEVICE = 1 ]; then
   if command -v adb >/dev/null && [ -n "$(adb devices | sed 1d | grep -w device)" ]; then
     KIND=$(adb shell getprop ro.kernel.qemu | tr -d '\r'); [ "$KIND" = 1 ] && KIND="EMULATOR" || KIND="PHYSICAL DEVICE $(adb shell getprop ro.product.model | tr -d '\r')"

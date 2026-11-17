@@ -39,6 +39,8 @@ class CameraPreviewRenderer(
     // Still-frame source (the virtual camera): upright bitmaps uploaded as an ordinary 2D texture and
     // drawn through the same film pipeline (its 2D-source variant, the one export uses).
     private val pendingStill = java.util.concurrent.atomic.AtomicReference<android.graphics.Bitmap?>(null)
+    /** the frame on screen now; kept so a look or aspect change can redraw it after the GL objects are rebuilt */
+    private var stillBmp: android.graphics.Bitmap? = null
     @Volatile private var stillOn = false
     private var pipeline2d: FilmPipeline? = null
     private var stillTex = 0
@@ -56,6 +58,7 @@ class CameraPreviewRenderer(
     fun clearStill() {
         stillOn = false
         pendingStill.getAndSet(null)?.recycle()
+        view.queueEvent { stillBmp?.recycle(); stillBmp = null }
         view.requestRender()
     }
 
@@ -82,6 +85,30 @@ class CameraPreviewRenderer(
         uploadErr = GLES30.glGetError()
         stillW = b.width; stillH = b.height
     }
+    private var stillWarm = false
+
+    /**
+     * One throwaway pass through every shader with a tiny dummy picture before the first real frame, so
+     * what a driver does lazily on first use cannot touch it (the off-screen renderer does the same: on the
+     * Android emulator the first source of a context came out black without it).
+     */
+    private fun warmUpStill(pipe: FilmPipeline, lk: Look) {
+        val dummy = android.graphics.Bitmap.createBitmap(8, 8, android.graphics.Bitmap.Config.ARGB_8888).apply { eraseColor(0xFF808080.toInt()) }
+        uploadStill(dummy)
+        dummy.recycle()
+        val p = FilmParams.effective(lk.spec, lk.adjust)
+        val map = SourceMap.bitmap(0f, 0f, 1f, 1f)
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        GLES30.glViewport(0, 0, 8, 8)
+        pipe.prepareGlow(stillTex, map, 1f, p)
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        GLES30.glViewport(0, 0, 8, 8)
+        pipe.composite(FilmPipeline.Frame(stillTex, map, 1f, 8, 8, 1f, 1f, onScreen = true), p, lk.lut, 0, 0, 8, 8)
+        GLES30.glFinish()
+        while (GLES30.glGetError() != GLES30.GL_NO_ERROR) { /* clear */ }
+        stillWarm = true
+    }
+
     private var oesTex = 0
     private var surfaceTexture: SurfaceTexture? = null
     private var viewW = 1
@@ -90,7 +117,7 @@ class CameraPreviewRenderer(
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         pipeline = FilmPipeline(assets, oes = true)
-        pipeline2d = null; stillTex = 0   // the old context's objects are gone
+        pipeline2d = null; stillTex = 0; stillWarm = false   // the old context's objects are gone
         val ids = IntArray(1)
         GLES30.glGenTextures(1, ids, 0)
         oesTex = ids[0]
@@ -113,8 +140,18 @@ class CameraPreviewRenderer(
         var pipe = pipeline ?: return
         val still = stillOn
         if (still) {
-            pendingStill.getAndSet(null)?.let { b -> if (!b.isRecycled) { uploadStill(b); b.recycle() } }
             pipe = pipeline2d ?: FilmPipeline(assets, oes = false).also { pipeline2d = it }
+            pendingStill.getAndSet(null)?.let { nb -> stillBmp?.recycle(); stillBmp = nb }
+            // The Android emulator's GL translator draws a source black when textures are created between
+            // uploading it and drawing from it (see FilmPipeline.ensureTargets). So every texture this draw
+            // needs (glow targets, the LUT) is created first, and the picture is uploaded last, every
+            // draw: the same order the off-screen export uses, which is known to work there.
+            look?.let { lk ->
+                pipe.ensureTargets(cropAspect, FilmParams.effective(lk.spec, lk.adjust))
+                pipe.prepareLut(lk.lut)
+            }
+            if (!stillWarm) look?.let { lk -> warmUpStill(pipe, lk) }
+            stillBmp?.takeIf { !it.isRecycled }?.let { uploadStill(it) }
         } else try {
             st.updateTexImage()
         } catch (e: RuntimeException) {

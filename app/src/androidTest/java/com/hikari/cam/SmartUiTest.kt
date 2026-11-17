@@ -122,6 +122,30 @@ class SmartUiTest {
         Report.flush(ctx, "smart_report.txt")
     }
 
+    /**
+     * The virtual camera's preview must show the photo, not a black frame: the middle of the preview is read back
+     * from a screenshot and has to be bright and varied (a black frame measures about 3 / 0).
+     */
+    @Test
+    fun virtualPreviewIsNotBlack() {
+        assertTrue("virtual camera did not start", poll(40_000) { set("virtualCamera", "true"); has("正在播放") })
+        Thread.sleep(5000)
+        val shot = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()!!
+        Report.png(ctx, "smart_virtual_preview_probe.png", shot)
+        val x0 = (shot.width * 0.2f).toInt(); val x1 = (shot.width * 0.8f).toInt()
+        val y0 = (shot.height * 0.28f).toInt(); val y1 = (shot.height * 0.46f).toInt()
+        var sum = 0.0; var sum2 = 0.0; var n = 0
+        for (y in y0 until y1 step 3) for (x in x0 until x1 step 3) {
+            val p = shot.getPixel(x, y)
+            val l = 0.2126 * ((p shr 16) and 255) + 0.7152 * ((p shr 8) and 255) + 0.0722 * (p and 255)
+            sum += l; sum2 += l * l; n++
+        }
+        val mean = sum / n; val sd = Math.sqrt(sum2 / n - mean * mean)
+        Report.line("smart: virtual preview centre luma mean ${"%.1f".format(mean)} sd ${"%.1f".format(sd)}")
+        Report.flush(ctx, "smart_virtual_probe_report.txt")
+        assertTrue("virtual preview is black (mean ${"%.1f".format(mean)}, sd ${"%.1f".format(sd)})", mean > 25 && sd > 10)
+    }
+
     /** Editor: top-three recommendation cards, composition analysis with overlays, apply a look, export. */
     @Test
     fun zEditorSmartFlow() {
