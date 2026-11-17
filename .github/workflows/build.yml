@@ -2,7 +2,7 @@ name: Build APK
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
   workflow_dispatch:
 
 permissions:
@@ -21,13 +21,23 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace
+          set +e
+          ./gradlew :vision:test :studio:test testDebugUnitTest assembleRelease > build.log 2>&1
+          status=$?
+          set -e
+          tail -5 build.log
+          if [ $status -ne 0 ]; then
+            echo "===== COMPILER ERRORS ====="
+            grep -E "^e: |^w: .*(Unresolved|Type mismatch)|FAILED|What went wrong" -A2 build.log | head -120
+            exit $status
+          fi
           cp app/build/outputs/apk/release/app-release.apk HikariCam.apk
       - uses: actions/upload-artifact@v4
         with:
           name: HikariCam
           path: HikariCam.apk
       - name: Publish download (Releases)
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: hikari-v${{ github.run_number }}
@@ -35,3 +45,142 @@ jobs:
           target_commitish: ${{ github.sha }}
           body: 用小米14 點下方的 HikariCam.apk 下載並安裝。
           files: HikariCam.apk
+
+  # Golden images and image-quality checks: every look on every standard photo, rendered by the
+  # shipped shaders in headless Chromium, compared with the recorded goldens.
+  golden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Tools
+        run: |
+          pip install numpy pillow
+          cd tools/engine && npm init -y > /dev/null && npm install playwright@1.63.0 && npx playwright install --with-deps chromium
+      - name: Golden + quality
+        run: python3 tools/golden/golden.py
+      - name: Engine shader tests
+        run: |
+          mkdir -p /tmp/et && python3 -c "from PIL import Image; Image.open('app/src/main/assets/samples/04_city.jpg').convert('RGB').save('/tmp/et/city.png')"
+          python3 tools/engine/engine_tests.py --photo /tmp/et/city.png --tmp /tmp/et
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: golden-report
+          path: reports/golden
+
+  # The app on an Android 14 emulator: engine tests on the real Android GL stack, and the
+  # Filter Lab driven through its UI. Screenshots and reports are uploaded as "lab-emulator".
+  emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build test APKs
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug assembleDebugAndroidTest > build.log 2>&1 || { grep -E "^e: " build.log | head -80; exit 1; }
+      - name: Run on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          ram-size: 4096M
+          disk-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none -no-snapshot
+          disable-animations: true
+          script: |
+            mkdir -p lab-emulator
+            adb logcat -c || true
+            ./gradlew connectedDebugAndroidTest --stacktrace -Pandroid.testInstrumentationRunnerArguments.skipCapture=true -Pandroid.testInstrumentationRunnerArguments.engineSample=true -Pandroid.testInstrumentationRunnerArguments.skipEditorUi=true -Pandroid.testInstrumentationRunnerArguments.notClass=com.hikari.cam.CameraUiTest || touch lab-emulator/TESTS_FAILED
+            timeout 60 adb logcat -d -s LabReport:I AndroidRuntime:E TestRunner:* HikariCamera:I > lab-emulator/logcat.txt || true
+            timeout 120 adb pull /sdcard/Download/HikariLab lab-emulator/ || true
+            timeout 30 adb shell ls -l /sdcard/Pictures/Hikari > lab-emulator/exported_files.txt || true
+      - name: Print device reports
+        if: always()
+        run: |
+          echo "===== LAB REPORTS ====="
+          cat lab-emulator/HikariLab/*.txt 2>/dev/null || echo "(no reports)"
+          echo "===== FAILURES ====="
+          grep -E "failed:|AssertionError|Exception:|FATAL" lab-emulator/logcat.txt 2>/dev/null | head -40 || true
+          echo "===== END ====="
+      - name: Collect test reports
+        if: always()
+        run: |
+          mkdir -p lab-emulator
+          cp -r app/build/reports/androidTests lab-emulator/reports || true
+          cp -r app/build/outputs/androidTest-results lab-emulator/results || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lab-emulator
+          path: lab-emulator
+      - name: Fail when tests failed
+        run: test ! -f lab-emulator/TESTS_FAILED
+
+  # Why the Android emulator dies when the editor screen opens (the main emulator job skips that test): the
+  # editor's start-up run only up to stage N (0 = the screen alone ... 5 = everything), one stage per emulator, with
+  # the whole logcat kept. The first stage whose emulator disappears is the step that does it. Never blocks.
+  editor-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        stage: [0, 1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build test APKs
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug assembleDebugAndroidTest > build.log 2>&1 || { grep -E "^e: " build.log | head -80; exit 1; }
+      - name: Editor start-up up to stage ${{ matrix.stage }}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          ram-size: 4096M
+          disk-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none -no-snapshot -verbose
+          disable-animations: true
+          script: |
+            mkdir -p editor-ui
+            adb logcat -c || true
+            (adb logcat -v threadtime > editor-ui/logcat_live.txt 2>&1 &) 
+            ./gradlew connectedDebugAndroidTest --stacktrace -Pandroid.testInstrumentationRunnerArguments.class=com.hikari.cam.EditorBisectTest -Pandroid.testInstrumentationRunnerArguments.stage=${{ matrix.stage }} > editor-ui/gradle.txt 2>&1 || touch editor-ui/TESTS_FAILED
+            adb devices > editor-ui/adb_devices.txt 2>&1 || true
+            timeout 60 adb logcat -d -b all -v threadtime > editor-ui/logcat_all.txt 2>&1 || true
+            timeout 30 adb shell dumpsys meminfo > editor-ui/meminfo.txt 2>&1 || true
+            timeout 30 adb shell dmesg > editor-ui/dmesg.txt 2>&1 || true
+            timeout 120 adb pull /sdcard/Download/HikariLab editor-ui/ || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: editor-ui-stage${{ matrix.stage }}
+          path: editor-ui

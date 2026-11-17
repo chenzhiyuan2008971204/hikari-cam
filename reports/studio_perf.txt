@@ -1,0 +1,6 @@
+studio performance (JVM, java.awt backend - not a phone)
+  film35: canvas 6240x4880 (30.5 MP), layout 0.32 ms, layout + render 106 ms
+  instant_classic: canvas 6440x5140 (33.1 MP), layout 0.16 ms, layout + render 696 ms
+  blur_bg: canvas 6960x4960 (34.5 MP), layout 0.14 ms, layout + render 764 ms
+  paper_texture: canvas 6960x5040 (35.1 MP), layout 0.14 ms, layout + render 686 ms
+  layout only: 0.004 ms per frame over 1740 layouts

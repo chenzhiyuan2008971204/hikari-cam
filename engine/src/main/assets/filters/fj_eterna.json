@@ -1,0 +1,89 @@
+{
+ "id": "fj_eterna",
+ "name": "Eterna",
+ "zh": "Eterna 電影",
+ "series": "fuji",
+ "note": "電影負片：很低的反差與飽和、寬廣的暗部層次，留給後製的柔和影調。",
+ "lut": "luts/fj_eterna.lut",
+ "color": {
+  "lutAmount": 1.0,
+  "exposure": 0.0
+ },
+ "inspired": "Eterna",
+ "grain": {
+  "amount": 0.2,
+  "size": 0.00108,
+  "chroma": 0.05,
+  "rough": 0.4
+ },
+ "halation": {
+  "amount": 0.04,
+  "threshold": 0.82,
+  "radius": 0.012,
+  "tint": [
+   1.0,
+   0.32,
+   0.12
+  ]
+ },
+ "bloom": {
+  "amount": 0.0,
+  "threshold": 0.78,
+  "radius": 0.045
+ },
+ "diffusion": {
+  "softFocus": 0.0,
+  "mist": 0.0,
+  "radius": 0.006
+ },
+ "lens": {
+  "vignette": 0.1,
+  "vignetteSoft": 0.6,
+  "aberration": 0.0,
+  "edgeSoft": 0.0
+ },
+ "defects": {
+  "dust": 0.0,
+  "scratches": 0.0,
+  "leak": 0.0,
+  "leakColor": [
+   1.0,
+   0.45,
+   0.18
+  ],
+  "uneven": 0.0,
+  "drift": 0.0
+ },
+ "recipe": [
+  "影調曲線：18% 灰處斜率 0.62（減反差），黑位 0.042、白位肩部 0.958，曝光 +0.06 EV（線性光、不裁切）",
+  "飽和度（OKLab）：整體飽和 -0.26",
+  "分色 HSL：膚色 色相+0° 飽和+0.10 亮度+0.00；天藍 色相-5° 飽和-0.05 亮度-0.01；綠 色相+5° 飽和-0.11 亮度+0.00；紅 色相+0° 飽和-0.05 亮度+0.00",
+  "色度上限（不螢光）：天藍 0.15、藍 0.17、綠 0.13、黃綠 0.13、膚色 0.12",
+  "高光色彩滾降：亮度 0.80 起漸淡 40%（雲與白牆乾淨不泛黃）",
+  "色彩管理：sRGB → 線性光 → OKLab 工作空間 → 色域映射 → sRGB；12 色相區段",
+  "分離色調：暗部 195° × 0.013、高光 60° × 0.006",
+  "保護：中性白／灰、膚色色相、色域內壓縮（不爆色）",
+  "顆粒：強度 0.20、粒徑 1.08‰ 短邊、彩色 0.05、粗糙 0.40，中間調最強",
+  "Halation：0.04，門檻 0.82，半徑 1.2% 短邊，紅橙色"
+ ],
+ "traits": {
+  "contrast": -0.3815,
+  "sat": -0.2792,
+  "warmth": -0.0076,
+  "shadowLift": 0.072,
+  "hlSoft": 0.0,
+  "fade": 0.0465,
+  "mono": 0.0,
+  "glow": 0.04,
+  "grain": 0.2,
+  "skySat": 0.7312,
+  "skyL": -0.0319,
+  "skyShift": -0.2516,
+  "greenSat": 0.6944,
+  "greenL": -0.0086,
+  "greenShift": 3.8385,
+  "skinSat": 0.7939,
+  "skinL": -0.0387,
+  "skinHue": 0.0978
+ }
+}

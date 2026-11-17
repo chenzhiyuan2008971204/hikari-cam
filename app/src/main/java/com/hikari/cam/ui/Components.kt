@@ -1,16 +1,16 @@
 package com.hikari.cam.ui
 
-import androidx.compose.foundation.ExperimentalFoundationApi
+import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -19,138 +19,129 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.hikari.cam.filter.Adjustments
-import com.hikari.cam.filter.Category
-import com.hikari.cam.filter.Filter
+import com.hikari.engine.Adjustments
+import com.hikari.engine.FilterSpec
 import kotlin.math.roundToInt
 
-val Accent = Color(0xFFE8553F)
-val Panel = Color(0xFF141414)
-val Dim = Color(0xFF9A9A9A)
+object HikariColors {
+    val Accent = Darkroom.Amber
+    val Panel = Color(0xFF161618)
+    val Dim = Darkroom.Dim
+    val Line = Color(0xFF2C2C2E)
+}
 
 @Composable
 fun HikariTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = darkColorScheme(
-            primary = Accent,
-            secondary = Color(0xFFBFD8E6),
-            background = Color.Black,
-            surface = Panel,
+            primary = HikariColors.Accent, onPrimary = Color.Black,
+            surface = Darkroom.Card, background = Darkroom.Ground, onSurface = Darkroom.Text, onBackground = Darkroom.Text,
+            secondaryContainer = Color(0xFF3A2A18), onSecondaryContainer = HikariColors.Accent,
         ),
         content = content,
     )
 }
 
-/** Category colour used for the swatch on filter chips. */
-private fun swatch(f: Filter): Brush = when {
-    f.id == "original" -> Brush.linearGradient(listOf(Color(0xFF666666), Color(0xFFBBBBBB)))
-    f.params.mono > 0.5f -> Brush.linearGradient(listOf(Color(0xFF111111), Color(0xFFDDDDDD)))
-    f.category == Category.AIR -> Brush.linearGradient(listOf(Color(0xFFDDEEF2), Color(0xFFF6E2E4)))
-    f.category == Category.FILM -> Brush.linearGradient(listOf(Color(0xFFE9B872), Color(0xFF8E6B4E)))
-    f.category == Category.CINEMA -> Brush.linearGradient(listOf(Color(0xFF16404F), Color(0xFFE0874B)))
-    else -> Brush.linearGradient(listOf(Color(0xFF7A5CC0), Color(0xFFE8553F)))
-}
+val SERIES_ZH = mapOf("sim" to "Film Simulation 底片模擬", "daylight" to "Daylight 日光系列", "film" to "Film 底片", "japanese" to "Japanese 日系", "ccd" to "CCD 數位", "special" to "Special 特殊",
+    // added categories go after the existing ones; a new category only needs a line here and looks with that series id
+    "fuji" to "Fujifilm 底片模擬", "cinema" to "Cinema 電影色彩", "pro" to "Pro 專業攝影", "vintage" to "Vintage 復古底片")
 
-@OptIn(ExperimentalFoundationApi::class)
+/** One adjustable parameter: [get] shows the look's own value when the user has not changed it. */
+class Param(
+    val label: String,
+    val range: ClosedFloatingPointRange<Float>,
+    val format: (Float) -> String,
+    val get: (Adjustments, FilterSpec) -> Float,
+    val set: (Adjustments, Float) -> Adjustments,
+)
+
+fun signed(v: Float) = (if (v >= 0) "+" else "") + "%.2f".format(v)
+
+val ADJUST_PARAMS = listOf(
+    Param("濾鏡強度", 0f..1f, { "${(it * 100).roundToInt()}%" }, { a, _ -> a.strength }, { a, v -> a.copy(strength = v) }),
+    Param("顆粒", 0f..1f, { "%.2f".format(it) }, { a, s -> a.grain ?: s.grain.amount }, { a, v -> a.copy(grain = v) }),
+    Param("顆粒大小", 0.0005f..0.003f, { "%.2f‰".format(it * 1000) }, { a, s -> a.grainSize ?: s.grain.size }, { a, v -> a.copy(grainSize = v) }),
+    Param("Halation", 0f..1.5f, { "%.2f".format(it) }, { a, s -> a.halation ?: s.halation.amount }, { a, v -> a.copy(halation = v) }),
+    Param("Bloom", 0f..1f, { "%.2f".format(it) }, { a, s -> a.bloom ?: s.bloom.amount }, { a, v -> a.copy(bloom = v) }),
+    Param("暗角", 0f..1f, { "%.2f".format(it) }, { a, s -> a.vignette ?: s.lens.vignette }, { a, v -> a.copy(vignette = v) }),
+    Param("褪色", 0f..1f, { "%.2f".format(it) }, { a, _ -> a.fade }, { a, v -> a.copy(fade = v) }),
+    Param("曝光 EV", -2f..2f, ::signed, { a, _ -> a.exposure }, { a, v -> a.copy(exposure = v) }),
+    Param("色溫", -1f..1f, ::signed, { a, _ -> a.temperature }, { a, v -> a.copy(temperature = v) }),
+    Param("色調", -1f..1f, ::signed, { a, _ -> a.tint }, { a, v -> a.copy(tint = v) }),
+    Param("對比", -1f..1f, ::signed, { a, _ -> a.contrast }, { a, v -> a.copy(contrast = v) }),
+    Param("飽和", -1f..1f, ::signed, { a, _ -> a.saturation }, { a, v -> a.copy(saturation = v) }),
+    Param("高光", -1f..1f, ::signed, { a, _ -> a.highlights }, { a, v -> a.copy(highlights = v) }),
+    Param("陰影", -1f..1f, ::signed, { a, _ -> a.shadows }, { a, v -> a.copy(shadows = v) }),
+    Param("白色", -1f..1f, ::signed, { a, _ -> a.whites }, { a, v -> a.copy(whites = v) }),
+    Param("黑色", -1f..1f, ::signed, { a, _ -> a.blacks }, { a, v -> a.copy(blacks = v) }),
+    Param("銳利度", 0f..1f, { "%.2f".format(it) }, { a, _ -> a.sharpness }, { a, v -> a.copy(sharpness = v) }),
+)
+
+/** Lens character and film defects: each one can be switched off (0) or set; null = the look's own amount. */
+val LENS_PARAMS = listOf(
+    Param("色差", 0f..1f, { "%.2f".format(it) }, { a, s -> a.aberration ?: s.lens.aberration }, { a, v -> a.copy(aberration = v) }),
+    Param("柔焦", 0f..1f, { "%.2f".format(it) }, { a, s -> a.softFocus ?: s.diffusion.softFocus }, { a, v -> a.copy(softFocus = v) }),
+    Param("光線擴散", 0f..1f, { "%.2f".format(it) }, { a, s -> a.mist ?: s.diffusion.mist }, { a, v -> a.copy(mist = v) }),
+    Param("邊緣柔化", 0f..1f, { "%.2f".format(it) }, { a, s -> a.edgeSoft ?: s.lens.edgeSoft }, { a, v -> a.copy(edgeSoft = v) }),
+    Param("灰塵", 0f..1f, { "%.2f".format(it) }, { a, s -> a.dust ?: s.defects.dust }, { a, v -> a.copy(dust = v) }),
+    Param("刮痕", 0f..1f, { "%.2f".format(it) }, { a, s -> a.scratches ?: s.defects.scratches }, { a, v -> a.copy(scratches = v) }),
+    Param("漏光", 0f..1f, { "%.2f".format(it) }, { a, s -> a.leak ?: s.defects.leak }, { a, v -> a.copy(leak = v) }),
+    Param("曝光不均", 0f..1f, { "%.2f".format(it) }, { a, s -> a.uneven ?: s.defects.uneven }, { a, v -> a.copy(uneven = v) }),
+    Param("色彩漂移", 0f..1f, { "%.2f".format(it) }, { a, s -> a.drift ?: s.defects.drift }, { a, v -> a.copy(drift = v) }),
+)
+
+/** The adjustment sliders for one look. [onChange] fires while dragging; [onCommit] when a drag ends. */
 @Composable
-fun FilterStrip(
-    filters: List<Filter>,
-    selectedId: String,
-    thumbs: Map<String, ImageBitmap> = emptyMap(),
-    onSelect: (Filter) -> Unit,
-    onLongPress: (Filter) -> Unit,
-    onImportLut: () -> Unit,
+fun AdjustSliders(
+    spec: FilterSpec,
+    adjust: Adjustments,
+    onChange: (Adjustments) -> Unit,
+    onReset: () -> Unit,
+    modifier: Modifier = Modifier,
+    onCommit: () -> Unit = {},
+    params: List<Param> = ADJUST_PARAMS,
+    lens: List<Param> = LENS_PARAMS,
 ) {
-    var category by remember { mutableStateOf<Category?>(null) }
-    Column {
-        // Category tabs
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            val tabs = listOf<Category?>(null) + Category.entries
-            for (c in tabs) {
-                val sel = c == category
-                Text(
-                    c?.label ?: "全部",
-                    color = if (sel) Color.White else Dim,
-                    fontWeight = if (sel) FontWeight.Bold else FontWeight.Normal,
-                    fontSize = 13.sp,
-                    modifier = Modifier.combinedClickable(onClick = { category = c }),
-                )
-            }
+    Column(modifier.verticalScroll(rememberScrollState()).padding(horizontal = 14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("${spec.name} · ${spec.zh}", color = HikariColors.Dim, fontSize = 11.sp, modifier = Modifier.weight(1f))
+            TextButton(onClick = onReset) { Text("重設", color = HikariColors.Accent) }
         }
-        val shown = filters.filter { category == null || it.category == category || it.id == "original" }
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            items(shown, key = { it.id }) { f ->
-                val sel = f.id == selectedId
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .width(64.dp)
-                        .combinedClickable(onClick = { onSelect(f) }, onLongClick = { onLongPress(f) }),
-                ) {
-                    Box(
-                        Modifier
-                            .size(58.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(swatch(f))
-                            .border(2.dp, if (sel) Accent else Color.Transparent, RoundedCornerShape(10.dp)),
-                    ) {
-                        thumbs[f.id]?.let {
-                            Image(it, null, contentScale = ContentScale.Crop, modifier = Modifier.size(58.dp))
-                        }
-                    }
-                    Spacer(Modifier.height(3.dp))
-                    Text(
-                        f.name, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        color = if (sel) Accent else Color.White, textAlign = TextAlign.Center,
+        for (p in params) ParamRow(p, spec, adjust, onChange, onCommit)
+        if (lens.isNotEmpty()) {
+            Text("鏡頭與底片瑕疵（每項可單獨開關）", color = HikariColors.Dim, fontSize = 11.sp, modifier = Modifier.padding(top = 10.dp, bottom = 2.dp))
+            for (p in lens) {
+                val v = p.get(adjust, spec)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Switch(
+                        checked = v > 0f,
+                        onCheckedChange = { on ->
+                            val own = p.get(Adjustments.DEFAULT, spec)
+                            onChange(p.set(adjust, if (on) (if (own > 0f) own else 0.3f) else 0f)); onCommit()
+                        },
+                        modifier = Modifier.padding(end = 4.dp).height(28.dp),
                     )
-                    Text(f.subtitle, fontSize = 9.sp, maxLines = 1, color = Dim)
-                }
-            }
-            item {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.width(64.dp).combinedClickable(onClick = onImportLut),
-                ) {
-                    Box(
-                        Modifier.size(58.dp).clip(RoundedCornerShape(10.dp)).border(1.dp, Dim, RoundedCornerShape(10.dp)),
-                        contentAlignment = Alignment.Center,
-                    ) { Text("+", fontSize = 26.sp, color = Dim) }
-                    Spacer(Modifier.height(3.dp))
-                    Text("匯入 LUT", fontSize = 12.sp, color = Dim)
+                    Box(Modifier.weight(1f)) { ParamRow(p, spec, adjust, onChange, onCommit) }
                 }
             }
         }
@@ -158,101 +149,58 @@ fun FilterStrip(
 }
 
 @Composable
-fun LabeledSlider(
-    label: String,
-    value: Float,
-    range: ClosedFloatingPointRange<Float>,
-    valueText: String,
-    onChange: (Float) -> Unit,
-    trailing: (@Composable () -> Unit)? = null,
-) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, color = Color.White, fontSize = 13.sp, modifier = Modifier.width(56.dp))
+private fun ParamRow(p: Param, spec: FilterSpec, adjust: Adjustments, onChange: (Adjustments) -> Unit, onCommit: () -> Unit) {
+    val v = p.get(adjust, spec)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(p.label, color = Color.White, fontSize = 12.sp, modifier = Modifier.width(70.dp))
         Slider(
-            value = value.coerceIn(range.start, range.endInclusive),
-            onValueChange = onChange,
-            valueRange = range,
-            modifier = Modifier.weight(1f).height(36.dp),
-            colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = Accent),
+            value = v.coerceIn(p.range.start, p.range.endInclusive),
+            onValueChange = { onChange(p.set(adjust, it)) },
+            onValueChangeFinished = onCommit,
+            valueRange = p.range,
+            colors = SliderDefaults.colors(thumbColor = HikariColors.Accent, activeTrackColor = HikariColors.Accent),
+            modifier = Modifier.weight(1f).height(32.dp),
         )
-        Text(valueText, color = Dim, fontSize = 12.sp, textAlign = TextAlign.End, modifier = Modifier.width(52.dp))
-        trailing?.invoke()
+        Text(p.format(v), color = HikariColors.Dim, fontSize = 11.sp, fontFamily = FontFamily.Monospace,
+            modifier = Modifier.width(56.dp).padding(start = 6.dp))
     }
 }
 
-private fun signed(v: Float) = (v * 100).roundToInt().let { if (it > 0) "+$it" else "$it" }
-
+/** Horizontal strip of looks with real rendered thumbnails. */
 @Composable
-fun AdjustPanel(
-    strength: Float,
-    onStrength: (Float) -> Unit,
-    adj: Adjustments,
-    onAdj: (Adjustments) -> Unit,
-    onSaveFilter: () -> Unit,
+fun LookStrip(
+    looks: List<FilterSpec>,
+    thumbs: Map<String, Bitmap>,
+    selectedId: String?,
+    favorites: Set<String>,
+    onSelect: (FilterSpec) -> Unit,
+    modifier: Modifier = Modifier,
+    size: Int = 64,
 ) {
-    Column(Modifier.verticalScroll(rememberScrollState())) {
-        LabeledSlider("濾鏡強度", strength, 0f..1f, "${(strength * 100).roundToInt()}%", onStrength)
-        LabeledSlider("曝光", adj.exposure, -1.5f..1.5f, signed(adj.exposure), { onAdj(adj.copy(exposure = it)) })
-        LabeledSlider("對比", adj.contrast, -1f..1f, signed(adj.contrast), { onAdj(adj.copy(contrast = it)) })
-        LabeledSlider("飽和", adj.saturation, -1f..1f, signed(adj.saturation), { onAdj(adj.copy(saturation = it)) })
-        LabeledSlider("色溫", adj.temperature, -1f..1f, signed(adj.temperature), { onAdj(adj.copy(temperature = it)) })
-        LabeledSlider("色調", adj.tint, -1f..1f, signed(adj.tint), { onAdj(adj.copy(tint = it)) })
-        LabeledSlider("亮部", adj.highlights, -1f..1f, signed(adj.highlights), { onAdj(adj.copy(highlights = it)) })
-        LabeledSlider("暗部", adj.shadows, -1f..1f, signed(adj.shadows), { onAdj(adj.copy(shadows = it)) })
-        LabeledSlider("褪色", adj.fade, 0f..1f, signed(adj.fade), { onAdj(adj.copy(fade = it)) })
-        LabeledSlider("顆粒", adj.grain, 0f..1f, signed(adj.grain), { onAdj(adj.copy(grain = it)) })
-        LabeledSlider("暗角", adj.vignette, 0f..1f, signed(adj.vignette), { onAdj(adj.copy(vignette = it)) })
-        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            TextButton(onClick = { onAdj(Adjustments()); onStrength(1f) }) { Text("重設", color = Dim) }
-            TextButton(onClick = onSaveFilter) { Text("存成我的濾鏡", color = Accent) }
+    LazyRow(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(horizontal = 12.dp)) {
+        items(looks, key = { it.id }) { spec ->
+            val selected = spec.id == selectedId
+            Column(Modifier.width((size + 8).dp).clickable { onSelect(spec) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                val shape = RoundedCornerShape(6.dp)
+                Box(Modifier.size(size.dp).clip(shape).background(HikariColors.Panel)
+                    .border(if (selected) 2.dp else 0.dp, if (selected) HikariColors.Accent else Color.Transparent, shape)) {
+                    val b = thumbs[spec.id]
+                    if (b != null) {
+                        val img = remember(b) { b.asImageBitmap() }
+                        Image(img, spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    } else {
+                        FilmIcon(spec, (size - 8).dp, Modifier.align(Alignment.Center))
+                    }
+                    if (spec.id in favorites) Text("★", color = HikariColors.Accent, fontSize = 11.sp,
+                        modifier = Modifier.align(Alignment.TopEnd).padding(3.dp))
+                }
+                Text(spec.name, color = if (selected) HikariColors.Accent else Color.White, fontSize = 10.sp, maxLines = 1)
+            }
         }
     }
 }
 
 @Composable
-fun NameDialog(title: String, initial: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
-    var name by remember { mutableStateOf(initial) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true, label = { Text("名稱") }) },
-        confirmButton = {
-            TextButton(onClick = { if (name.isNotBlank()) onConfirm(name.trim()) }) { Text("儲存") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
-    )
-}
-
-@Composable
-fun ConfirmDialog(title: String, text: String, confirm: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(text) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(confirm, color = Accent) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
-    )
-}
-
-/** Small pill toggle used in top bars and mode switches. */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun Pill(text: String, active: Boolean, onClick: () -> Unit) {
-    Box(
-        Modifier
-            .clip(CircleShape)
-            .background(if (active) Color.White.copy(alpha = 0.18f) else Color.Transparent)
-            .combinedClickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-    ) {
-        Text(text, color = if (active) Color.White else Dim, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-    }
-}
-
-/** Tab row: 濾鏡 / 調整 / 手動 */
-@Composable
-fun Tabs(tabs: List<String>, selected: Int, onSelect: (Int) -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.Center) {
-        tabs.forEachIndexed { i, t -> Pill(t, i == selected) { onSelect(i) } }
-    }
+fun SectionTitle(text: String, modifier: Modifier = Modifier) {
+    Text(text, color = Darkroom.Dim, fontSize = 12.sp, letterSpacing = 0.6.sp, modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
 }

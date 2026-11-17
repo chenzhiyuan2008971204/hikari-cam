@@ -1,229 +1,291 @@
 package com.hikari.cam.ui
 
-import android.graphics.Bitmap
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Redo
+import androidx.compose.material.icons.automirrored.outlined.Undo
+import androidx.compose.material.icons.outlined.BookmarkAdd
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.hikari.cam.data.DateStamp
-import com.hikari.cam.data.FilterStore
-import com.hikari.cam.data.PhotoStore
-import com.hikari.cam.filter.Adjustments
-import com.hikari.cam.filter.Category
-import com.hikari.cam.filter.CubeLut
-import com.hikari.cam.filter.Filter
-import com.hikari.cam.filter.Presets
-import com.hikari.cam.filter.effectiveParams
-import com.hikari.cam.gl.FilterEngine
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hikari.cam.lab.CompareView
+import com.hikari.engine.Adjustments
 
 @Composable
-fun EditorScreen(uri: Uri, store: FilterStore, onClose: () -> Unit) {
-    val context = LocalContext.current
+fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewModel = viewModel()) {
+    LaunchedEffect(uri) { vm.open(uri, lookId) }
+    val favorites by app.favorites.collectAsState()
+    val presets by app.presets.collectAsState()
+    val settings by app.settings.collectAsState()
+    var saveRecipe by remember { mutableStateOf(false) }   // "save as camera recipe" dialog
+    var tab by remember { mutableStateOf(0) } // 0 looks, 1 effects, 2 timestamp, 3 frame, 4 smart
+    // Back first leaves a tool (timestamp, frame, smart...) and shows the photo with its filter strip
+    // again; back from there leaves the editor. The arrow in the top bar does the same.
+    val goBack = { if (tab != 0) tab = 0 else { app.back(); Unit } }
+    BackHandler { goBack() }
+    var showStrength by remember { mutableStateOf(false) }
+    var naming by remember { mutableStateOf(false) }
+    var showPresets by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val deleteLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { r ->
+        if (r.resultCode == android.app.Activity.RESULT_OK) app.back()
+    }
     val scope = rememberCoroutineScope()
-    BackHandler(onBack = onClose)
-
-    var full by remember { mutableStateOf<Bitmap?>(null) }
-    var small by remember { mutableStateOf<Bitmap?>(null) }
-    var shown by remember { mutableStateOf<ImageBitmap?>(null) }
-    var original by remember { mutableStateOf<ImageBitmap?>(null) }
-    var holdOriginal by remember { mutableStateOf(false) }
-    val thumbs = remember { mutableStateMapOf<String, ImageBitmap>() }
-
-    var filter by remember { mutableStateOf<Filter>(Presets.ORIGINAL) }
-    var strength by remember { mutableFloatStateOf(1f) }
-    var adj by remember { mutableStateOf(Adjustments()) }
-    var lut by remember { mutableStateOf<CubeLut?>(null) }
-    var tab by remember { mutableIntStateOf(0) }
-    var dateStamp by remember { mutableStateOf(false) }
-    var saving by remember { mutableStateOf(false) }
-    var saveDialog by remember { mutableStateOf(false) }
-    var deleteTarget by remember { mutableStateOf<Filter?>(null) }
-    var pendingLut by remember { mutableStateOf<Uri?>(null) }
-
-    LaunchedEffect(uri) {
-        try {
-            val f = PhotoStore.load(context, uri, 4096)
-            val s = withContext(Dispatchers.Default) {
-                val k = 1600f / maxOf(f.width, f.height)
-                if (k < 1f) Bitmap.createScaledBitmap(f, (f.width * k).toInt(), (f.height * k).toInt(), true) else f
-            }
-            full = f
-            small = s
-            original = s.asImageBitmap()
-        } catch (e: Exception) {
-            Toast.makeText(context, "無法開啟照片：${e.message}", Toast.LENGTH_LONG).show()
-            onClose()
-        }
-    }
-
-    // Filter thumbnails from the photo itself.
-    LaunchedEffect(small, store.custom.size) {
-        val s = small ?: return@LaunchedEffect
-        val k = 180f / maxOf(s.width, s.height)
-        val t = Bitmap.createScaledBitmap(s, (s.width * k).toInt(), (s.height * k).toInt(), true)
-        for (f in Presets.all + store.custom) {
-            if (thumbs.containsKey(f.id)) continue
-            val l = f.lutFile?.let { withContext(Dispatchers.IO) { CubeLut.load(it) } }
-            thumbs[f.id] = FilterEngine.render(t, f.params, l).asImageBitmap()
-        }
-    }
-
-    LaunchedEffect(filter) {
-        lut = filter.lutFile?.let { withContext(Dispatchers.IO) { CubeLut.load(it) } }
-    }
-
-    // Re-render the preview when anything changes (restarts on each change, so it keeps up with sliders).
-    LaunchedEffect(small, filter, strength, adj, lut, dateStamp) {
-        val s = small ?: return@LaunchedEffect
-        delay(30)
-        var out = FilterEngine.render(s, effectiveParams(filter, strength, adj), lut)
-        if (dateStamp) out = DateStamp.draw(out)
-        shown = out.asImageBitmap()
-    }
-
-    val pickLut = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { u ->
-        if (u != null) pendingLut = u
-    }
-
-    fun save() {
-        val src = full ?: return
-        if (saving) return
-        saving = true
-        val params = effectiveParams(filter, strength, adj)
-        val l = lut
-        val stamp = dateStamp
-        scope.launch {
-            try {
-                var out = FilterEngine.render(src, params, l)
-                if (stamp) out = DateStamp.draw(out)
-                PhotoStore.save(context, out)
-                out.recycle()
-                Toast.makeText(context, "已儲存到相簿 Pictures/Hikari", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(context, "儲存失敗：${e.message}", Toast.LENGTH_LONG).show()
-            } finally {
-                saving = false
-            }
-        }
-    }
 
     Column(Modifier.fillMaxSize().background(Color.Black).statusBarsPadding().navigationBarsPadding()) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Pill("‹ 返回", false, onClose)
-            Pill("日期", dateStamp) { dateStamp = !dateStamp }
-            Pill(if (saving) "儲存中…" else "儲存", true) { save() }
+        // top bar: back · undo redo · delete · save
+        Row(Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            BarIcon(Icons.AutoMirrored.Outlined.ArrowBack, "返回") { goBack() }
+            Text(if (vm.fullW > 0) "${vm.fullW}×${vm.fullH}" else "", color = HikariColors.Dim, fontSize = 11.sp,
+                modifier = Modifier.weight(1f).padding(start = 6.dp))
+            BarIcon(Icons.AutoMirrored.Outlined.Undo, "還原", vm.canUndo) { vm.undo() }
+            BarIcon(Icons.AutoMirrored.Outlined.Redo, "重做", vm.canRedo) { vm.redo() }
+            BarIcon(Icons.Outlined.BookmarkAdd, "存成相機配方") { saveRecipe = true }
+            BarIcon(Icons.Outlined.DeleteOutline, "刪除") { confirmDelete = true }
+            BarIcon(Icons.Outlined.FileDownload, "儲存", vm.busy == null && vm.preview != null) { vm.export(settings.jpegQuality) }
         }
-
-        Box(
-            Modifier.fillMaxWidth().weight(1f).pointerInput(Unit) {
-                detectTapGestures(onPress = {
-                    holdOriginal = true
-                    tryAwaitRelease()
-                    holdOriginal = false
-                })
-            },
-            contentAlignment = Alignment.Center,
-        ) {
-            val img = if (holdOriginal) original else shown ?: original
-            if (img != null) {
-                Image(img, null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
-            } else {
-                CircularProgressIndicator(color = Accent)
-            }
-            Text(
-                if (holdOriginal) "原圖" else "按住看原圖", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp,
-                modifier = Modifier.align(Alignment.TopCenter).padding(6.dp),
-            )
+        if (vm.busy != null) {
+            LinearProgressIndicator(Modifier.fillMaxWidth(), color = HikariColors.Accent)
+            Text(vm.busy ?: "", color = HikariColors.Accent, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 12.dp))
         }
-
-        Tabs(listOf("濾鏡", "調整"), tab) { tab = it }
-        Box(Modifier.fillMaxWidth().height(if (tab == 0) 130.dp else 260.dp)) {
-            when (tab) {
-                0 -> FilterStrip(
-                    filters = Presets.all + store.custom,
-                    selectedId = filter.id,
-                    thumbs = thumbs,
-                    onSelect = { filter = it; strength = 1f },
-                    onLongPress = { if (it.category == Category.MINE) deleteTarget = it },
-                    onImportLut = { pickLut.launch(arrayOf("*/*")) },
-                )
-                else -> AdjustPanel(strength, { strength = it }, adj, { adj = it }, onSaveFilter = { saveDialog = true })
-            }
-        }
-    }
-
-    if (saveDialog) {
-        NameDialog("存成我的濾鏡", filter.name + " 改", onDismiss = { saveDialog = false }) { name ->
-            filter = store.saveCustom(name, effectiveParams(filter, strength, adj), filter.lutFile)
-            strength = 1f
-            adj = Adjustments()
-            saveDialog = false
-            tab = 0
-        }
-    }
-    pendingLut?.let { u ->
-        NameDialog("匯入 LUT 濾鏡", "LUT ${store.custom.size + 1}", onDismiss = { pendingLut = null }) { name ->
-            pendingLut = null
-            scope.launch {
-                try {
-                    filter = store.importLut(u, name)
-                    strength = 1f
-                } catch (e: Exception) {
-                    Toast.makeText(context, "匯入失敗：${e.message}", Toast.LENGTH_LONG).show()
+        // the photo is the main thing
+        Box(Modifier.fillMaxWidth().weight(1f).padding(horizontal = 10.dp, vertical = 6.dp), contentAlignment = Alignment.Center) {
+            val o = vm.original
+            val p = vm.preview
+            if (o != null && p != null) Box(Modifier.clip(RoundedCornerShape(14.dp))) {
+                val fb = vm.framed
+                when {
+                    // with a timestamp or a frame the preview is the composed result (what export writes)
+                    fb != null -> FramedView(fb, vm, placing = tab == 2)
+                    else -> CompareView(o, p)
                 }
             }
+            // look name over the photo, like a print label
+            Text(vm.look.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 18.dp)
+                    .background(Color(0x55000000), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 2.dp))
+            Box(Modifier.align(Alignment.BottomEnd).padding(14.dp).size(34.dp).clip(CircleShape).background(Color(0x66000000))
+                .clickable { app.toggleFavorite(vm.look.id) }, contentAlignment = Alignment.Center) {
+                Text(if (vm.look.id in favorites) "♥" else "♡", color = if (vm.look.id in favorites) Color(0xFFFF6B7A) else Color.White, fontSize = 18.sp)
+            }
+        }
+
+        if (tab == 0) {
+            LookCategoryBar(app, vm.looks, short = true)
+            val shown = looksInCategory(app, vm.looks)
+            // filter tiles; the selected one shows its strength, tap it again for the ruler
+            androidx.compose.foundation.lazy.LazyRow(
+                Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp),
+            ) {
+                items(shown.size, key = { shown[it].id }) { i ->
+                    val spec = shown[i]
+                    val sel = spec.id == vm.look.id
+                    Column(Modifier.width(66.dp).clickable {
+                        if (sel) showStrength = !showStrength else { vm.selectLook(spec); app.touch(spec.id); showStrength = false }
+                    }, horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(Modifier.size(62.dp).clip(RoundedCornerShape(10.dp)).background(HikariColors.Panel)
+                            .border(if (sel) 2.dp else 0.dp, if (sel) Color(0xFFE9E2D2) else Color.Transparent, RoundedCornerShape(10.dp)),
+                            contentAlignment = Alignment.Center) {
+                            vm.thumbs[spec.id]?.let { b ->
+                                val img = remember(b) { b.asImageBitmap() }
+                                Image(img, spec.name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                            } ?: FilmIcon(spec, 54.dp)
+                            if (sel) Box(Modifier.fillMaxSize().background(Color(0x99252019)), contentAlignment = Alignment.Center) {
+                                Text("${(vm.adjust.strength * 100).roundToInt()}", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Text(spec.name, color = if (sel) Color.White else Color(0xFF9A9A9A), fontSize = 10.sp, maxLines = 1,
+                            modifier = Modifier.padding(top = 3.dp))
+                    }
+                }
+            }
+            if (showStrength) RulerSlider(vm.adjust.strength, { vm.updateAdjust(vm.adjust.copy(strength = it)) }, { vm.commit() },
+                Modifier.fillMaxWidth().padding(horizontal = 24.dp))
+        } else if (tab == 2) {
+            StampPanel(vm, app)
+        } else if (tab == 3) {
+            FramePanel(vm, app)
+        } else {
+            AdjustSliders(
+                spec = vm.look, adjust = vm.adjust,
+                onChange = { vm.updateAdjust(it) }, onCommit = { vm.commit() }, onReset = { vm.reset() },
+                modifier = Modifier.fillMaxWidth().heightIn(max = 250.dp),
+            )
+        }
+        // tabs
+        Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+            for ((i, label) in listOf("濾鏡", "效果", "時間戳", "邊框").withIndex()) {
+                Column(Modifier.clickable { tab = i }.padding(horizontal = 9.dp, vertical = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.size(4.dp).clip(CircleShape).background(if (tab == i) HikariColors.Accent else Color.Transparent))
+                    Text(label, color = if (tab == i) Color.White else Color(0xFF8A8A8A), fontSize = 13.sp,
+                        fontWeight = if (tab == i) FontWeight.Bold else FontWeight.Normal)
+                }
+            }
+            Text("預設", color = Color(0xFF8A8A8A), fontSize = 13.sp, modifier = Modifier.clickable { showPresets = true }.padding(horizontal = 9.dp))
         }
     }
-    deleteTarget?.let { f ->
-        ConfirmDialog("刪除濾鏡", "要刪除「${f.name}」嗎？", "刪除", onDismiss = { deleteTarget = null }) {
-            if (filter.id == f.id) filter = Presets.ORIGINAL
-            store.delete(f)
-            thumbs.remove(f.id)
-            deleteTarget = null
+
+    if (saveRecipe) RecipeDialog(app, vm.look, vm.adjust, vm.stamp.encode(), vm.frame.encode(), null) { saveRecipe = false }
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text("刪除這張照片？") },
+            text = { Text("照片會從手機相簿中移除。") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDelete = false
+                    val u = vm.uri ?: return@TextButton
+                    val req = com.hikari.cam.data.Media.deleteRequest(ctx, listOf(u))
+                    if (req != null) deleteLauncher.launch(IntentSenderRequest.Builder(req).build())
+                    else scope.launch {
+                        val need = com.hikari.cam.data.Media.deleteDirect(ctx, listOf(u))
+                        if (need != null) deleteLauncher.launch(IntentSenderRequest.Builder(need).build()) else app.back()
+                    }
+                }) { Text("刪除", color = Color(0xFFFF7070)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("取消") } },
+        )
+    }
+
+    if (showPresets) {
+        AlertDialog(
+            onDismissRequest = { showPresets = false },
+            title = { Text("自訂參數") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (presets.isEmpty()) Text("還沒有儲存的參數。", color = HikariColors.Dim)
+                    for (p in presets) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(onClick = { vm.apply(p.lookId, Adjustments.fromJson(p.adjustJson)); showPresets = false },
+                                modifier = Modifier.weight(1f)) {
+                                Text("${p.name}（${app.look(p.lookId).name}）", color = Color.White)
+                            }
+                            TextButton(onClick = { app.deletePreset(p.id) }) { Text("刪除", color = HikariColors.Dim) }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showPresets = false; naming = true }) { Text("儲存目前參數") } },
+            dismissButton = { TextButton(onClick = { showPresets = false }) { Text("關閉") } },
+        )
+    }
+    if (naming) {
+        var name by remember { mutableStateOf("${vm.look.name} 自訂") }
+        AlertDialog(
+            onDismissRequest = { naming = false },
+            title = { Text("儲存參數") },
+            text = { OutlinedTextField(name, { name = it }, singleLine = true) },
+            confirmButton = {
+                TextButton(onClick = { app.savePreset(name.ifBlank { vm.look.name }, vm.look.id, vm.adjust); naming = false }) { Text("儲存") }
+            },
+            dismissButton = { TextButton(onClick = { naming = false }) { Text("取消") } },
+        )
+    }
+    Toast(vm.message) { vm.message = null }
+}
+
+@Composable
+private fun BarIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, desc: String, enabled: Boolean = true, onClick: () -> Unit) {
+    Box(Modifier.size(42.dp).clip(CircleShape).clickable(enabled = enabled, onClick = onClick), contentAlignment = Alignment.Center) {
+        Icon(icon, desc, tint = if (enabled) Color.White else Color(0xFF555555), modifier = Modifier.size(22.dp))
+    }
+}
+
+/** Strength as a ruler: ticks every 5 %, long ticks every 25 %, drag or tap anywhere. */
+@Composable
+fun RulerSlider(value: Float, onChange: (Float) -> Unit, onCommit: () -> Unit, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.Canvas(
+        modifier.height(36.dp)
+            .pointerInput(Unit) {
+                detectDragGestures(onDragEnd = onCommit) { ch, _ -> onChange((ch.position.x / size.width).coerceIn(0f, 1f)) }
+            }
+            .pointerInput(Unit) { detectTapGestures { p -> onChange((p.x / size.width).coerceIn(0f, 1f)); onCommit() } }
+    ) {
+        val n = 20
+        for (i in 0..n) {
+            val x = size.width * i / n
+            val long = i % 5 == 0
+            drawLine(Color(0xFF8A8A8A), androidx.compose.ui.geometry.Offset(x, size.height * (if (long) 0.25f else 0.45f)),
+                androidx.compose.ui.geometry.Offset(x, size.height * 0.75f), if (long) 2f else 1.2f)
         }
+        val x = size.width * value
+        drawLine(Color.White, androidx.compose.ui.geometry.Offset(x, 0f), androidx.compose.ui.geometry.Offset(x, size.height), 3f)
+        drawCircle(Color.White, radius = 4.dp.toPx(), center = androidx.compose.ui.geometry.Offset(x, size.height * 0.08f))
+    }
+}
+
+@Composable
+fun Toast(msg: String?, onDone: () -> Unit) {
+    if (msg == null) return
+    LaunchedEffect(msg) {
+        kotlinx.coroutines.delay(3000)
+        onDone()
+    }
+    Box(Modifier.fillMaxSize().padding(bottom = 120.dp), contentAlignment = Alignment.BottomCenter) {
+        Text(msg, color = Color.White, modifier = Modifier
+            .background(Color(0xE0303030), RoundedCornerShape(8.dp))
+            .padding(horizontal = 14.dp, vertical = 8.dp))
     }
 }

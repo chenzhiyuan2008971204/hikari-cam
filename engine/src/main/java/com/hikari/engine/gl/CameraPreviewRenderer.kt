@@ -1,0 +1,235 @@
+package com.hikari.engine.gl
+
+import android.content.res.AssetManager
+import android.graphics.SurfaceTexture
+import android.opengl.GLES11Ext
+import android.opengl.GLES30
+import android.opengl.GLSurfaceView
+import com.hikari.engine.Adjustments
+import com.hikari.engine.CubeLut
+import com.hikari.engine.FilmParams
+import com.hikari.engine.FilterSpec
+import javax.microedition.khronos.egl.EGLConfig
+import javax.microedition.khronos.opengles.GL10
+
+/**
+ * Live camera preview through the film pipeline (same shaders as export, external-texture source).
+ * Grain moves from frame to frame like real film; dust, scratches and leaks use [seed], which the
+ * capture reuses so the saved photo matches what was on screen.
+ */
+class CameraPreviewRenderer(
+    private val assets: AssetManager,
+    private val view: GLSurfaceView,
+    private val onSurfaceTexture: (SurfaceTexture) -> Unit,
+) : GLSurfaceView.Renderer {
+
+    class Look(val spec: FilterSpec, val lut: CubeLut, val adjust: Adjustments)
+
+    @Volatile var look: Look? = null
+    @Volatile var rotationDegrees = 90
+    @Volatile var mirror = false
+    @Volatile var bufferWidth = 1440
+    @Volatile var bufferHeight = 1080
+    /** width / height of the frame being composed (the chosen aspect ratio) */
+    @Volatile var cropAspect = 3f / 4f
+    @Volatile var seed = 1f
+
+    private var pipeline: FilmPipeline? = null
+
+    /** While set, every frame drawn on screen is drawn once more, with the same look, into this recording. */
+    @Volatile var recorder: FilmRecorder? = null
+
+    /**
+     * Stops feeding [rec] and lets go of its surface on the GL thread, then finishes the file on another thread.
+     * [done] gets the length in ms (0 = nothing recorded) and any failure.
+     */
+    fun stopRecording(rec: FilmRecorder, done: (Long, Throwable?) -> Unit) {
+        recorder = null
+        view.queueEvent {
+            val d = android.opengl.EGL14.eglGetCurrentDisplay()
+            rec.releaseEgl(d)
+            Thread {
+                val ms = try { rec.finish() } catch (e: Throwable) { 0L }
+                done(ms, rec.failure)
+            }.start()
+        }
+        view.requestRender()
+    }
+
+    private fun encodeFrame(rec: FilmRecorder, pipe: FilmPipeline, src: Int, p: FilmParams, lk: Look, still: Boolean) {
+        val dpy = android.opengl.EGL14.eglGetCurrentDisplay()
+        val ctx = android.opengl.EGL14.eglGetCurrentContext()
+        val drawS = android.opengl.EGL14.eglGetCurrentSurface(android.opengl.EGL14.EGL_DRAW)
+        val readS = android.opengl.EGL14.eglGetCurrentSurface(android.opengl.EGL14.EGL_READ)
+        val surf = rec.eglSurface(dpy, ctx) ?: return
+        try {
+            if (!android.opengl.EGL14.eglMakeCurrent(dpy, surf, surf, ctx)) return
+            val a = rec.aspect
+            val map = if (still) {
+                val sa = stillW.toFloat() / stillH
+                if (sa > a) { val w = a / sa; SourceMap.bitmap((1f - w) / 2f, 0f, (1f + w) / 2f, 1f) }
+                else { val h = sa / a; SourceMap.bitmap(0f, (1f - h) / 2f, 1f, (1f + h) / 2f) }
+            } else SourceMap.camera(rotationDegrees, mirror, bufferWidth, bufferHeight, a)
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+            GLES30.glViewport(0, 0, rec.width, rec.height)
+            GLES30.glClearColor(0f, 0f, 0f, 1f)
+            GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
+            pipe.composite(FilmPipeline.Frame(src, map, a, rec.width, rec.height, seed, seed + frame, onScreen = true), p, lk.lut, 0, 0, rec.width, rec.height)
+            android.opengl.EGLExt.eglPresentationTimeANDROID(dpy, surf, rec.nextPts())
+            if (android.opengl.EGL14.eglSwapBuffers(dpy, surf)) rec.framesDrawn++
+        } finally {
+            android.opengl.EGL14.eglMakeCurrent(dpy, drawS, readS, ctx)
+        }
+    }
+
+    // Still-frame source (the virtual camera): upright bitmaps uploaded as an ordinary 2D texture and
+    // drawn through the same film pipeline (its 2D-source variant, the one export uses).
+    private val pendingStill = java.util.concurrent.atomic.AtomicReference<android.graphics.Bitmap?>(null)
+    /** the frame on screen now; kept so a look or aspect change can redraw it after the GL objects are rebuilt */
+    private var stillBmp: android.graphics.Bitmap? = null
+    @Volatile private var stillOn = false
+    private var pipeline2d: FilmPipeline? = null
+    private var stillTex = 0
+    private var stillW = 0
+    private var stillH = 0
+
+    /** Shows [frame] (upright) instead of the camera texture; the renderer recycles it. */
+    fun showStill(frame: android.graphics.Bitmap) {
+        stillOn = true
+        pendingStill.getAndSet(frame)?.recycle()
+        view.requestRender()
+    }
+
+    /** Back to the camera texture. */
+    fun clearStill() {
+        stillOn = false
+        pendingStill.getAndSet(null)?.recycle()
+        view.queueEvent { stillBmp?.recycle(); stillBmp = null }
+        view.requestRender()
+    }
+
+    private var uploadErr = 0
+    private fun uploadStill(b: android.graphics.Bitmap) {
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
+        if (stillTex == 0) {
+            val ids = IntArray(1)
+            GLES30.glGenTextures(1, ids, 0)
+            stillTex = ids[0]
+        }
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, stillTex)
+        // A plain single-level texture, re-specified from the bitmap every frame: the simplest upload
+        // there is. (Immutable storage + texSubImage2D left the texture black in the preview context.)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_BASE_LEVEL, 0)
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAX_LEVEL, 0)
+        GLES30.glPixelStorei(GLES30.GL_UNPACK_ALIGNMENT, 1)
+        while (GLES30.glGetError() != GLES30.GL_NO_ERROR) { /* clear */ }
+        android.opengl.GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, b, 0)
+        uploadErr = GLES30.glGetError()
+        stillW = b.width; stillH = b.height
+    }
+    private var stillWarm = false
+
+    /**
+     * One throwaway pass through every shader with a tiny dummy picture before the first real frame, so
+     * what a driver does lazily on first use cannot touch it (the off-screen renderer does the same: on the
+     * Android emulator the first source of a context came out black without it).
+     */
+    private fun warmUpStill(pipe: FilmPipeline, lk: Look) {
+        val dummy = android.graphics.Bitmap.createBitmap(8, 8, android.graphics.Bitmap.Config.ARGB_8888).apply { eraseColor(0xFF808080.toInt()) }
+        uploadStill(dummy)
+        dummy.recycle()
+        val p = FilmParams.effective(lk.spec, lk.adjust)
+        val map = SourceMap.bitmap(0f, 0f, 1f, 1f)
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        GLES30.glViewport(0, 0, 8, 8)
+        pipe.prepareGlow(stillTex, map, 1f, p)
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        GLES30.glViewport(0, 0, 8, 8)
+        pipe.composite(FilmPipeline.Frame(stillTex, map, 1f, 8, 8, 1f, 1f, onScreen = true), p, lk.lut, 0, 0, 8, 8)
+        GLES30.glFinish()
+        while (GLES30.glGetError() != GLES30.GL_NO_ERROR) { /* clear */ }
+        stillWarm = true
+    }
+
+    private var oesTex = 0
+    private var surfaceTexture: SurfaceTexture? = null
+    private var viewW = 1
+    private var viewH = 1
+    private var frame = 0
+
+    override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+        pipeline = FilmPipeline(assets, oes = true)
+        pipeline2d = null; stillTex = 0; stillWarm = false   // the old context's objects are gone
+        val ids = IntArray(1)
+        GLES30.glGenTextures(1, ids, 0)
+        oesTex = ids[0]
+        GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTex)
+        RenderTarget.linearClamp(GLES11Ext.GL_TEXTURE_EXTERNAL_OES)
+        surfaceTexture?.release()
+        val st = SurfaceTexture(oesTex)
+        st.setOnFrameAvailableListener { view.requestRender() }
+        surfaceTexture = st
+        view.post { onSurfaceTexture(st) }
+    }
+
+    override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
+        viewW = width
+        viewH = height
+    }
+
+    override fun onDrawFrame(gl: GL10?) {
+        val st = surfaceTexture ?: return
+        var pipe = pipeline ?: return
+        val still = stillOn
+        if (still) {
+            pipe = pipeline2d ?: FilmPipeline(assets, oes = false).also { pipeline2d = it }
+            pendingStill.getAndSet(null)?.let { nb -> stillBmp?.recycle(); stillBmp = nb }
+            // The Android emulator's GL translator draws a source black when textures are created between
+            // uploading it and drawing from it (see FilmPipeline.ensureTargets). So every texture this draw
+            // needs (glow targets, the LUT) is created first, and the picture is uploaded last, every
+            // draw: the same order the off-screen export uses, which is known to work there.
+            look?.let { lk ->
+                pipe.ensureTargets(cropAspect, FilmParams.effective(lk.spec, lk.adjust))
+                pipe.prepareLut(lk.lut)
+            }
+            if (!stillWarm) look?.let { lk -> warmUpStill(pipe, lk) }
+            stillBmp?.takeIf { !it.isRecycled }?.let { uploadStill(it) }
+        } else try {
+            st.updateTexImage()
+        } catch (e: RuntimeException) {
+            return
+        }
+        val l = look
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        GLES30.glViewport(0, 0, viewW, viewH)
+        GLES30.glClearColor(0f, 0f, 0f, 1f)
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
+        if (l == null) return
+        if (still && stillTex == 0) return
+        val src = if (still) stillTex else oesTex
+        val map = if (still) {
+            // centre crop of the upright picture to the chosen aspect
+            val a = stillW.toFloat() / stillH
+            if (a > cropAspect) { val w = cropAspect / a; SourceMap.bitmap((1f - w) / 2f, 0f, (1f + w) / 2f, 1f) }
+            else { val h = a / cropAspect; SourceMap.bitmap(0f, (1f - h) / 2f, 1f, (1f + h) / 2f) }
+        } else SourceMap.camera(rotationDegrees, mirror, bufferWidth, bufferHeight, cropAspect)
+        val p = FilmParams.effective(l.spec, l.adjust)
+        pipe.prepareGlow(src, map, cropAspect, p)
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        GLES30.glViewport(0, 0, viewW, viewH)
+        frame = (frame + 1) % 997
+        val fr = FilmPipeline.Frame(src, map, cropAspect, viewW, viewH, seed, seed + frame, onScreen = true)
+        pipe.composite(fr, p, l.lut, 0, 0, viewW, viewH)
+        recorder?.let { rec -> encodeFrame(rec, pipe, src, p, l, still) }
+        if (still && frame % 8 == 1) {
+            // test source only: one pixel read back, so a run can tell a drawn preview from a black one
+            val px = java.nio.ByteBuffer.allocateDirect(4)
+            GLES30.glReadPixels(viewW / 2, viewH / 2, 1, 1, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, px)
+            android.util.Log.i("HikariCamera", "still preview centre rgb ${px.get(0).toInt() and 255},${px.get(1).toInt() and 255},${px.get(2).toInt() and 255} src ${stillBmp?.takeIf { !it.isRecycled }?.let { b -> val c = b.getPixel(b.width / 2, b.height / 2); "${(c shr 16) and 255},${(c shr 8) and 255},${c and 255}" }} view ${viewW}x$viewH tex ${stillW}x$stillH upload 0x${Integer.toHexString(uploadErr)} gl 0x${Integer.toHexString(GLES30.glGetError())}")
+        }
+    }
+}

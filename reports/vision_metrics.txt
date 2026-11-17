@@ -1,0 +1,161 @@
+horizon (synthetic): y, tilt -> found y, tilt, confidence
+  0.30 -6.0 -> 0.304 -6.00 1.00
+  0.30 -3.0 -> 0.301 -2.50 1.00
+  0.30 +0.0 -> 0.298 +0.00 1.00
+  0.30 +2.0 -> 0.301 +2.00 1.00
+  0.30 +5.0 -> 0.300 +5.00 1.00
+  0.50 -6.0 -> 0.498 -6.00 1.00
+  0.50 -3.0 -> 0.500 -2.50 1.00
+  0.50 +0.0 -> 0.497 +0.00 1.00
+  0.50 +2.0 -> 0.500 +2.00 1.00
+  0.50 +5.0 -> 0.501 +5.50 1.00
+  0.66 -6.0 -> 0.662 -6.00 1.00
+  0.66 -3.0 -> 0.662 -3.00 1.00
+  0.66 +0.0 -> 0.660 +0.00 1.00
+  0.66 +2.0 -> 0.657 +2.00 1.00
+  0.66 +5.0 -> 0.663 +5.00 1.00
+  mean error: y 0.0015, tilt 0.10 deg over 15 cases
+
+leading lines (synthetic road): vanishing point -> found
+  (0.50, 0.35) -> (0.527, 0.353) lines 3 conf 0.90
+  (0.35, 0.40) -> (0.352, 0.403) lines 3 conf 0.90
+  (0.62, 0.30) -> (0.619, 0.298) lines 2 conf 0.80
+
+negative cases: noise x5, facade (no horizon), landscape (no verticals): nothing claimed
+
+real photos (14 bundled samples, hand annotated)
+
+01_sunny.jpg
+  scene: BLUE_SKY 1.00, OVERCAST 0.25
+  sky 0.48 blueSky 0.37 green 0.00 skin 0.05 contrast 0.42 warmth +0.001 structure 0.47
+  horizon: none  (truth: 0.575, partial)
+  subject: none
+  advice: 目前的構圖沒有偵測到明顯需要調整的地方。
+  filters: Muted Chrome 77 | Kodak 2383 76 | Standard Chrome 72  <- 藍天日景：把天空壓深一些，雲朵更立體
+
+02_overcast.jpg
+  scene: OVERCAST 0.59, HIGH_CONTRAST 0.24
+  sky 0.24 blueSky 0.06 green 0.00 skin 0.01 contrast 0.68 warmth -0.001 structure 0.44
+  horizon: none  (truth: none)
+  verticals: tilt -0.0 converge +18.8 n 3 conf 0.22
+  advice: 目前的構圖沒有偵測到明顯需要調整的地方。
+  filters: Architecture 75 | Studio Hi 74 | Street Negative 71  <- 陰天：補上陰天平光缺少的反差
+
+03_foliage.jpg
+  scene: FOLIAGE 0.51
+  sky 0.03 blueSky 0.01 green 0.23 skin 0.03 contrast 0.56 warmth +0.029 structure 0.39
+  horizon: none  (truth: none)
+  advice: 目前的構圖沒有偵測到明顯需要調整的地方。
+  filters: Standard Chrome 99 | Summer 400 99 | Rich Color 94  <- 綠色植物：綠色保持自然的飽和度
+
+04_city.jpg
+  scene: ARCHITECTURE 0.42
+  sky 0.06 blueSky 0.05 green 0.01 skin 0.04 contrast 0.63 warmth +0.004 structure 0.60
+  horizon: none  (truth: none)
+  verticals: tilt +1.5 converge -0.0 n 6 conf 0.73
+  advice: 目前的構圖沒有偵測到明顯需要調整的地方。
+  filters: Architecture 100 | Studio Hi 97 | Street Negative 96  <- 建築／街景：俐落的反差突顯建築線條
+
+05_portrait.jpg
+  scene: PORTRAIT 1.00, INDOOR 0.60
+  sky 0.02 blueSky 0.00 green 0.00 skin 0.26 contrast 0.38 warmth +0.025 structure 0.43
+  horizon: none  (truth: none)
+  advice: 目前的構圖沒有偵測到明顯需要調整的地方。
+  filters: True Negative 87 | Soft Portrait 84 | Nostalgic Summer 82  <- 人像：膚色飽和度自然，不會過橘
+
+06_backlight.jpg
+  scene: BACKLIGHT 0.68
+  sky 0.01 blueSky 0.00 green 0.00 skin 0.10 contrast 0.63 warmth +0.014 structure 0.36
+  horizon: none  (truth: none)
+  subject: none
+  advice: 畫面中找不到足夠明確的主體或線條，無法給出有根據的構圖建議。
+  filters: Airy White 81 | Mellow 400 76 | Eterna 75  <- 逆光：較低的反差保住亮暗兩端的細節
+
+07_contrast.jpg
+  scene: BLUE_SKY 0.29, OVERCAST 0.20
+  sky 0.24 blueSky 0.09 green 0.10 skin 0.08 contrast 0.44 warmth +0.010 structure 0.40
+  horizon: none  (truth: none)
+  subject: none
+  advice: 畫面中找不到足夠明確的主體或線條，無法給出有根據的構圖建議。
+  filters: Kodak 2383 79 | Muted Chrome 79 | Architecture 77  <- 藍天日景：把天空壓深一些，雲朵更立體
+
+08_white.jpg
+  scene: ARCHITECTURE 0.33, OVERCAST 0.29
+  sky 0.39 blueSky 0.07 green 0.04 skin 0.06 contrast 0.51 warmth +0.006 structure 0.58
+  horizon: none  (truth: none)
+  subject: none
+  verticals: tilt -3.9 converge +15.0 n 3 conf 0.21
+  advice: 目前的構圖沒有偵測到明顯需要調整的地方。
+  filters: Architecture 99 | Studio Hi 97 | Street Negative 94  <- 建築／街景：俐落的反差突顯建築線條
+
+09_seaside.jpg
+  scene: OVERCAST 0.57, BLUE_SKY 0.51
+  sky 0.30 blueSky 0.13 green 0.00 skin 0.00 contrast 0.50 warmth +0.011 structure 0.52
+  horizon: y 0.501 tilt -0.5 conf 0.98  (truth: 0.5)
+  advice: 低地平線（多留天空） (0.73)
+  filters: Architecture 81 | Kodak 2383 80 | Muted Chrome 80  <- 陰天：補上陰天平光缺少的反差
+
+10_child.jpg
+  scene: PORTRAIT 1.00, HIGH_CONTRAST 0.91
+  sky 0.04 blueSky 0.00 green 0.01 skin 0.09 contrast 0.80 warmth +0.014 structure 0.41
+  horizon: none  (truth: none)
+  advice: 目前的構圖沒有偵測到明顯需要調整的地方。
+  filters: Airy White 81 | Soft Portrait 81 | Nostalgic Summer 77  <- 人像：膚色飽和度自然，不會過橘
+
+11_concrete.jpg
+  scene: OVERCAST 1.00, HIGH_CONTRAST 0.49
+  sky 0.36 blueSky 0.00 green 0.00 skin 0.00 contrast 0.73 warmth +0.001 structure 0.35
+  horizon: none  (truth: none)
+  verticals: tilt -1.1 converge +29.2 n 3 conf 0.20
+  advice: 目前的構圖沒有偵測到明顯需要調整的地方。
+  filters: Architecture 72 | Studio Hi 72 | Disposable Camera 70  <- 陰天：補上陰天平光缺少的反差
+
+12_beach.jpg
+  scene: 
+  sky 0.08 blueSky 0.00 green 0.10 skin 0.04 contrast 0.55 warmth +0.024 structure 0.58
+  horizon: y 0.226 tilt +2.0 conf 0.85  (truth: 0.226, partial)
+  subject: none
+  advice: 校正水平線 (0.62)
+  filters: Standard Chrome 97 | Summer 400 93 | Clean Daylight 92  <- 場景沒有特別明顯的特徵，這款色彩忠實、適用範圍廣
+
+13_night.jpg
+  scene: NIGHT 1.00
+  sky 0.00 blueSky 0.00 green 0.00 skin 0.07 contrast 0.58 warmth +0.004 structure 0.49
+  horizon: none  (truth: none)
+  advice: 目前的構圖沒有偵測到明顯需要調整的地方。
+  filters: Night Bloom 80 | CineStill 800T 66 | Tokyo Night 56  <- 夜景／低光：燈光帶光暈，夜景更有氣氛
+
+14_nightstreet.jpg
+  scene: NIGHT 0.53
+  sky 0.00 blueSky 0.00 green 0.02 skin 0.07 contrast 0.42 warmth +0.029 structure 0.50
+  horizon: none  (truth: none)
+  advice: 目前的構圖沒有偵測到明顯需要調整的地方。
+  filters: Night Bloom 69 | CineStill 800T 63 | Tokyo Night 54  <- 夜景／低光：燈光帶光暈，夜景更有氣氛
+
+summary
+  full horizons found within 4 % and 1.5 deg: 1 / 1
+  false horizons on photos without one: 0 / 11
+  subject (saliency only): found 0 / 5, inside the annotated box 0 / 0
+  verticals found on architecture photos: 4 / 4
+  scene type in the top two: 11 / 11
+
+portrait scene -> Soft Portrait 77 (人像：膚色飽和度自然，不會過橘), Architecture 76 (人像：膚色飽和度自然，不會過橘), True Negative 76 (人像：膚色飽和度自然，不會過橘)
+
+blue sky scene -> Standard Chrome 87 (藍天日景：保留藍天的飽和與層次，不會變螢光), Summer 400 83 (藍天日景：保留藍天的飽和與層次，不會變螢光), Clear Daylight 78 (藍天日景：保留藍天的飽和與層次，不會變螢光)
+
+subject (synthetic object, no detector): position -> found
+  (0.50, 0.50) -> (0.498, 0.497) error 0.003 conf 0.65
+  (0.30, 0.40) -> (0.299, 0.398) error 0.002 conf 0.65
+  (0.70, 0.60) -> (0.697, 0.597) error 0.004 conf 0.65
+  (0.20, 0.70) -> (0.199, 0.696) error 0.004 conf 0.65
+  (0.80, 0.30) -> (0.797, 0.298) error 0.004 conf 0.65
+  mean error: 0.0034 of the frame over 5 cases
+
+verticals (synthetic facade): tilt -> found tilt, lines, confidence
+  -6.0 -> -6.00 10 0.94
+  -3.0 -> -2.50 10 1.00
+  +0.0 -> +0.00 5 0.75
+  +2.0 -> +2.00 10 1.00
+  +4.0 -> +4.00 10 1.00
+  +7.0 -> +7.00 10 1.00
+  mean error: 0.08 deg over 6 cases

@@ -1,75 +1,97 @@
 package com.hikari.cam
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.NavigationBar
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
-import com.hikari.cam.data.FilterStore
-import com.hikari.cam.ui.Accent
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hikari.cam.lab.FilterLabScreen
+import com.hikari.cam.ui.AppViewModel
 import com.hikari.cam.ui.CameraScreen
 import com.hikari.cam.ui.EditorScreen
+import com.hikari.cam.ui.FiltersScreen
+import com.hikari.cam.ui.GalleryScreen
+import com.hikari.cam.ui.HikariColors
 import com.hikari.cam.ui.HikariTheme
+import com.hikari.cam.ui.Route
+import com.hikari.cam.ui.SettingsScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val store = FilterStore(applicationContext)
-        setContent {
-            HikariTheme {
-                var granted by remember {
-                    mutableStateOf(
-                        ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-                    )
-                }
-                val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
-                LaunchedEffect(Unit) { if (!granted) ask.launch(Manifest.permission.CAMERA) }
+        setContent { HikariTheme { HikariAppUi() } }
+    }
+}
 
-                var editing by remember { mutableStateOf<Uri?>(null) }
-                val e = editing
-                when {
-                    e != null -> EditorScreen(e, store) { editing = null }
-                    granted -> CameraScreen(store) { editing = it }
-                    else -> Column(
-                        Modifier.fillMaxSize().background(Color.Black).padding(32.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text("光 Hikari", color = Color.White, fontSize = 28.sp)
-                        Spacer(Modifier.height(12.dp))
-                        Text("需要相機權限才能拍照", color = Color.Gray)
-                        Spacer(Modifier.height(24.dp))
-                        Button(
-                            onClick = { ask.launch(Manifest.permission.CAMERA) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Accent),
-                        ) { Text("允許相機") }
-                    }
+@Composable
+fun HikariAppUi(app: AppViewModel = viewModel()) {
+    // pages cross-fade; full-screen pages (editor, lab) fade over the tabs
+    // look thumbnails come from the real engine on the chosen standard photo
+    val settings = app.settings.collectAsState().value
+    androidx.compose.runtime.LaunchedEffect(settings.thumbScene) { app.loadThumbs(settings.thumbScene) }
+    Crossfade(targetState = app.route, animationSpec = tween(220), label = "route") { r -> RouteContent(app, r) }
+    com.hikari.cam.ui.Toast(app.notice) { app.notice = null }
+}
+
+@Composable
+private fun RouteContent(app: AppViewModel, r: Route) {
+    when (r) {
+        is Route.Editor -> EditorScreen(app, r.uri, r.lookId)
+        Route.Lab -> {
+            BackHandler { app.back() }
+            FilterLabScreen()
+        }
+        Route.Frames -> com.hikari.cam.ui.FramesScreen(app)
+        Route.DaylightLab -> com.hikari.cam.lab.DaylightLabScreen(onBack = { app.back() })
+        else -> Column(Modifier.fillMaxSize().background(com.hikari.cam.ui.Darkroom.Ground).statusBarsPadding()) {
+            Box(Modifier.fillMaxWidth().weight(1f)) {
+                when (r) {
+                    Route.Camera -> CameraScreen(app)
+                    Route.Gallery -> GalleryScreen(app)
+                    Route.Filters -> FiltersScreen(app)
+                    else -> SettingsScreen(app, app.rawSupported)
+                }
+            }
+            NavigationBar(containerColor = HikariColors.Panel, windowInsets = androidx.compose.foundation.layout.WindowInsets(0),
+                modifier = Modifier.navigationBarsPadding().height(62.dp)) {
+                for ((route, label, icon) in listOf(
+                    Triple(Route.Camera, "Camera", Icons.Outlined.PhotoCamera),
+                    Triple(Route.Gallery, "Gallery", Icons.Outlined.PhotoLibrary),
+                    Triple(Route.Filters, "Filters", Icons.Outlined.AutoAwesome),
+                    Triple(Route.Settings, "Settings", Icons.Outlined.Settings),
+                )) {
+                    NavigationBarItem(
+                        selected = r == route, onClick = { app.go(route) },
+                        icon = { Icon(icon, contentDescription = label) },
+                        label = { Text(label, fontSize = 11.sp) },
+                    )
                 }
             }
         }
