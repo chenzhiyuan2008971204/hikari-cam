@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Redo
 import androidx.compose.material.icons.automirrored.outlined.Undo
+import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material3.Icon
@@ -75,6 +76,7 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
     val favorites by app.favorites.collectAsState()
     val presets by app.presets.collectAsState()
     val settings by app.settings.collectAsState()
+    var saveRecipe by remember { mutableStateOf(false) }   // "save as camera recipe" dialog
     var tab by remember { mutableStateOf(0) } // 0 looks, 1 effects, 2 timestamp, 3 frame, 4 smart
     // Back first leaves a tool (timestamp, frame, smart...) and shows the photo with its filter strip
     // again; back from there leaves the editor. The arrow in the top bar does the same.
@@ -99,6 +101,7 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
                 modifier = Modifier.weight(1f).padding(start = 6.dp))
             BarIcon(Icons.AutoMirrored.Outlined.Undo, "還原", vm.canUndo) { vm.undo() }
             BarIcon(Icons.AutoMirrored.Outlined.Redo, "重做", vm.canRedo) { vm.redo() }
+            BarIcon(Icons.Outlined.BookmarkAdd, "存成相機配方") { saveRecipe = true }
             BarIcon(Icons.Outlined.DeleteOutline, "刪除") { confirmDelete = true }
             BarIcon(Icons.Outlined.FileDownload, "儲存", vm.busy == null && vm.preview != null) { vm.export(settings.jpegQuality) }
         }
@@ -188,6 +191,7 @@ fun EditorScreen(app: AppViewModel, uri: Uri, lookId: String?, vm: EditorViewMod
         }
     }
 
+    if (saveRecipe) RecipeDialog(app, vm.look, vm.adjust, vm.stamp.encode(), vm.frame.encode(), null) { saveRecipe = false }
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },

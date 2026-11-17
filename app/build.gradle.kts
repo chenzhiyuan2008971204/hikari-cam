@@ -66,6 +66,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     testImplementation("junit:junit:4.13.2")
+    // real org.json for JVM unit tests (android.jar only has stubs): recipes store Adjustments as JSON
+    testImplementation("org.json:json:20240303")
 
     // on-device / emulator tests (CI job "emulator")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))

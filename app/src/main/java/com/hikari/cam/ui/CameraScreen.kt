@@ -137,7 +137,7 @@ class CameraViewModel(app: Application) : AndroidViewModel(app) {
      * rendered by the film engine at full size with the same look, adjustments and seed as the
      * preview -> new JPEG with the original's EXIF. The unfiltered JPEG (and DNG) can be kept too.
      */
-    fun shoot(look: FilterSpec, adjust: Adjustments, aspect: Float, s: UserSettings) {
+    fun shoot(look: FilterSpec, adjust: Adjustments, aspect: Float, s: UserSettings, recipe: com.hikari.data.FilmRecipe? = null) {
         val ctx = getApplication<Application>()
         val shotSeed = seed
         processing++
@@ -159,7 +159,29 @@ class CameraViewModel(app: Application) : AndroidViewModel(app) {
                     OffscreenRenderer.Request(look, hikari.looks.lut(look), adjust, crop = crop, seed = shotSeed)
                 }
                 val out = hikari.renderer.render(d.bitmap, req, outW, outH, releaseSource = true)
-                if (s.dateStamp) {
+                var final = out
+                var studio = false
+                if (recipe != null) {
+                    // the recipe's pipeline: original -> adjustments -> look (done above) -> timestamp -> frame -> output
+                    val stamp = com.hikari.studio.StampSpec.decode(recipe.stampSpec).copy(enabled = recipe.stampOn)
+                    val frame = if (recipe.frameOn) com.hikari.studio.FrameOptions.decode(recipe.frameOptions) else com.hikari.studio.FrameOptions()
+                    if (stamp.enabled || frame.frame.isNotEmpty()) {
+                        if (recipe.saveClean) Media.saveJpeg(ctx, out, s.jpegQuality, "_" + look.id + "_clean")
+                        val now = java.time.LocalDateTime.now()
+                        val info = com.hikari.cam.studio.PhotoInfo.read(ctx, android.net.Uri.fromFile(file)).let { com.hikari.cam.studio.PhotoInfo(it.exifTime ?: now, it.created ?: now, it.info, it.camera) }
+                        val sc = withContext(Dispatchers.Default) {
+                            com.hikari.cam.studio.StudioRenderer.scene(out.width, out.height, stamp, frame, info, com.hikari.cam.studio.StudioRenderer.palette(out))
+                        }
+                        if (sc != null) {
+                            final = withContext(Dispatchers.Default) {
+                                try { com.hikari.cam.studio.StudioRenderer.render(sc, out) }
+                                catch (e: OutOfMemoryError) { System.gc(); com.hikari.cam.studio.StudioRenderer.render(sc, out, 0.7f, 1f) }
+                            }
+                            out.recycle()
+                            studio = true
+                        }
+                    }
+                } else if (s.dateStamp) {
                     // the capture moment is the true time of this photo
                     val spec = if (s.stampSpec.isNotEmpty()) com.hikari.studio.StampSpec.decode(s.stampSpec).copy(enabled = true) else null
                     val done = spec != null && runCatching {
@@ -169,16 +191,17 @@ class CameraViewModel(app: Application) : AndroidViewModel(app) {
                     }.isSuccess
                     if (!done) drawDateStamp(out, stampText(java.util.Date(), s.stampNote))
                 }
-                val uri = Media.saveJpeg(ctx, out, s.jpegQuality, "_" + look.id)
+                val uri = Media.saveJpeg(ctx, final, s.jpegQuality, "_" + look.id + (if (studio) "_studio" else ""))
                 Media.copyExif(ctx, null, file, uri)
-                lastThumb = withContext(Dispatchers.Default) { LabViewModel.fit(out, 160) }
-                out.recycle()
+                lastThumb = withContext(Dispatchers.Default) { LabViewModel.fit(final, 160) }
+                val savedW = final.width; val savedH = final.height
+                final.recycle()
                 lastUri = uri
                 if (s.saveOriginal) {
                     val stamp = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date())
                     Media.saveFileCopy(ctx, file, "image/jpeg", "HIKARI_${stamp}_original.jpg")
                 }
-                message = "已儲存 ${outW}×${outH}${if (shot.dng != null) " + DNG" else ""}"
+                message = "已儲存 ${savedW}×${savedH}${if (shot.dng != null) " + DNG" else ""}"
             } catch (e: Throwable) {
                 message = "拍攝失敗：${e.message}"
             } finally {
@@ -213,6 +236,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
     val ctx = LocalContext.current
     val owner = LocalLifecycleOwner.current
     val settings by app.settings.collectAsState()
+    val recipes by app.recipes.collectAsState()
     val favorites by app.favorites.collectAsState()
     val look = app.look(settings.lastLook)
     val adjust = remember(settings.cameraAdjustJson) { Adjustments.fromJson(settings.cameraAdjustJson) }
@@ -403,7 +427,7 @@ private fun CameraContent(app: AppViewModel, vm: CameraViewModel) {
         val audio = ctx.getSystemService(android.content.Context.AUDIO_SERVICE) as android.media.AudioManager
         if (audio.ringerMode == android.media.AudioManager.RINGER_MODE_NORMAL) shutterSound.play(MediaActionSound.SHUTTER_CLICK)
         scope.launch { flashAlpha.snapTo(0.75f); flashAlpha.animateTo(0f, tween(260)) }
-        vm.shoot(look, adjust, aspect, settings); vm.newSeed(); r.seed = vm.seed
+        vm.shoot(look, adjust, aspect, settings, recipes.firstOrNull { it.slot == settings.recipeSlot && settings.recipeSlot != 0 }); vm.newSeed(); r.seed = vm.seed
     }
 
     fun shoot() {

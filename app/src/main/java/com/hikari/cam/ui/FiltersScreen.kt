@@ -133,6 +133,9 @@ fun FiltersScreen(app: AppViewModel) {
                     if (spec.inspired.isNotEmpty()) Text("原創配方，色彩靈感來自 ${spec.inspired} 這一類底片模擬的風格（非官方演算法）", color = HikariColors.Dim, fontSize = 11.sp,
                         modifier = Modifier.padding(bottom = 6.dp))
                     for (line in spec.recipe) Text("• $line", color = HikariColors.Dim, fontSize = 11.sp, modifier = Modifier.padding(vertical = 1.dp))
+                    var saveRecipe by remember { mutableStateOf(false) }
+                    TextButton(onClick = { saveRecipe = true }, modifier = Modifier.testTag("saveRecipe")) { Text("存成相機配方（C1–C7）…") }
+                    if (saveRecipe) RecipeDialog(app, spec, com.hikari.engine.Adjustments.DEFAULT, "", "", null) { saveRecipe = false }
                 }
             },
             confirmButton = {

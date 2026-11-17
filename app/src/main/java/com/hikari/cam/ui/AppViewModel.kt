@@ -51,6 +51,37 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     val presets: StateFlow<List<Preset>> = db.looks().presets()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    /** camera recipes C1..C7 the user saved */
+    val recipes: StateFlow<List<com.hikari.data.FilmRecipe>> = db.recipes().all()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /**
+     * Switches the camera to recipe [slot] (0 = none: the camera keeps its current look and adjustments and
+     * the shutter stops applying a recipe's timestamp and frame). A recipe sets the look and the adjustments
+     * at once, so the live preview shows the whole style.
+     */
+    fun applyRecipe(slot: Int) = viewModelScope.launch {
+        val r = if (slot == 0) null else db.recipes().get(slot)
+        if (slot != 0 && r == null) return@launch
+        updateSettings {
+            if (r == null) it.copy(recipeSlot = 0)
+            else it.copy(recipeSlot = slot, lastLook = hikari.looks.look(r.lookId).id, cameraAdjustJson = com.hikari.cam.recipe.RecipeLogic.adjustments(r).toJson())
+        }
+        r?.let { touch(hikari.looks.look(it.lookId).id) }
+    }
+
+    /** Saves a recipe (replacing the one in its slot) and switches the camera to it. */
+    fun saveRecipe(r: com.hikari.data.FilmRecipe) = viewModelScope.launch {
+        db.recipes().put(r)
+        notice = "已存成 ${com.hikari.cam.recipe.RecipeLogic.title(r)}"
+        applyRecipe(r.slot)
+    }
+
+    fun deleteRecipe(slot: Int) = viewModelScope.launch {
+        db.recipes().delete(slot)
+        if (settings.value.recipeSlot == slot) updateSettings { it.copy(recipeSlot = 0) }
+    }
+
     /** null until a camera has been opened once */
     var rawSupported by mutableStateOf<Boolean?>(null)
 

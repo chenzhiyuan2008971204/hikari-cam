@@ -36,9 +36,12 @@ data class UserSettings(
     val frameRecents: String = "",
     /** the timestamp look used for the camera's date stamp (encoded StampSpec), "" = classic */
     val stampSpec: String = "",
+    /** the camera recipe in use: 0 = none (the camera's own settings), 1..7 = C1..C7 */
+    val recipeSlot: Int = 0,
 ) {
     fun toRows(): List<Setting> = listOf(
         Setting("filterCategory", filterCategory), Setting("frameFavs", frameFavs), Setting("frameRecents", frameRecents), Setting("stampSpec", stampSpec),
+        Setting("recipeSlot", recipeSlot.toString()),
         Setting("jpegQuality", jpegQuality.toString()),
         Setting("naturalDetail", naturalDetail.toString()),
         Setting("saveOriginal", saveOriginal.toString()),
@@ -80,6 +83,7 @@ data class UserSettings(
                 frameFavs = m["frameFavs"] ?: d.frameFavs,
                 frameRecents = m["frameRecents"] ?: d.frameRecents,
                 stampSpec = m["stampSpec"] ?: d.stampSpec,
+                recipeSlot = m["recipeSlot"]?.toIntOrNull()?.takeIf { it in 0..7 } ?: d.recipeSlot,
             )
         }
 

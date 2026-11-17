@@ -162,7 +162,10 @@ fun looksInCategory(app: AppViewModel, looks: List<FilterSpec>, query: String = 
 @Composable
 fun CameraLookPanel(app: AppViewModel, look: FilterSpec, favorites: Set<String>, recs: List<com.hikari.vision.Recommendation>, sceneLabel: String, onPick: (String) -> Unit) {
     var more by remember { mutableStateOf(false) }
+    val camSettings by app.settings.collectAsState()
     Column(Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
+        // camera recipes: one tap switches the whole style
+        RecipeBar(app, look, remember(camSettings.cameraAdjustJson) { com.hikari.engine.Adjustments.fromJson(camSettings.cameraAdjustJson) })
         if (recs.isNotEmpty()) Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp).fillMaxWidth().clip(RoundedCornerShape(14.dp))
             .background(Color(0xFF1B1A17)).border(1.dp, Color(0x40E9C46A), RoundedCornerShape(14.dp)).padding(horizontal = 10.dp, vertical = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
