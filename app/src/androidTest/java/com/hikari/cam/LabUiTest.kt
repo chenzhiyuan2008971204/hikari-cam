@@ -109,7 +109,7 @@ class LabUiTest {
         Thread.sleep(1500)
         shot("ui_01_start.png")
 
-        for ((i, name) in listOf("Soft Chrome", "True Negative", "Silver Bypass", "Standard Chrome").withIndex()) {
+        for ((i, name) in listOf("Studio Hi", "Studio Std", "Portrait Soft", "Standard Chrome").withIndex()) {
             rule.onNodeWithText(name).performClick()
             Thread.sleep(2500)
             shot("ui_02_look_${i}.png")

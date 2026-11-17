@@ -42,10 +42,10 @@ class DaylightLabTest {
             Thread.sleep(800)
             shot("daylight_${i + 1}.png")
         }
-        rule.onNodeWithText("Muted Chrome").performClick()
+        rule.onNodeWithText("Portrait Soft").performClick()   // first look of the Daylight Collection
         Thread.sleep(1500)
         shot("daylight_compare.png")
-        Report.line("daylight lab: 7 scenes x 8 looks rendered, compare view opened")
+        Report.line("daylight lab: 7 scenes x 5 looks rendered, compare view opened")
         Report.flush(ctx, "daylight_report.txt")
     }
 }
