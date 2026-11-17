@@ -4,7 +4,7 @@
  "zh": "棚拍柔調",
  "series": "sim",
  "note": "棚拍柔調：非常柔和的階調、低飽和、柔軟的陰影，膚色細膩，保留最大的後製空間。",
- "lut": "luts/studio_std.cube",
+ "lut": "luts/studio_std.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

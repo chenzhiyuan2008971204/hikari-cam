@@ -4,7 +4,7 @@
  "zh": "京都底片",
  "series": "japanese",
  "note": "京都的底片：沉穩的暖褐、苔綠、朱紅，中低反差，古寺與巷弄的顏色。",
- "lut": "luts/jp_kyoto_film.cube",
+ "lut": "luts/jp_kyoto_film.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

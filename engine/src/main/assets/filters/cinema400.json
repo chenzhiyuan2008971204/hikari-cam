@@ -4,7 +4,7 @@
  "zh": "電影 400",
  "series": "film",
  "note": "電影感：青色暗部、暖色膚色與高光（青橙對比），綠色偏青，有力的反差與紅色光暈。",
- "lut": "luts/cinema400.cube",
+ "lut": "luts/cinema400.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

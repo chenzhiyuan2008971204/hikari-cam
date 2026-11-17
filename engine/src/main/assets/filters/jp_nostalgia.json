@@ -4,7 +4,7 @@
  "zh": "柔和懷舊",
  "series": "japanese",
  "note": "柔和懷舊：淡淡的洋紅暖調、柔焦的高光、低反差，舊相簿的溫度。",
- "lut": "luts/jp_nostalgia.cube",
+ "lut": "luts/jp_nostalgia.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

@@ -1,6 +1,7 @@
 """Bake the twelve film looks into engine assets.
 
-  python3 build_films.py            writes engine/src/main/assets/luts/<id>.cube and filters/<id>.json
+  python3 build_films.py            writes engine/src/main/assets/luts/<id>.lut (compact binary, see lutbin.py,
+                                    lossless against the 4-decimal .cube text) and filters/<id>.json
 Each look must pass build.CLEAN_LIMITS (white/grey neutrality, black level, skin, shadow and
 highlight detail) or the build stops.
 """
@@ -11,7 +12,8 @@ import sys
 import numpy as np
 
 import look as engine
-from build import bake, clean_check, write_cube
+from build import bake, clean_check
+import lutbin
 from films import FILMS, SHIP, RETIRED
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -71,7 +73,7 @@ def recipe(c, fx):
                                          for k, (h, a) in sp.items()))
     rf = c.get("refine")
     if rf:
-        zh = dict(shadow_open="暗部層次展開", hl_open="高光層次展開", toe="黑位微調", mud="髒色還原（去灰濁）", skin_hue="膚色色相修正",
+        zh = dict(shadow_open="暗部層次展開", hl_open="高光層次展開", mid_open="中間調反差補償", toe="黑位微調", mud="髒色還原（去灰濁）", skin_hue="膚色色相修正",
                   green_light="植物亮度", green_sat="植物飽和", sky_hue="天空色相修正", neon="色度上限收斂")
         out.append("品質微調（逐款擬合，不改風格）：" + "、".join(f"{zh[k]} {v:+.3g}" if k not in ("neon",) else f"{zh[k]} ×{v:.2f}" for k, v in rf.items()))
     out.append("保護：中性白／灰、膚色色相、色域內壓縮（不爆色）")
@@ -90,7 +92,7 @@ def recipe(c, fx):
 
 def spec(key, f):
     out = dict(id=key, name=f["name"], zh=f["zh"], series=f["series"], note=f["note"],
-               lut=f"luts/{key}.cube", color=dict(lutAmount=1.0, exposure=0.0))
+               lut=f"luts/{key}.lut", color=dict(lutAmount=1.0, exposure=0.0))
     if f.get("inspired"):
         out["inspired"] = f["inspired"]
     out.update(f["fx"])
@@ -104,7 +106,7 @@ def main():
     os.makedirs(os.path.join(ASSETS, "luts"), exist_ok=True)
     os.makedirs(os.path.join(ASSETS, "filters"), exist_ok=True)
     import glob
-    for old in glob.glob(os.path.join(ASSETS, "luts", "*.cube")) + glob.glob(os.path.join(ASSETS, "filters", "*.json")):
+    for old in glob.glob(os.path.join(ASSETS, "luts", "*.cube")) + glob.glob(os.path.join(ASSETS, "luts", "*.lut")) + glob.glob(os.path.join(ASSETS, "filters", "*.json")):
         os.remove(old)
     bad = []
     for key in SHIP:
@@ -118,7 +120,7 @@ def main():
               f"black {m['blackLv']:.3f}  white {m['whiteLv']:.2f}  shadow {m['shadow']:.3f}  {status}")
         if fails:
             bad.append(key)
-        write_cube(os.path.join(ASSETS, "luts", key + ".cube"), bake(lk), f["name"])
+        lutbin.write(os.path.join(ASSETS, "luts", key + ".lut"), bake(lk))
         with open(os.path.join(ASSETS, "filters", key + ".json"), "w") as fh:
             json.dump(spec(key, f), fh, ensure_ascii=False, indent=1)
     with open(os.path.join(ASSETS, "filters", "index.json"), "w") as fh:

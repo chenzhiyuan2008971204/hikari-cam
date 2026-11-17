@@ -4,7 +4,7 @@
  "zh": "柔光 400",
  "series": "film",
  "note": "人像負片：明亮奶油色的膚色、收斂的橄欖綠、柔和偏青的天空，暖高光與冷暗部，柔和反差。",
- "lut": "luts/mellow400.cube",
+ "lut": "luts/mellow400.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

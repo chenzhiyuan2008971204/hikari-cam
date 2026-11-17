@@ -4,7 +4,7 @@
  "zh": "空氣感白",
  "series": "japanese",
  "note": "空氣感：高調明亮、白色乾淨通透、陰影很淺，逆光與室內窗光最合適。",
- "lut": "luts/jp_airy.cube",
+ "lut": "luts/jp_airy.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

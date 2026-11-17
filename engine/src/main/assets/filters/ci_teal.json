@@ -4,7 +4,7 @@
  "zh": "電影青橙",
  "series": "cinema",
  "note": "青橙調色：暗部與藍綠往青色集中、膚色與暖光往橙色集中，互補對比。",
- "lut": "luts/ci_teal.cube",
+ "lut": "luts/ci_teal.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

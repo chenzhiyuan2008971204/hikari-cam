@@ -4,7 +4,7 @@
  "zh": "Acros 細緻黑白",
  "series": "fuji",
  "note": "細緻黑白（紅濾鏡感）：天空壓得很深、膚色明亮、黑很深，銳利的細顆粒。",
- "lut": "luts/fj_acros.cube",
+ "lut": "luts/fj_acros.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

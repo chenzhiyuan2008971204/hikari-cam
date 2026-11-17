@@ -37,7 +37,10 @@ class LookRepository(context: Context) {
     fun look(id: String?): FilterSpec = canonical(id).let { c -> looks.firstOrNull { it.id == c } } ?: looks.first()
 
     fun lut(spec: FilterSpec): CubeLut = synchronized(luts) {
-        luts.getOrPut(spec.lut) { CubeLut.parse(assets.open(spec.lut).use { it.readBytes().decodeToString() }) }
+        luts.getOrPut(spec.lut) {
+            val bytes = assets.open(spec.lut).use { it.readBytes() }
+            if (spec.lut.endsWith(".lut")) CubeLut.parseBinary(bytes) else CubeLut.parse(bytes.decodeToString())
+        }
     }
 
     companion object {

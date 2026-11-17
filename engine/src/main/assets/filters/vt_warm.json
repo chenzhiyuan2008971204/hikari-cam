@@ -4,7 +4,7 @@
  "zh": "暖調復古",
  "series": "vintage",
  "note": "暖調復古：濃厚的橙褐色調、柔和的反差、深而不死的陰影，七零年代的家庭相片。",
- "lut": "luts/vt_warm.cube",
+ "lut": "luts/vt_warm.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

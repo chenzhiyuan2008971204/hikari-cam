@@ -4,7 +4,7 @@
  "zh": "鮮明 100",
  "series": "film",
  "note": "鮮明細顆粒：溫暖濃郁的紅、深邃的藍、清晰反差，白色乾淨、膚色穩定。",
- "lut": "luts/vivid100.cube",
+ "lut": "luts/vivid100.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

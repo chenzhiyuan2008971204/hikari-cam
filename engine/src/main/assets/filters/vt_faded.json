@@ -4,7 +4,7 @@
  "zh": "褪色底片",
  "series": "vintage",
  "note": "褪色底片：黑與白都被時間磨掉、顏色只剩一半、整體偏暖黃。",
- "lut": "luts/vt_faded.cube",
+ "lut": "luts/vt_faded.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

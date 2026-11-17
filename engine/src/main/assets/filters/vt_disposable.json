@@ -4,7 +4,7 @@
  "zh": "即可拍",
  "series": "vintage",
  "note": "即可拍：塑膠鏡頭的暗角與邊緣模糊、閃燈般的硬反差、偏綠的陰影與濃重顆粒。",
- "lut": "luts/vt_disposable.cube",
+ "lut": "luts/vt_disposable.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

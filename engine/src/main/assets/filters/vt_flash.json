@@ -4,7 +4,7 @@
  "zh": "復古閃燈",
  "series": "vintage",
  "note": "復古直打閃燈：前景亮而硬、背景快速變暗、顏色濃、白色帶一點冷。",
- "lut": "luts/vt_flash.cube",
+ "lut": "luts/vt_flash.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

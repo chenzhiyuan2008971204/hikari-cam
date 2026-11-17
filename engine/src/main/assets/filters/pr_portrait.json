@@ -4,7 +4,7 @@
  "zh": "柔膚人像",
  "series": "pro",
  "note": "柔膚人像：柔和的反差、明亮平滑的膚色、背景的綠與藍稍微收斂。",
- "lut": "luts/pr_portrait.cube",
+ "lut": "luts/pr_portrait.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

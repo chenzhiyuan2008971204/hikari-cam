@@ -4,7 +4,7 @@
  "zh": "藍色時刻",
  "series": "pro",
  "note": "藍色時刻：日落後的靛藍天光、保留燈火的暖橙，冷暖並存。",
- "lut": "luts/pr_blue_hour.cube",
+ "lut": "luts/pr_blue_hour.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

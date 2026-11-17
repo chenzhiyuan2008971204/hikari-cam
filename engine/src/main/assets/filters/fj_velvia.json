@@ -4,7 +4,7 @@
  "zh": "Velvia 鮮豔",
  "series": "fuji",
  "note": "鮮豔正片：濃郁的藍天與綠葉、深沉的暗部與強烈反差，風景專用。",
- "lut": "luts/fj_velvia.cube",
+ "lut": "luts/fj_velvia.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

@@ -4,7 +4,7 @@
  "zh": "黃金時刻",
  "series": "pro",
  "note": "黃金時刻：把斜陽的金色推出來，高光暖、陰影保留一點冷藍做對比。",
- "lut": "luts/pr_golden.cube",
+ "lut": "luts/pr_golden.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

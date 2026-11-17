@@ -4,7 +4,7 @@
  "zh": "拍立得底片",
  "series": "vintage",
  "note": "拍立得：低反差、偏青綠的陰影、奶油色的高光、柔軟不銳利的畫面。",
- "lut": "luts/vt_instant.cube",
+ "lut": "luts/vt_instant.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

@@ -4,7 +4,7 @@
  "zh": "千禧年數位相機",
  "series": "vintage",
  "note": "早期數位相機：偏硬的反差、過艷的原色、偏冷的自動白平衡、容易爆的高光。",
- "lut": "luts/vt_2000s.cube",
+ "lut": "luts/vt_2000s.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

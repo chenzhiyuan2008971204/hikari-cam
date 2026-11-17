@@ -4,7 +4,7 @@
  "zh": "粗粒底片",
  "series": "vintage",
  "note": "粗粒高感光：粗大明顯的顆粒、推沖造成的高反差與偏色的陰影。",
- "lut": "luts/vt_grainy.cube",
+ "lut": "luts/vt_grainy.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

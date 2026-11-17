@@ -4,7 +4,7 @@
  "zh": "夢 1998",
  "series": "special",
  "note": "夢 1998：褪色的暖粉色調、抬起的淡黑、柔和反差，綠與藍收斂，帶灰塵與漏光。",
- "lut": "luts/dream1998.cube",
+ "lut": "luts/dream1998.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

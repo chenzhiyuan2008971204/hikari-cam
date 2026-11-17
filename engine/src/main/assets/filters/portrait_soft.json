@@ -4,7 +4,7 @@
  "zh": "柔膚人像",
  "series": "daylight",
  "note": "戶外人像：柔和反差、乾淨明亮的膚色（不橘不紅）、柔和的綠與藍，高光細膩地過渡到白。",
- "lut": "luts/portrait_soft.cube",
+ "lut": "luts/portrait_soft.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

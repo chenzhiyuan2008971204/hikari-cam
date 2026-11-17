@@ -4,7 +4,7 @@
  "zh": "Eterna 電影",
  "series": "fuji",
  "note": "電影負片：很低的反差與飽和、寬廣的暗部層次，留給後製的柔和影調。",
- "lut": "luts/fj_eterna.cube",
+ "lut": "luts/fj_eterna.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

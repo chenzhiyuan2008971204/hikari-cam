@@ -4,7 +4,7 @@
  "zh": "800T 鎢絲燈電影片",
  "series": "cinema",
  "note": "夜晚燈光片：偏冷的藍青底色、燈光周圍的紅色光暈、霓虹更艷。",
- "lut": "luts/ci_800t.cube",
+ "lut": "luts/ci_800t.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

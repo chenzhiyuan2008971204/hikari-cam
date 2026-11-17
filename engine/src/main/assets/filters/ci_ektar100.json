@@ -4,7 +4,7 @@
  "zh": "Ektar 100 高彩負片",
  "series": "cinema",
  "note": "高彩細粒負片：乾淨鮮明的顏色、偏青的藍天、扎實的反差，適合風景與旅行。",
- "lut": "luts/ci_ektar100.cube",
+ "lut": "luts/ci_ektar100.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

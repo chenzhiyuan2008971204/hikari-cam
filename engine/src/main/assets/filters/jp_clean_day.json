@@ -4,7 +4,7 @@
  "zh": "乾淨日光",
  "series": "japanese",
  "note": "乾淨日光：中性偏亮、顏色清澈不濃、白就是白，日常記錄的基準色。",
- "lut": "luts/jp_clean_day.cube",
+ "lut": "luts/jp_clean_day.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

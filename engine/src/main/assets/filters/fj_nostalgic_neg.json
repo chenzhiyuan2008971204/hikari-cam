@@ -4,7 +4,7 @@
  "zh": "Nostalgic Neg. 懷舊負片",
  "series": "fuji",
  "note": "彩色新攝影的味道：琥珀色的高光、飽滿的暗部顏色、柔和的階調。",
- "lut": "luts/fj_nostalgic_neg.cube",
+ "lut": "luts/fj_nostalgic_neg.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

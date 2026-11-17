@@ -4,7 +4,7 @@
  "zh": "復古電影",
  "series": "cinema",
  "note": "老拷貝：褪色的黑、偏黃綠的高光、洋紅的陰影與明顯的顆粒，七零年代電影的質地。",
- "lut": "luts/ci_vintage.cube",
+ "lut": "luts/ci_vintage.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

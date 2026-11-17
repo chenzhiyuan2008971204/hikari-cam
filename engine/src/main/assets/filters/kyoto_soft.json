@@ -4,7 +4,7 @@
  "zh": "京都柔",
  "series": "japanese",
  "note": "京都柔：非常柔和的粉彩、薄荷綠、粉霧天空，暗部帶一點淡粉，適合日常與人像。",
- "lut": "luts/kyoto_soft.cube",
+ "lut": "luts/kyoto_soft.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

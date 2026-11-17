@@ -4,7 +4,7 @@
  "zh": "褪色夏天",
  "series": "japanese",
  "note": "褪色的夏天：被曬淡的顏色、偏黃綠的暖光、霧霧的黑，回憶裡的暑假。",
- "lut": "luts/jp_faded_summer.cube",
+ "lut": "luts/jp_faded_summer.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

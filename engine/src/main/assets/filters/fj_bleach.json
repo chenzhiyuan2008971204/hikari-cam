@@ -4,7 +4,7 @@
  "zh": "Eterna Bleach Bypass 銀殘留",
  "series": "fuji",
  "note": "銀殘留：高反差、極低飽和、銀灰色的高光，冷硬的戲劇感。",
- "lut": "luts/fj_bleach.cube",
+ "lut": "luts/fj_bleach.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

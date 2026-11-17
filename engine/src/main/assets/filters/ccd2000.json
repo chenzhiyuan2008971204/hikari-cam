@@ -4,7 +4,7 @@
  "zh": "CCD 2000",
  "series": "ccd",
  "note": "CCD 2000：早期數位相機的冷調與高飽和，偏洋紅的紅與藍、硬朗的高光、細小色彩雜訊。",
- "lut": "luts/ccd2000.cube",
+ "lut": "luts/ccd2000.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

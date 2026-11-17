@@ -4,7 +4,7 @@
  "zh": "Fuji 400 綠調負片",
  "series": "cinema",
  "note": "日系負片：帶青綠的陰影、清涼的綠與藍、乾淨偏冷的白。",
- "lut": "luts/ci_fuji400.cube",
+ "lut": "luts/ci_fuji400.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

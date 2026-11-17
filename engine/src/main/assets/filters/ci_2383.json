@@ -4,7 +4,7 @@
  "zh": "2383 電影拷貝片",
  "series": "cinema",
  "note": "電影院拷貝片：濃密的黑、暖黃的高光、偏青的暗部與厚重的膚色。",
- "lut": "luts/ci_2383.cube",
+ "lut": "luts/ci_2383.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

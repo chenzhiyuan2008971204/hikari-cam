@@ -4,7 +4,7 @@
  "zh": "東京夜",
  "series": "japanese",
  "note": "東京的夜：深藍青的暗部、霓虹的洋紅與青更鮮明、燈光帶柔和光暈。",
- "lut": "luts/jp_tokyo_night.cube",
+ "lut": "luts/jp_tokyo_night.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

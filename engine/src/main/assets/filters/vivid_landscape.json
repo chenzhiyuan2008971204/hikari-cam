@@ -4,7 +4,7 @@
  "zh": "鮮明風景",
  "series": "daylight",
  "note": "風景：飽和而受控、天空由淺到深的漸層、黃綠／草綠／深綠層層分開，雲朵保留細節。",
- "lut": "luts/vivid_landscape.cube",
+ "lut": "luts/vivid_landscape.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

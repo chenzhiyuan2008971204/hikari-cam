@@ -4,7 +4,7 @@
  "zh": "暖調電影",
  "series": "cinema",
  "note": "暖調電影：琥珀色的整體光線、柔和的黑、略降的飽和，像黃昏的室內戲。",
- "lut": "luts/ci_warm.cube",
+ "lut": "luts/ci_warm.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

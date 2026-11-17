@@ -4,7 +4,7 @@
  "zh": "深邃反差",
  "series": "pro",
  "note": "深邃反差：很強的反差與深黑，顏色不跟著變艷，畫面有重量。",
- "lut": "luts/pr_deep.cube",
+ "lut": "luts/pr_deep.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

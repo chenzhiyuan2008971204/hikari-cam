@@ -4,7 +4,7 @@
  "zh": "隨身機鉻",
  "series": "ccd",
  "note": "隨身機鉻：清脆銳利、冷暗部暖高光、深藍天空、收斂的綠。",
- "lut": "luts/compact_chrome.cube",
+ "lut": "luts/compact_chrome.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

@@ -4,7 +4,7 @@
  "zh": "日系綠",
  "series": "japanese",
  "note": "日系綠調：青翠偏冷的綠、帶綠的陰影、柔和的反差，森林與夏日的空氣感。",
- "lut": "luts/jp_green.cube",
+ "lut": "luts/jp_green.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

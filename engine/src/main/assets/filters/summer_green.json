@@ -4,7 +4,7 @@
  "zh": "夏日綠",
  "series": "japanese",
  "note": "夏日綠：清新鮮活的黃綠與草綠、青藍天空、明亮通透，暗部帶一點富士式的青綠。",
- "lut": "luts/summer_green.cube",
+ "lut": "luts/summer_green.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

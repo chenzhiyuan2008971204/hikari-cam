@@ -4,7 +4,7 @@
  "zh": "Portra 400 人像負片",
  "series": "cinema",
  "note": "人像負片：溫潤的膚色、柔和的高光、淡淡的暖調與很寬的階調。",
- "lut": "luts/ci_portra400.cube",
+ "lut": "luts/ci_portra400.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

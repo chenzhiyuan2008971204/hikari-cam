@@ -4,7 +4,7 @@
  "zh": "Classic Negative 經典負片",
  "series": "fuji",
  "note": "街拍負片：硬朗的反差、暗部偏青綠、高光偏暖，紅色濃、綠色沉。",
- "lut": "luts/fj_classic_neg.cube",
+ "lut": "luts/fj_classic_neg.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

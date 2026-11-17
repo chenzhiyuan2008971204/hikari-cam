@@ -4,7 +4,7 @@
  "zh": "夏日 400",
  "series": "daylight",
  "note": "夏天的彩色負片：溫暖飽滿的紅黃、青藍色的天空、明亮的綠，顆粒感明顯但膚色依然自然。",
- "lut": "luts/summer400.cube",
+ "lut": "luts/summer400.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

@@ -9,12 +9,14 @@ import java.util.zip.Inflater
 import kotlin.math.abs
 
 class XmpTest {
+    /** The look's LUT from the app's binary asset (engine CubeLut.parseBinary does the same on the device). */
     private fun cube(id: String): Pair<FloatArray, Int> {
-        var n = 0; val v = ArrayList<Float>()
-        for (l in File(Awt.root, "engine/src/main/assets/luts/$id.cube").readLines()) { val t = l.trim()
-            if (t.startsWith("LUT_3D_SIZE")) n = t.split(Regex("\\s+"))[1].toInt()
-            else if (t.isNotEmpty() && (t[0].isDigit() || t[0] == '-' || t[0] == '.')) t.split(Regex("\\s+")).forEach { v += it.toFloat() } }
-        return v.toFloatArray() to n
+        val b = java.nio.ByteBuffer.wrap(File(Awt.root, "engine/src/main/assets/luts/$id.lut").readBytes()).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+        assertEquals("HLUT", String(ByteArray(4) { b.get(it) }))
+        val n = b.getShort(6).toInt(); assertEquals(1, b.getShort(4).toInt()); assertEquals(10000, b.getInt(8)); assertEquals(16 + n * n * n * 6, b.capacity())
+        val out = FloatArray(n * n * n * 3); val acc = IntArray(3); var p = 16; var o = 0
+        for (row in 0 until n * n) { acc.fill(0); for (r in 0 until n) for (c in 0..2) { acc[c] += b.getShort(p).toInt(); p += 2; out[o++] = (acc[c] * Math.pow(10.0, -4.0)).toFloat() } }
+        return out to n
     }
 
     @Test fun base85RoundTrip() {

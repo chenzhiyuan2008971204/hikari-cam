@@ -24,6 +24,9 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // Signed with the debug key so the APK installs directly.
             signingConfig = signingConfigs.getByName("debug")
+            // The shipped APK is for phones (64-bit ARM): the ML Kit native libraries for x86, x86_64 and
+            // 32-bit ARM were 56 MB of the APK. Debug builds (emulator tests run on x86_64) keep every ABI.
+            ndk { abiFilters += listOf("arm64-v8a") }
         }
     }
     compileOptions {

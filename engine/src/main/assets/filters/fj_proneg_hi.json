@@ -4,7 +4,7 @@
  "zh": "PRO Neg. Hi 人像硬調",
  "series": "fuji",
  "note": "棚拍人像：俐落反差、收斂色彩、立體而準確的膚色。",
- "lut": "luts/fj_proneg_hi.cube",
+ "lut": "luts/fj_proneg_hi.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

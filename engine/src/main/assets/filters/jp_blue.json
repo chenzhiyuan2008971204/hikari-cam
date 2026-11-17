@@ -4,7 +4,7 @@
  "zh": "日系藍",
  "series": "japanese",
  "note": "日系藍調：白平衡偏冷、天空與陰影是透明的水藍，整體明亮清爽。",
- "lut": "luts/jp_blue.cube",
+ "lut": "luts/jp_blue.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

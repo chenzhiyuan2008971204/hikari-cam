@@ -4,7 +4,7 @@
  "zh": "東京藍",
  "series": "japanese",
  "note": "東京藍：明亮冷調的空氣感、偏藍的淡黑、青綠色調的植物，膚色乾淨。",
- "lut": "luts/tokyo_blue.cube",
+ "lut": "luts/tokyo_blue.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

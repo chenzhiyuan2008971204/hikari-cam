@@ -4,7 +4,7 @@
  "zh": "柔和粉彩",
  "series": "japanese",
  "note": "粉彩：很低的反差、提亮的暗部、顏色變淡變粉，像水彩一樣輕。",
- "lut": "luts/jp_pastel.cube",
+ "lut": "luts/jp_pastel.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

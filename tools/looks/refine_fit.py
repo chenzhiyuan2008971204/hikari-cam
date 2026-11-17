@@ -128,7 +128,7 @@ def cost(m, d, mono, monotone):
     c += 9.0 * max(0.0, d["dE"] - 2.6) ** 1.5 + 0.15 * d["dE"]
     c += 700 * max(0.0, abs(d["dL"]) - 0.018)
     c += 200 * max(0.0, abs(d["dC"]) - 0.07)
-    c += 200 * max(0.0, abs(d["dContrast"]) - 0.06)
+    c += 300 * max(0.0, abs(d["dContrast"]) - 0.035)
     c += 3000 * max(0.0, d["cast"] - 0.008)
     return c
 

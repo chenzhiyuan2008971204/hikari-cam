@@ -7,6 +7,7 @@ A look keeps its white balance, grading, split toning, saturation and contrast c
   shadow_open   steeper tone curve just above black: crushed shadow detail comes back, lifted-black
                 (matte) looks keep their lift but stop looking flat
   hl_open       steeper tone curve just below white: highlights separate instead of merging
+  mid_open      steeper mid tones (around 18-50 % grey) so opening the shadows does not flatten the picture
   toe           black level nudge (only where the look crushes to pure black)
   mud           how much of the look's darkening of desaturated colours is given back (grey, dirty
                 colour becomes clean desaturated colour)
@@ -22,10 +23,10 @@ import copy
 
 import numpy as np
 
-KNOBS = ("shadow_open", "hl_open", "toe", "mud", "skin_hue", "green_light", "green_sat", "sky_hue", "neon")
-RANGES = dict(shadow_open=(0.0, 1.0), hl_open=(0.0, 0.5), toe=(-0.004, 0.02), mud=(0.0, 1.0), skin_hue=(-8.0, 8.0),
+KNOBS = ("shadow_open", "hl_open", "mid_open", "toe", "mud", "skin_hue", "green_light", "green_sat", "sky_hue", "neon")
+RANGES = dict(shadow_open=(0.0, 1.4), hl_open=(0.0, 0.5), mid_open=(0.0, 0.5), toe=(-0.004, 0.02), mud=(0.0, 1.0), skin_hue=(-8.0, 8.0),
               green_light=(-0.1, 0.3), green_sat=(-0.12, 0.25), sky_hue=(-8.0, 8.0), neon=(0.7, 1.0))
-NEUTRAL = dict(shadow_open=0.0, hl_open=0.0, toe=0.0, mud=0.0, skin_hue=0.0, green_light=0.0, green_sat=0.0, sky_hue=0.0, neon=1.0)
+NEUTRAL = dict(shadow_open=0.0, hl_open=0.0, mid_open=0.0, toe=0.0, mud=0.0, skin_hue=0.0, green_light=0.0, green_sat=0.0, sky_hue=0.0, neon=1.0)
 
 
 def _bump_s(y):
@@ -37,13 +38,18 @@ def _bump_h(y):
     return np.where(u < 0.30, u * (1 - u / 0.30) ** 2, 0.0)
 
 
-def reshape_curve(points, shadow_open, hl_open, toe):
+def _bump_m(y):
+    d = y - 0.5
+    return np.where(np.abs(d) < 0.2, d * (1 - (d / 0.2) ** 2) ** 2, 0.0)
+
+
+def reshape_curve(points, shadow_open, hl_open, toe, mid_open=0.0):
     """Tone curve points with steeper shadow / highlight ends. Stays monotone; the 18 % grey slope is untouched."""
     pts = np.array(points, float)
     xs, ys = pts[:, 0], pts[:, 1]
     lo, hi = ys[0], ys[-1]
     t = np.clip((ys - lo) / max(hi - lo, 1e-6), 0, 1)  # curve output normalised to 0..1
-    t2 = t + shadow_open * _bump_s(t) - hl_open * _bump_h(t)
+    t2 = t + shadow_open * _bump_s(t) - hl_open * _bump_h(t) + mid_open * _bump_m(t)
     # monotone guard: never let the slope of the correction fall below 10 % of the original
     t2 = np.maximum.accumulate(t2)
     ys2 = lo + (hi - lo) * t2
@@ -59,8 +65,8 @@ def refine_look(lk, p):
     """A new look dict with the refinement `p` (dict of KNOBS) applied."""
     lk = copy.deepcopy(lk)
     p = dict(NEUTRAL, **p)
-    if lk.get("curve") is not None and (p["shadow_open"] or p["hl_open"] or p["toe"]):
-        lk["curve"] = reshape_curve(lk["curve"], p["shadow_open"], p["hl_open"], p["toe"])
+    if lk.get("curve") is not None and (p["shadow_open"] or p["hl_open"] or p["mid_open"] or p["toe"]):
+        lk["curve"] = reshape_curve(lk["curve"], p["shadow_open"], p["hl_open"], p["toe"], p["mid_open"])
     if lk.get("mono") is not None:
         lk["refine"] = {k: p[k] for k in KNOBS if p[k] != NEUTRAL[k]}
         return lk

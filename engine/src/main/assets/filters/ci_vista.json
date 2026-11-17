@@ -4,7 +4,7 @@
  "zh": "Vista 鮮豔負片",
  "series": "cinema",
  "note": "歐系負片：偏洋紅的暖紅、飽和的原色、暗部帶一點紫，鮮明活潑。",
- "lut": "luts/ci_vista.cube",
+ "lut": "luts/ci_vista.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

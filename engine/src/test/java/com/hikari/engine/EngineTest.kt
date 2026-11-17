@@ -23,12 +23,38 @@ class EngineTest {
         for (id in ids) {
             val spec = FilterSpec.parse(asset("filters/$id.json"))
             assertEquals(id, spec.id)
-            val lut = CubeLut.parse(asset(spec.lut))
+            assertEquals("luts/$id.lut", spec.lut)
+            val lut = CubeLut.parseBinary(File(assets, spec.lut).readBytes())
             assertEquals("$id lut size", 33, lut.size)
+            // the binary file and the standard .cube text it replaces carry the same floats, bit for bit
+            val back = CubeLut.parse(lut.toCubeText(spec.name))
+            assertEquals("$id text size", lut.size, back.size)
+            assertTrue("$id binary and .cube text differ", lut.data.contentEquals(back.data))
             assertTrue("$id lut range", lut.data.all { it in 0f..1f })
             assertTrue("$id grain size", spec.grain.size in 0.0003f..0.003f)
             assertTrue("$id recipe", spec.recipe.size >= 5)
         }
+    }
+
+    @Test
+    fun onlyBinaryLutsAreShipped() {
+        val files = File(assets, "luts").listFiles()!!.map { it.name }
+        assertEquals(ids.sorted().map { "$it.lut" }, files.sorted())          // no .cube text, no stray files
+    }
+
+    @Test
+    fun binaryLutRejectsWhatIsNotAValidLut() {
+        val good = File(assets, "luts/${ids.first()}.lut").readBytes()
+        assertEquals(16 + 33 * 33 * 33 * 6, good.size)
+        fun bad(msg: String, b: ByteArray) = org.junit.Assert.assertThrows(msg, IllegalArgumentException::class.java) { CubeLut.parseBinary(b) }
+        bad("magic", good.copyOf().also { it[0] = 'X'.code.toByte() })
+        bad("version", good.copyOf().also { it[4] = 2 })
+        bad("size", good.copyOf().also { it[6] = 1; it[7] = 0 })
+        bad("size too large", good.copyOf().also { it[6] = 0; it[7] = 1 })
+        bad("scale", good.copyOf().also { it[8] = 0x10 })
+        bad("truncated", good.copyOf(good.size - 2))
+        bad("too long", good.copyOf(good.size + 2))
+        bad("empty", ByteArray(0))
     }
 
     /** Retired near-duplicate looks: not shipped, no files left, and each points at a shipped look. */
@@ -39,7 +65,7 @@ class EngineTest {
         for (k in o.keys()) {
             assertTrue("$k still shipped", k !in ids)
             assertTrue("$k json left", !File(assets, "filters/$k.json").exists())
-            assertTrue("$k lut left", !File(assets, "luts/$k.cube").exists())
+            assertTrue("$k lut left", !File(assets, "luts/$k.lut").exists() && !File(assets, "luts/$k.cube").exists())
             assertTrue("$k -> ${o.getString(k)} not shipped", o.getString(k) in ids)
         }
     }

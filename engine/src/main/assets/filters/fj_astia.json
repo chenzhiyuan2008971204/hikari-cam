@@ -4,7 +4,7 @@
  "zh": "Astia 柔和",
  "series": "fuji",
  "note": "柔和正片：反差柔順、膚色通透，顏色依然飽滿，適合人像與日常。",
- "lut": "luts/fj_astia.cube",
+ "lut": "luts/fj_astia.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

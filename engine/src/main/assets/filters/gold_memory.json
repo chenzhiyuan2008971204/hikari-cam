@@ -4,7 +4,7 @@
  "zh": "金色記憶",
  "series": "film",
  "note": "金色記憶：金黃溫暖的高光、飽滿的黃與紅、綠色偏向黃綠、帶棕色的暗部，像夏天的消費級負片。",
- "lut": "luts/gold_memory.cube",
+ "lut": "luts/gold_memory.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

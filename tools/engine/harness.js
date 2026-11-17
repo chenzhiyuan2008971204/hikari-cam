@@ -9,7 +9,26 @@ const { chromium } = require('playwright');
 const ROOT = path.resolve(__dirname, '../..');
 const ASSETS = path.join(ROOT, 'engine/src/main/assets');
 
+// compact binary LUT (tools/looks/lutbin.py): "HLUT", version, size, scale, reserved, then int16 differences along red
+function readHlut(file) {
+  const b = fs.readFileSync(file);
+  if (b.toString('latin1', 0, 4) !== 'HLUT') throw new Error('not an HLUT file ' + file);
+  const version = b.readUInt16LE(4), size = b.readUInt16LE(6), scale = b.readUInt32LE(8);
+  if (version !== 1 || scale !== 10000 || size < 2 || size > 128 || b.length !== 16 + size * size * size * 6) throw new Error('bad HLUT ' + file);
+  const data = new Array(size * size * size * 3);
+  for (let row = 0; row < size * size; row++) {
+    const acc = [0, 0, 0];
+    for (let r = 0; r < size; r++) for (let c = 0; c < 3; c++) {
+      const i = (row * size + r) * 3 + c;
+      acc[c] += b.readInt16LE(16 + i * 2);
+      data[i] = acc[c] / scale;     // = Number("0.0084"): the double nearest the 4-decimal text
+    }
+  }
+  return { size, data };
+}
+
 function readCube(file) {
+  if (file.endsWith('.lut')) return readHlut(file);
   const data = []; let size = 0;
   for (const raw of fs.readFileSync(file, 'utf8').split('\n')) {
     const l = raw.trim();

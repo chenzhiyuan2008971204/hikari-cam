@@ -32,7 +32,18 @@ from colorlib import linear_to_oklab, srgb_to_linear  # noqa: E402
 from build import apply_lut, SKINS  # noqa: E402
 
 
+def find_lut(d, k):
+    """The baked LUT of look k in folder d: compact binary (.lut, the app's assets) or .cube text."""
+    for ext in (".lut", ".cube"):
+        if os.path.exists(os.path.join(d, k + ext)):
+            return os.path.join(d, k + ext)
+    raise FileNotFoundError(os.path.join(d, k))
+
+
 def load_cube(path):
+    if path.endswith(".lut"):
+        import lutbin
+        return lutbin.read(path)
     rows, n = [], 0
     for line in open(path):
         if line.startswith("LUT_3D_SIZE"):
@@ -145,7 +156,7 @@ def main():
     print(f"{'look':<18}{'clipHi':>7}{'clipLo':>7}{'hlKeep':>7}{'shKeep':>7}{'neon':>6}{'mud':>6}{'rough':>7}{'levels':>7}{'mono':>5}{'skinH':>7}{'skinC':>6}{'skyH':>6}{'skyC':>6}{'grnH':>6}{'grnC':>6}")
     for k in order:
         if only and k not in only: continue
-        m = measure(load_cube(os.path.join(d, k + ".cube")), imgs)
+        m = measure(load_cube(find_lut(d, k)), imgs)
         res[k] = m
         print(f"{k:<18}{m['clipHi']:7.2f}{m['clipLo']:7.2f}{m['hlKeep']:7.2f}{m['shKeep']:7.2f}{m['neon']:6.2f}{m['mud']:6.2f}{m['rough']:7.2f}{m['levels']:7d}{'Y' if m['mono'] else 'N':>5}"
               f"{m['skinH']:7.1f}{m['skinC']:6.2f}{m['skyH']:6.1f}{m['skyC']:6.2f}{m['grnH']:6.1f}{m['grnC']:6.2f}")

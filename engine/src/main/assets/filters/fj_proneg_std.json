@@ -4,7 +4,7 @@
  "zh": "PRO Neg. Std. 人像柔調",
  "series": "fuji",
  "note": "柔光人像：很柔的反差、淡雅的顏色、平滑的膚色過渡。",
- "lut": "luts/fj_proneg_std.cube",
+ "lut": "luts/fj_proneg_std.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

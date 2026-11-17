@@ -4,7 +4,7 @@
  "zh": "棚拍硬調",
  "series": "sim",
  "note": "棚拍硬調：俐落的反差、收斂的色彩與準確立體的膚色，適合人像、街頭人物與商品。",
- "lut": "luts/studio_hi.cube",
+ "lut": "luts/studio_hi.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

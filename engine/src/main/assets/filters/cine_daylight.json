@@ -4,7 +4,7 @@
  "zh": "電影日光",
  "series": "daylight",
  "note": "電影感日光：低反差、低飽和但膚色有血色，暗部微青、高光柔和，畫面寬容度高、適合後製。",
- "lut": "luts/cine_daylight.cube",
+ "lut": "luts/cine_daylight.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

@@ -8,7 +8,7 @@ only the BEFORE result is drawn.
 import json, os, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-from quality import load_cube, photos
+from quality import find_lut, load_cube, photos
 from build import apply_lut
 
 SCENES = {"sunny": "白天藍天", "foliage": "綠色植物", "portrait": "人像", "overcast": "陰天", "nightstreet": "夜景", "indoor1": "室內", "city": "建築", "seaside": "海邊"}
@@ -46,8 +46,8 @@ def main():
                 sh.paste(tile(imgs[s], None), (130 + c * col_w, y))
             continue
         d.text((6, y + 4), k[:16], fill="white", font=Fs)
-        tb = load_cube(os.path.join(b_dir, k + ".cube"))
-        ta = load_cube(os.path.join(a_dir, k + ".cube")) if two else None
+        tb = load_cube(find_lut(b_dir, k))
+        ta = load_cube(find_lut(a_dir, k)) if two else None
         for c, s in enumerate(scenes):
             x = 130 + c * col_w
             sh.paste(tile(imgs[s], tb), (x, y))

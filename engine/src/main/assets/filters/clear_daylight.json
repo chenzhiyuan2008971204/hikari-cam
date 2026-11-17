@@ -4,7 +4,7 @@
  "zh": "晴透日光",
  "series": "daylight",
  "note": "晴透日光：明亮通透、略冷的空氣感、乾淨的天空與純白，顏色自然清爽。",
- "lut": "luts/clear_daylight.cube",
+ "lut": "luts/clear_daylight.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

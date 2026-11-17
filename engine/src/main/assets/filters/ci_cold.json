@@ -4,7 +4,7 @@
  "zh": "冷調電影",
  "series": "cinema",
  "note": "冷調電影：鋼藍色的陰影、去飽和的暖色、偏硬的反差，懸疑片的氣氛。",
- "lut": "luts/ci_cold.cube",
+ "lut": "luts/ci_cold.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

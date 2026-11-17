@@ -4,7 +4,7 @@
  "zh": "閃光日記",
  "series": "ccd",
  "note": "閃光日記：直打閃光的強反差、深黑、明亮偏暖的膚色與鮮豔顏色。",
- "lut": "luts/flash_diary.cube",
+ "lut": "luts/flash_diary.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

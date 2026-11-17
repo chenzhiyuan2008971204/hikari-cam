@@ -4,7 +4,7 @@
  "zh": "Classic Chrome 經典",
  "series": "fuji",
  "note": "紀實風格：壓低的飽和、偏青的深藍天、厚實的暗部，冷靜而有分量。",
- "lut": "luts/fj_classic_chrome.cube",
+ "lut": "luts/fj_classic_chrome.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

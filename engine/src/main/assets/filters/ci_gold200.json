@@ -4,7 +4,7 @@
  "zh": "Gold 200 金色負片",
  "series": "cinema",
  "note": "陽光負片：金黃的暖調、飽滿的紅與黃、帶點綠的陰影，假日快照的顏色。",
- "lut": "luts/ci_gold200.cube",
+ "lut": "luts/ci_gold200.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0

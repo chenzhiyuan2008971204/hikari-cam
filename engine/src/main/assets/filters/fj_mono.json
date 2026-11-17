@@ -4,7 +4,7 @@
  "zh": "Monochrome 標準黑白",
  "series": "fuji",
  "note": "標準黑白：中性的灰階轉換、溫和的反差，平實耐看。",
- "lut": "luts/fj_mono.cube",
+ "lut": "luts/fj_mono.lut",
  "color": {
   "lutAmount": 1.0,
   "exposure": 0.0
